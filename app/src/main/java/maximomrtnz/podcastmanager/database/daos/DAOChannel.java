@@ -1,5 +1,6 @@
 package maximomrtnz.podcastmanager.database.daos;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -78,6 +79,27 @@ public class DAOChannel {
         }
 
         return channels;
+
+    }
+
+    public void insert(Channel channel, Context context){
+
+        DatabaseHelper mDbHelper = new DatabaseHelper(context);
+
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(PodcastManagerContract.Channel.COLUMN_NAME_COPYRIGHT, channel.getCopyright());
+        values.put(PodcastManagerContract.Channel.COLUMN_NAME_DESCRIPTION, channel.getDescription());
+
+        long newRowId;
+
+        newRowId = db.insert(
+                PodcastManagerContract.Channel.TABLE_NAME,
+                null,
+                values);
+
+        channel.setId(newRowId);
 
     }
 
