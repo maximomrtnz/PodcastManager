@@ -16,7 +16,7 @@ import maximomrtnz.podcastmanager.models.pojos.Channel;
 /**
  * Created by Maxi on 11/22/2015.
  */
-public class DAOChannel {
+public class DAOChannel extends DAO{
 
     public static final String[] projection = {
             PodcastManagerContract.Channel.COLUMN_NAME_ID,
@@ -34,9 +34,14 @@ public class DAOChannel {
 
     public static final String sortOrder = PodcastManagerContract.Channel.COLUMN_NAME_TITLE + " DESC";
 
-    public static List<Channel> getAll(Context context){
+    public DAOChannel(Context context){
+        super(context);
+    }
 
-        List<Channel> channels = new ArrayList<>();
+    @Override
+    public List<Object> getAll(){
+
+        List channels = new ArrayList<>();
 
         DatabaseHelper mDbHelper = new DatabaseHelper(context);
 
@@ -82,7 +87,20 @@ public class DAOChannel {
 
     }
 
-    public void insert(Channel channel, Context context){
+    @Override
+    public void delete(Object object) {
+
+    }
+
+    @Override
+    public void update(Object object) {
+
+    }
+
+    @Override
+    public void insert(Object object){
+
+        Channel channel = (Channel)object;
 
         DatabaseHelper mDbHelper = new DatabaseHelper(context);
 
