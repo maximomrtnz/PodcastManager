@@ -2,6 +2,7 @@ package maximomrtnz.podcastmanager.models.pojos;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Maxi on 11/17/2015.
@@ -20,6 +21,7 @@ public class Channel {
     private String itunesAuthor;
     private String copyright;
     private ItunesOwner itunesOwner;
+    private List<Item> items;
 
     public String getTitle() {
         return title;
@@ -115,5 +117,13 @@ public class Channel {
 
     public void setItunesOwner(ItunesOwner itunesOwner) {
         this.itunesOwner = itunesOwner;
+    }
+
+    public List<Item> getItems() {
+        return items;
+    }
+
+    public void setItems(List<Item> items) {
+        this.items = items;
     }
 }

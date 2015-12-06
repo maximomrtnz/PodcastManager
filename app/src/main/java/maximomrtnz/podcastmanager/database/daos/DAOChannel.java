@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import java.util.ArrayList;
 import java.util.List;
 
-import maximomrtnz.podcastmanager.Utils;
+import maximomrtnz.podcastmanager.utils.Utils;
 import maximomrtnz.podcastmanager.database.DatabaseHelper;
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
 import maximomrtnz.podcastmanager.models.pojos.Channel;
