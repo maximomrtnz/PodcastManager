@@ -23,9 +23,9 @@ public class PodcastXMLParser {
 
     // We don't use XML namespaces
     private static final String ns = null;
-
     private static final String CHANNEL = "channel";
     private static final String ITEM = "item";
+    private static final String RSS = "rss";
 
 
     /** Parse an Podcast XML, returning a Podacast Channel.
@@ -35,20 +35,52 @@ public class PodcastXMLParser {
      * @throws org.xmlpull.v1.XmlPullParserException on error parsing feed.
      * @throws java.io.IOException on I/O error.
      */
-    public Channel parse(InputStream in) throws XmlPullParserException, IOException, ParseException {
+    public static Channel parse(InputStream in) throws XmlPullParserException, IOException, ParseException {
 
         Channel channel = null;
 
         try {
+
             XmlPullParser parser = Xml.newPullParser();
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
             parser.setInput(in, null);
             parser.nextTag();
 
-            channel = readChannel(parser);
+            channel = readPodcast(parser);
 
         } finally {
             in.close();
+        }
+
+        return channel;
+
+    }
+
+    private static Channel readPodcast(XmlPullParser parser)throws XmlPullParserException, IOException, ParseException {
+
+        Channel channel = null;
+
+        // Search for <rss> tags.
+        parser.require(XmlPullParser.START_TAG, ns, RSS);
+
+        while (parser.next() != XmlPullParser.END_TAG) {
+
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+
+            String name = parser.getName();
+
+            if (name.equals(CHANNEL)) {
+
+                channel = readChannel(parser);
+
+            } else {
+
+                skip(parser);
+
+            }
+
         }
 
         return channel;
@@ -63,11 +95,13 @@ public class PodcastXMLParser {
      * @throws org.xmlpull.v1.XmlPullParserException on error parsing feed.
      * @throws java.io.IOException on I/O error.
      */
-    private Channel readChannel(XmlPullParser parser) throws XmlPullParserException, IOException, ParseException {
+    private static Channel readChannel(XmlPullParser parser) throws XmlPullParserException, IOException, ParseException {
 
         Channel channel = new Channel();
 
         List<Item> items = new ArrayList();
+
+        channel.setItems(items);
 
         // Search for <channel> tags.
         parser.require(XmlPullParser.START_TAG, ns, CHANNEL);
@@ -146,7 +180,7 @@ public class PodcastXMLParser {
      * Parses the contents of an item. If it encounters a title, summary, or link tag, hands them
      * off to their respective "read" methods for processing. Otherwise, skips the tag.
      */
-    private Item readItem(XmlPullParser parser) throws XmlPullParserException, IOException, ParseException {
+    private static Item readItem(XmlPullParser parser) throws XmlPullParserException, IOException, ParseException {
 
         parser.require(XmlPullParser.START_TAG, ns, ITEM);
 
@@ -237,7 +271,7 @@ public class PodcastXMLParser {
      * @throws java.io.IOException
      * @throws org.xmlpull.v1.XmlPullParserException
      */
-    private String readBasicTag(XmlPullParser parser, String tag) throws IOException, XmlPullParserException {
+    private static String readBasicTag(XmlPullParser parser, String tag) throws IOException, XmlPullParserException {
         parser.require(XmlPullParser.START_TAG, ns, tag);
         String result = readText(parser);
         parser.require(XmlPullParser.END_TAG, ns, tag);
@@ -248,7 +282,7 @@ public class PodcastXMLParser {
     /**
      * Processes link tags in the feed.
      */
-    private ItunesImage readItunesImage(XmlPullParser parser) throws IOException, XmlPullParserException {
+    private static ItunesImage readItunesImage(XmlPullParser parser) throws IOException, XmlPullParserException {
 
         ItunesImage itunesImage = new ItunesImage();
 
@@ -268,7 +302,7 @@ public class PodcastXMLParser {
     /**
      * Processes link tags in the feed.
      */
-    private Enclosure readEnclosure(XmlPullParser parser) throws IOException, XmlPullParserException {
+    private static Enclosure readEnclosure(XmlPullParser parser) throws IOException, XmlPullParserException {
 
         Enclosure enclosure = new Enclosure();
 
@@ -288,7 +322,7 @@ public class PodcastXMLParser {
     }
 
 
-    private ItunesOwner readItunesOwner(XmlPullParser parser) throws IOException, XmlPullParserException {
+    private static ItunesOwner readItunesOwner(XmlPullParser parser) throws IOException, XmlPullParserException {
 
         ItunesOwner itunesOwner = new ItunesOwner();
 
@@ -297,19 +331,26 @@ public class PodcastXMLParser {
         itunesOwner.setName(parser.getAttributeValue(null, "name"));
         itunesOwner.setEmail(parser.getAttributeValue(null, "email"));
 
-        while (true) {
-            if (parser.nextTag() == XmlPullParser.END_TAG){
-                break;
+        while (parser.next() != XmlPullParser.END_TAG) {
+
+            if (parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+
+            }else {
+
+                skip(parser);
+
             }
-            // Intentionally break; consumes any remaining sub-tags.
+
         }
+
         return itunesOwner;
     }
 
     /**
      * For the tags title and summary, extracts their text values.
      */
-    private String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
+    private static String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
         String result = null;
         if (parser.next() == XmlPullParser.TEXT) {
             result = parser.getText();
@@ -324,7 +365,7 @@ public class PodcastXMLParser {
      * if the next tag after a START_TAG isn't a matching END_TAG, it keeps going until it
      * finds the matching END_TAG (as indicated by the value of "depth" being 0).
      */
-    private void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
+    private static void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
         if (parser.getEventType() != XmlPullParser.START_TAG) {
             throw new IllegalStateException();
         }
