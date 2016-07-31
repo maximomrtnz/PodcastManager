@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="5dp"
+    android:background="@color/tabsScrollColor">
+
+        <RelativeLayout
+            style="@style/Widget.CardContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <ImageView
+                android:layout_width="@dimen/episode_image_width"
+                android:layout_height="wrap_content"
+                android:id="@+id/episode_image"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginRight="16dp" />
+
+            <TextView
+                android:layout_width="@dimen/episode_title_width"
+                android:layout_height="wrap_content"
+                android:id="@+id/episode_title"
+                android:layout_toRightOf="@+id/episode_image"
+                android:layout_alignParentTop="true"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/episodeTitleListColor"
+                android:ellipsize="end"
+                android:maxLines="2" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/episode_description"
+                android:layout_toRightOf="@+id/episode_image"
+                android:layout_below="@+id/episode_title"
+                android:textSize="15sp"
+                android:textColor="@color/episodeDescriptionListColor"
+                android:ellipsize="end"
+                android:maxLines="1"/>
+
+            <TextView
+                android:id="@+id/episode_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBaseline="@+id/episode_title"
+                android:layout_alignBottom="@+id/episode_title"
+                android:layout_alignParentRight="true"
+                android:textSize="16sp"/>
+
+        </RelativeLayout>
+
+</LinearLayout>

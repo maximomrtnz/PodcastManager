@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimary">#e62117</color>
+    <color name="colorPrimaryDark">#c31c13</color>
+    <color name="colorAccent">#8a140e</color>
+    <color name="tabsScrollColor">#fff</color>
+    <color name="episodeTitleListColor">#000</color>
+    <color name="episodeDescriptionListColor">#616161</color>
+    <color name="episodeDurationListColor">#616161</color>
+    <color name="podcastTitleListColor">#000</color>
+    <color name="colorSubscribed">#64dd17</color>
 </resources>

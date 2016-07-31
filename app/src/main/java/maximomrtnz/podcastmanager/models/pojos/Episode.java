@@ -1,19 +1,24 @@
 package maximomrtnz.podcastmanager.models.pojos;
 
+import android.content.ContentValues;
+
 import java.util.Calendar;
 import java.util.Date;
+
+import maximomrtnz.podcastmanager.database.PodcastManagerContract;
+import maximomrtnz.podcastmanager.utils.Utils;
 
 /**
  * Created by Maxi on 11/17/2015.
  */
-public class Item {
+public class Episode {
 
     private Long id;
     private String title;
     private String link;
-    private ItunesImage itunesImage;
+    private String imageUrl;
     private String itunesAuthor;
-    private Integer itunesDuration;
+    private String itunesDuration;
     private String itunesSubtitle;
     private String itunesSummary;
     private Calendar pubDate;
@@ -37,14 +42,6 @@ public class Item {
         this.link = link;
     }
 
-    public ItunesImage getItunesImage() {
-        return itunesImage;
-    }
-
-    public void setItunesImage(ItunesImage itunesImage) {
-        this.itunesImage = itunesImage;
-    }
-
     public String getItunesAuthor() {
         return itunesAuthor;
     }
@@ -53,11 +50,11 @@ public class Item {
         this.itunesAuthor = itunesAuthor;
     }
 
-    public Integer getItunesDuration() {
+    public String getItunesDuration() {
         return itunesDuration;
     }
 
-    public void setItunesDuration(Integer itunesDuration) {
+    public void setItunesDuration(String  itunesDuration) {
         this.itunesDuration = itunesDuration;
     }
 
@@ -116,4 +113,37 @@ public class Item {
     public void setId(Long id) {
         this.id = id;
     }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+    public ContentValues toContentValue(){
+
+        // Defines an object to contain the new values to insert
+        ContentValues mNewValues = new ContentValues();
+
+        /*
+         * Sets the values of each column and inserts the word. The arguments to the "put"
+         * method are "column name" and "value"
+         */
+
+        if(getId()!=null){
+            mNewValues.put(PodcastManagerContract.Episode._ID, getId());
+        }
+
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_TITLE, getTitle());
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_DESCRIPTION, getDescription());
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_AUTHOR, getItunesAuthor());
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE, Utils.formatDateAsLong(getPubDate()));
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_LINK, getLink());
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_IMAGE_URL, getImageUrl());
+
+        return mNewValues;
+
+    }
+
 }
