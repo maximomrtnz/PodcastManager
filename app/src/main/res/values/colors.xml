@@ -8,5 +8,5 @@
     <color name="episodeDescriptionListColor">#616161</color>
     <color name="episodeDurationListColor">#616161</color>
     <color name="podcastTitleListColor">#000</color>
-    <color name="colorSubscribed">#64dd17</color>
+    <color name="colorSubscribed">#2e7d32</color>
 </resources>

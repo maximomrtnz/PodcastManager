@@ -177,17 +177,18 @@ public class PodcastManagerContentProvider extends ContentProvider {
 
                 case ENCLOSURE_ID:
 
-                    final long work_placeId = dbConnection.insertOrThrow(PodcastManagerContract.Enclosure.TABLE_NAME, null, values);
+                    final long enclosureId = dbConnection.insertOrThrow(PodcastManagerContract.Enclosure.TABLE_NAME, null, values);
 
-                    final Uri newWorkPlaceUri = ContentUris.withAppendedId(ENCLOSURE_CONTENT_URI, work_placeId);
+                    final Uri newEnclosureUri = ContentUris.withAppendedId(ENCLOSURE_CONTENT_URI, enclosureId);
 
-                    getContext().getContentResolver().notifyChange(newWorkPlaceUri, null);
+                    getContext().getContentResolver().notifyChange(newEnclosureUri, null);
 
                     dbConnection.setTransactionSuccessful();
 
-                    return newWorkPlaceUri;
+                    return newEnclosureUri;
 
                 default :
+
                     throw new IllegalArgumentException("Unsupported URI:" + uri);
             }
         } catch (Exception e) {

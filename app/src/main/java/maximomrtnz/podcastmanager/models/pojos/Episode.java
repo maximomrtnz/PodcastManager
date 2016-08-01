@@ -14,6 +14,7 @@ import maximomrtnz.podcastmanager.utils.Utils;
 public class Episode {
 
     private Long id;
+    private Long podcastId;
     private String title;
     private String link;
     private String imageUrl;
@@ -121,6 +122,15 @@ public class Episode {
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
     }
+
+    public Long getPodcastId() {
+        return podcastId;
+    }
+
+    public void setPodcastId(Long podcastId) {
+        this.podcastId = podcastId;
+    }
+
     public ContentValues toContentValue(){
 
         // Defines an object to contain the new values to insert
@@ -141,6 +151,8 @@ public class Episode {
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE, Utils.formatDateAsLong(getPubDate()));
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_LINK, getLink());
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_IMAGE_URL, getImageUrl());
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID, getPodcastId());
+
 
         return mNewValues;
 

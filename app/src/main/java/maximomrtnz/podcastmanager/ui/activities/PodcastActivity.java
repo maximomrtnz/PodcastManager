@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import maximomrtnz.podcastmanager.R;
+import maximomrtnz.podcastmanager.asynktasks.DeletePodcast;
 import maximomrtnz.podcastmanager.asynktasks.InsertPodcast;
 import maximomrtnz.podcastmanager.cache.FeedLoader;
 import maximomrtnz.podcastmanager.cache.ImageLoader;
@@ -211,6 +212,24 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
 
                     mFloatingActionButton.setImageResource(R.drawable.ic_check);
                     mFloatingActionButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorSubscribed)));
+
+                }
+            }).execute(mPodcast);
+
+        }else{ // Unsuscribe
+
+            new DeletePodcast(getApplicationContext(), new DeletePodcast.DeletePodcastListener() {
+                @Override
+                public void onPodcastDeleted(int deletedRows) {
+
+                    Log.d(LOG_TAG,"Delete Rows -->"+deletedRows);
+
+                    // Change Button Look and feel
+                    mFloatingActionButton.setImageResource(R.drawable.ic_favorite_border);
+                    mFloatingActionButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorPrimary)));
+
+                    // Remove Id
+                    mPodcast.setId(null);
 
                 }
             }).execute(mPodcast);

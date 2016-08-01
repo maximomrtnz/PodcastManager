@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 1;
 
     public static final String DATABASE_NAME = "PodcastManager.db";
 
@@ -32,7 +32,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     PodcastManagerContract.Enclosure.COLUMN_NAME_TYPE + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Enclosure.COLUMN_NAME_URL + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Enclosure.COLUMN_EPISODE_ID + TEXT_TYPE + COMMA_SEP +
-                    FOREIGN_KEY + " ("+PodcastManagerContract.Enclosure.COLUMN_EPISODE_ID+") "+REFERENCES+" "+PodcastManagerContract.Podcast.TABLE_NAME+"("+PodcastManagerContract.Episode._ID+") " + ON_DELETE_CASCADE +
+                    FOREIGN_KEY + " ("+PodcastManagerContract.Enclosure.COLUMN_EPISODE_ID+") "+REFERENCES+" "+PodcastManagerContract.Episode.TABLE_NAME+"("+PodcastManagerContract.Episode._ID+") " + ON_DELETE_CASCADE +
             " )";
 
     private static final String SQL_CREATE_ENTRY_PODCAST =
@@ -93,6 +93,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         onUpgrade(db, oldVersion, newVersion);
+    }
+
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        if (!db.isReadOnly()) {
+            // Enable foreign key constraints
+            db.execSQL("PRAGMA foreign_keys=ON;");
+        }
     }
 
 }

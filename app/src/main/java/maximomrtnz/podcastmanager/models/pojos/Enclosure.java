@@ -14,6 +14,7 @@ public class Enclosure {
     private String url;
     private String type;
     private Long length;
+    private Long episodeId;
 
     public String getUrl() {
         return url;
@@ -47,6 +48,14 @@ public class Enclosure {
         this.id = id;
     }
 
+    public Long getEpisodeId() {
+        return episodeId;
+    }
+
+    public void setEpisodeId(Long episodeId) {
+        this.episodeId = episodeId;
+    }
+
     public ContentValues toContentValue(){
 
         // Defines an object to contain the new values to insert
@@ -64,6 +73,7 @@ public class Enclosure {
         mNewValues.put(PodcastManagerContract.Enclosure.COLUMN_NAME_LENGTH, getLength());
         mNewValues.put(PodcastManagerContract.Enclosure.COLUMN_NAME_TYPE, getType());
         mNewValues.put(PodcastManagerContract.Enclosure.COLUMN_NAME_URL, getUrl());
+        mNewValues.put(PodcastManagerContract.Enclosure.COLUMN_EPISODE_ID, getEpisodeId());
 
         return mNewValues;
 

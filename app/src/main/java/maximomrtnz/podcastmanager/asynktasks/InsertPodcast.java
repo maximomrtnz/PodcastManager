@@ -12,7 +12,6 @@ import android.util.Log;
 import java.util.ArrayList;
 
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
-import maximomrtnz.podcastmanager.database.PodcastManagerContract;
 import maximomrtnz.podcastmanager.models.pojos.Enclosure;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
@@ -57,10 +56,15 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
         ArrayList<ContentProviderOperation> episodes = new ArrayList<ContentProviderOperation>();
 
         for(Episode episode : podcast.getEpisodes()){
+
+            // Set podcast id
+            episode.setPodcastId(podcastId);
+
+            // Add apisode to bath list
             episodes.add(ContentProviderOperation.newInsert(PodcastManagerContentProvider.EPISODE_CONTENT_URI)
-                    .withValue(PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID, podcastId)
                     .withValues(episode.toContentValue())
                     .build());
+
         }
 
 
@@ -94,8 +98,10 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
 
                 Log.d(LOG_TAG,"New Podcast Episode -->"+result.uri.toString());
 
+                // Set Episode Id
+                enclosure.setEpisodeId(episodetId);
+
                 enclosures.add(ContentProviderOperation.newInsert(PodcastManagerContentProvider.ENCLOSURE_CONTENT_URI)
-                        .withValue(PodcastManagerContract.Enclosure.COLUMN_EPISODE_ID, episodetId)
                         .withValues(enclosure.toContentValue())
                         .build());
 
