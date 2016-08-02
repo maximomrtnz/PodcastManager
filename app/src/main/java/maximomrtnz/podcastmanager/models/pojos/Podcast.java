@@ -1,6 +1,7 @@
 package maximomrtnz.podcastmanager.models.pojos;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 
 import java.util.Calendar;
 import java.util.List;
@@ -159,6 +160,24 @@ public class Podcast {
             mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL, getImageUrl());
 
             return mNewValues;
+
+        }
+
+
+        public void loadFrom(Cursor cursor){
+
+            this.setId(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast._ID)));
+            this.setTitle(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_TITLE)));
+            this.setFeedUrl(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL)));
+            this.setImageUrl(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL)));
+            this.setCopyright(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_COPYRIGHT)));
+            this.setDescription(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_DESCRIPTION)));
+            this.setItunesAuthor(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_AUTHOR)));
+            this.setItunesSumary(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_SUMMARY)));
+            this.setLanguage(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LANGUAGE)));
+            this.setLastBuildDate(Utils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE))));
+            this.setPubDate(Utils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE))));
+            this.setLink(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LINK)));
 
         }
 

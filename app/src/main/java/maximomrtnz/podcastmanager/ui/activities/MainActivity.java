@@ -30,14 +30,13 @@ import maximomrtnz.podcastmanager.ui.listeners.EventSendedListener;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 import maximomrtnz.podcastmanager.ui.views.SlidingTabLayout;
 
-public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, MenuItemCompat.OnActionExpandListener, RecyclerViewClickListener, LoaderManager.LoaderCallbacks<Cursor>{
+public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, MenuItemCompat.OnActionExpandListener, RecyclerViewClickListener{
 
     private static String LOG_TAG = "MainActivity";
     private static final int NUMBER_OF_TABS =2;
     private static final int BROWSE_FRAGMENT_INDEX = 1;
 
-    // Identifies a particular Loader being used in this component
-    private static final int PODCAST_SUBSCRIBED_LOADER = 0;
+
 
     private ViewPager mViewPager;
     private ViewPagerAdapter mViewPagerAdapter;
@@ -83,8 +82,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         // Setting the ViewPager For the SlidingTabsLayout
         mTabs.setViewPager(mViewPager);
 
-        // Load Podcast Subscribed
-        getLoaderManager().initLoader(PODCAST_SUBSCRIBED_LOADER, null, this);
+
 
     }
 
@@ -183,68 +181,4 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     }
 
-    /*
-    * Callback that's invoked when the system has initialized the Loader and
-    * is ready to start the query. This usually happens when initLoader() is
-    * called. The loaderID argument contains the ID value passed to the
-    * initLoader() call.
-    */
-    @Override
-    public Loader<Cursor> onCreateLoader(int loaderID, Bundle args) {
-
-        // Check Loader Id
-
-        switch (loaderID) {
-
-            case PODCAST_SUBSCRIBED_LOADER:
-
-            // Set columns to retrieve
-            String[] projection = {PodcastManagerContract.Podcast._ID,
-                    PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL,
-                    PodcastManagerContract.Podcast.COLUMN_NAME_COPYRIGHT,
-                    PodcastManagerContract.Podcast.COLUMN_NAME_DESCRIPTION,
-                    PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL,
-                    PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_AUTHOR,
-                    PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_SUMMARY,
-                    PodcastManagerContract.Podcast.COLUMN_NAME_LANGUAGE,
-                    PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE,
-                    PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE,
-                    PodcastManagerContract.Podcast.COLUMN_NAME_TITLE,
-                    PodcastManagerContract.Podcast.COLUMN_NAME_LINK};
-
-            // Returns a new CursorLoader
-            return new CursorLoader(
-                    this,   // Parent activity context
-                    PodcastManagerContentProvider.PODCAST_CONTENT_URI, // Table to query
-                    projection,      // Projection to return
-                    null,            // No selection clause
-                    null,            // No selection arguments
-                    null             // Default sort order
-            );
-
-            default:
-                break;
-
-        }
-
-        return null;
-    }
-
-    /*
-     * Defines the callback that CursorLoader calls
-     * when it's finished its query
-     */
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-
-    }
-
-    /*
-     * Defines the callback that CursorLoader calls
-     * when it's finished its query
-     */
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-
-    }
 }
