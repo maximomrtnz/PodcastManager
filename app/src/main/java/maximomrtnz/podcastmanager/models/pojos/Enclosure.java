@@ -56,10 +56,7 @@ public class Enclosure {
         this.episodeId = episodeId;
     }
 
-    public ContentValues toContentValue(){
-
-        // Defines an object to contain the new values to insert
-        ContentValues mNewValues = new ContentValues();
+    public void loadTo(ContentValues mNewValues){
 
         /*
          * Sets the values of each column and inserts the word. The arguments to the "put"
@@ -74,8 +71,6 @@ public class Enclosure {
         mNewValues.put(PodcastManagerContract.Enclosure.COLUMN_NAME_TYPE, getType());
         mNewValues.put(PodcastManagerContract.Enclosure.COLUMN_NAME_URL, getUrl());
         mNewValues.put(PodcastManagerContract.Enclosure.COLUMN_EPISODE_ID, getEpisodeId());
-
-        return mNewValues;
 
     }
 }

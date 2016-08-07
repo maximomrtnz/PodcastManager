@@ -151,7 +151,7 @@ public class ItunesAppleAPI{
 
                         podcast.setImageUrl(entry.getString("artworkUrl600"));
 
-                        podcast.setFeedUrl(API_BASE+"/lookup?id=" + entry.getString("collectionId"));
+                        podcast.setFeedUrl(entry.getString("feedUrl"));
 
                         podcasts.add(podcast);
                     }

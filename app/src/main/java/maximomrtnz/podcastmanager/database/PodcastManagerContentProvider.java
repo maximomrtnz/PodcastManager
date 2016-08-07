@@ -37,12 +37,12 @@ public class PodcastManagerContentProvider extends ContentProvider {
 
     private static final UriMatcher URI_MATCHER;
 
+
+    // helper constants for use with the UriMatcher
     private static final int PODCAST_DIR = 0;
     private static final int PODCAST_ID = 1;
-
     private static final int EPISODE_DIR = 2;
     private static final int EPISODE_ID = 3;
-
     private static final int ENCLOSURE_DIR = 4;
     private static final int ENCLOSURE_ID = 5;
 
@@ -101,6 +101,7 @@ public class PodcastManagerContentProvider extends ContentProvider {
         }
 
         Cursor cursor = queryBuilder.query(dbConnection, projection, selection, selectionArgs, null, null, sortOrder);
+
         cursor.setNotificationUri(getContext().getContentResolver(), uri);
 
         return cursor;

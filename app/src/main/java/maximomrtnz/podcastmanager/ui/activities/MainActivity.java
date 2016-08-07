@@ -29,6 +29,7 @@ import maximomrtnz.podcastmanager.ui.adapters.ViewPagerAdapter;
 import maximomrtnz.podcastmanager.ui.listeners.EventSendedListener;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 import maximomrtnz.podcastmanager.ui.views.SlidingTabLayout;
+import maximomrtnz.podcastmanager.utils.Utils;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, MenuItemCompat.OnActionExpandListener, RecyclerViewClickListener{
 
@@ -171,9 +172,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         Intent i = new Intent(getApplicationContext(), PodcastActivity.class);
 
         // Pass podcast data
-        i.putExtra("title",podcast.getTitle());
-        i.putExtra("feedUrl",podcast.getFeedUrl());
-        i.putExtra("imageUrl",podcast.getImageUrl());
+        podcast.loadTo(i);
 
         startActivity(i);
 

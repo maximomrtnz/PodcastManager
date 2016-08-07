@@ -1,6 +1,7 @@
 package maximomrtnz.podcastmanager.models.pojos;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -131,10 +132,7 @@ public class Episode {
         this.podcastId = podcastId;
     }
 
-    public ContentValues toContentValue(){
-
-        // Defines an object to contain the new values to insert
-        ContentValues mNewValues = new ContentValues();
+    public void loadTo(ContentValues mNewValues){
 
         /*
          * Sets the values of each column and inserts the word. The arguments to the "put"
@@ -152,9 +150,27 @@ public class Episode {
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_LINK, getLink());
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_IMAGE_URL, getImageUrl());
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID, getPodcastId());
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_GUID, getGuid());
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_DURATION, getItunesDuration());
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUBTITLE, getItunesSubtitle());
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUMMARY, getItunesSummary());
+    }
 
 
-        return mNewValues;
+    public void loadFrom(Cursor cursor){
+
+        this.setId(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode._ID)));
+        this.setTitle(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_TITLE)));
+        this.setPodcastId(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID)));
+        this.setImageUrl(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_IMAGE_URL)));
+        this.setItunesDuration(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_DURATION)));
+        this.setDescription(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_DESCRIPTION)));
+        this.setItunesAuthor(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_AUTHOR)));
+        this.setItunesSummary(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUMMARY)));
+        this.setPubDate(Utils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE))));
+        this.setLink(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_LINK)));
+        this.setItunesSubtitle(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUBTITLE)));
+        this.setGuid(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_GUID)));
 
     }
 

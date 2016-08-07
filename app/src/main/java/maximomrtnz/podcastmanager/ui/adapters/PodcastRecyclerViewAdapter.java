@@ -37,7 +37,7 @@ public class PodcastRecyclerViewAdapter extends RecyclerView.Adapter<PodcastRecy
 
     public PodcastRecyclerViewAdapter(Context context, RecyclerViewClickListener itemListener){
         this.mImageLoader = new ImageLoader(context);
-        mItemListener = itemListener;
+        this.mItemListener = itemListener;
     }
 
     @Override

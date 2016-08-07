@@ -2,6 +2,7 @@ package maximomrtnz.podcastmanager.asynktasks;
 
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.OperationApplicationException;
 import android.net.Uri;
@@ -39,36 +40,68 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
     }
 
     @Override
-    protected Uri doInBackground(Podcast... podcasts) {
+    protected Uri doInBackground(Podcast... args) {
 
-        Podcast podcast = podcasts[0];
+        Podcast podcast = args[0];
 
-        // Defines a new Uri object that receives the result of the insertion
-        Uri mNewPodcastUri = mContext.getContentResolver().insert(
-                PodcastManagerContentProvider.PODCAST_CONTENT_URI, // the podcast content URI
-                podcast.toContentValue()                          // the values to insert
-        );
+        Uri mNewPodcastUri;
+
+        ContentValues podcastContentValue = new ContentValues();
+
+        podcast.loadTo(podcastContentValue);
+
+        // Insert Podcast
+        ArrayList<ContentProviderOperation> podcasts = new ArrayList<>();
+
+        // Add podcast
+        podcasts.add(ContentProviderOperation.newInsert(PodcastManagerContentProvider.PODCAST_CONTENT_URI)
+                .withValues(podcastContentValue)
+                .build());
+
+
+        ContentProviderResult[] results = null;
+
+        try{
+            results = mContext.getContentResolver().applyBatch(PodcastManagerContentProvider.AUTHORITY,podcasts);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
+        }
+
+        if(results==null){
+            return null;
+        }
+
+        // Get URI
+        mNewPodcastUri = results[0].uri;
 
         // Get Podcast Database Id
         long podcastId = Long.valueOf(mNewPodcastUri.getLastPathSegment());
 
         // Insert Podcast Episodes
-        ArrayList<ContentProviderOperation> episodes = new ArrayList<ContentProviderOperation>();
+        ArrayList<ContentProviderOperation> episodes = new ArrayList<>();
 
         for(Episode episode : podcast.getEpisodes()){
+
+            ContentValues episodeContentValue = new ContentValues();
 
             // Set podcast id
             episode.setPodcastId(podcastId);
 
+            episode.loadTo(episodeContentValue);
+
             // Add apisode to bath list
             episodes.add(ContentProviderOperation.newInsert(PodcastManagerContentProvider.EPISODE_CONTENT_URI)
-                    .withValues(episode.toContentValue())
+                    .withValues(episodeContentValue)
                     .build());
 
         }
 
 
-        ContentProviderResult[] results = null;
+        results = null;
 
         try{
             results = mContext.getContentResolver().applyBatch(PodcastManagerContentProvider.AUTHORITY,episodes);
@@ -82,10 +115,12 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
 
         if(results!=null){
 
-            ArrayList<ContentProviderOperation> enclosures = new ArrayList<ContentProviderOperation>();
+            ArrayList<ContentProviderOperation> enclosures = new ArrayList<>();
 
             // Insert Episodes Enclosures
             for(Integer i = 0; i < results.length ; i++){
+
+                ContentValues enclosureContentValue = new ContentValues();
 
                 Episode episode = podcast.getEpisodes().get(i);
 
@@ -101,8 +136,10 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
                 // Set Episode Id
                 enclosure.setEpisodeId(episodetId);
 
+                enclosure.loadTo(enclosureContentValue);
+
                 enclosures.add(ContentProviderOperation.newInsert(PodcastManagerContentProvider.ENCLOSURE_CONTENT_URI)
-                        .withValues(enclosure.toContentValue())
+                        .withValues(enclosureContentValue)
                         .build());
 
             }
@@ -122,6 +159,7 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
         }
 
         return mNewPodcastUri;
+
 
     }
 

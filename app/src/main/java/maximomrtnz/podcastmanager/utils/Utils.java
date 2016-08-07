@@ -1,5 +1,6 @@
 package maximomrtnz.podcastmanager.utils;
 
+import android.content.Intent;
 import android.util.Log;
 
 import java.io.InputStream;
@@ -12,6 +13,8 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import maximomrtnz.podcastmanager.models.pojos.Podcast;
 
 /**
  * Created by Maxi on 11/22/2015.

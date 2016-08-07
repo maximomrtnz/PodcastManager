@@ -17,15 +17,18 @@
             style="@style/Widget.CardContent"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp">
+            android:paddingTop="@dimen/podcast_item_list_padding_top"
+            android:paddingBottom="@dimen/podcast_item_list_padding_bottom"
+            android:paddingLeft="@dimen/podcast_item_list_padding_left"
+            android:paddingRight="@dimen/podcast_item_list_padding_right">
 
             <ImageView
-                android:layout_width="wrap_content"
+                android:layout_width="@dimen/podcast_image_width"
                 android:layout_height="wrap_content"
                 android:id="@+id/podcast_image"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"
-                android:layout_marginRight="16dp" />
+                android:layout_marginRight="4dp" />
 
             <TextView
                 android:layout_width="wrap_content"

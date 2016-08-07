@@ -80,18 +80,7 @@ public class PodcastSubscribedFragment extends Fragment implements LoaderManager
             case PODCAST_SUBSCRIBED_LOADER:
 
                 // Set columns to retrieve
-                String[] projection = {PodcastManagerContract.Podcast._ID,
-                        PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL,
-                        PodcastManagerContract.Podcast.COLUMN_NAME_COPYRIGHT,
-                        PodcastManagerContract.Podcast.COLUMN_NAME_DESCRIPTION,
-                        PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL,
-                        PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_AUTHOR,
-                        PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_SUMMARY,
-                        PodcastManagerContract.Podcast.COLUMN_NAME_LANGUAGE,
-                        PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE,
-                        PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE,
-                        PodcastManagerContract.Podcast.COLUMN_NAME_TITLE,
-                        PodcastManagerContract.Podcast.COLUMN_NAME_LINK};
+                String[] projection = PodcastManagerContract.Podcast.PROJECTION_ALL;
 
                 // Returns a new CursorLoader
                 return new CursorLoader(

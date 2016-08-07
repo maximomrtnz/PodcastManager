@@ -1,6 +1,7 @@
 package maximomrtnz.podcastmanager.models.pojos;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 
 import java.util.Calendar;
@@ -133,10 +134,7 @@ public class Podcast {
             this.imageUrl = imageUrl;
         }
 
-        public ContentValues toContentValue(){
-
-            // Defines an object to contain the new values to insert
-            ContentValues mNewValues = new ContentValues();
+        public void loadTo(ContentValues mNewValues){
 
             /*
              * Sets the values of each column and inserts the word. The arguments to the "put"
@@ -159,10 +157,7 @@ public class Podcast {
             mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL, getFeedUrl());
             mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL, getImageUrl());
 
-            return mNewValues;
-
         }
-
 
         public void loadFrom(Cursor cursor){
 
@@ -178,6 +173,29 @@ public class Podcast {
             this.setLastBuildDate(Utils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE))));
             this.setPubDate(Utils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE))));
             this.setLink(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LINK)));
+
+        }
+
+        public void loadTo(Intent i){
+
+            i.putExtra("title",getTitle());
+            i.putExtra("feedUrl",getFeedUrl());
+            i.putExtra("imageUrl",getImageUrl());
+            i.putExtra("id",getId());
+
+        }
+
+        public void loadFrom(Intent i){
+
+            long id = i.getLongExtra("id",-1);
+
+            if(id!=-1) {
+                setId(id);
+            }
+
+            setTitle(i.getStringExtra("title"));
+            setFeedUrl(i.getStringExtra("feedUrl"));
+            setImageUrl(i.getStringExtra("imageUrl"));
 
         }
 

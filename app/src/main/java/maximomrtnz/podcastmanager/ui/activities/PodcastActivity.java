@@ -1,16 +1,13 @@
 package maximomrtnz.podcastmanager.ui.activities;
 
-import android.content.ContentProviderOperation;
-import android.content.ContentProviderResult;
-import android.content.ContentValues;
+import android.app.LoaderManager;
+import android.content.CursorLoader;
 import android.content.Intent;
-import android.content.OperationApplicationException;
-import android.content.res.ColorStateList;
+import android.content.Loader;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -20,8 +17,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.TextClock;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,22 +28,24 @@ import maximomrtnz.podcastmanager.cache.FeedLoader;
 import maximomrtnz.podcastmanager.cache.ImageLoader;
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
-import maximomrtnz.podcastmanager.models.pojos.Enclosure;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.network.ItunesAppleAPI;
 import maximomrtnz.podcastmanager.ui.adapters.EpisodesRecyclerViewAdapter;
-import maximomrtnz.podcastmanager.ui.adapters.PodcastRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
-import maximomrtnz.podcastmanager.utils.Utils;
+import mbanje.kurt.fabbutton.FabButton;
 
 /**
  * Created by maximo on 26/07/16.
  */
 
-public class PodcastActivity extends AppCompatActivity implements FeedLoader.FeedLoaderListener, RecyclerViewClickListener{
+public class PodcastActivity extends AppCompatActivity implements FeedLoader.FeedLoaderListener, RecyclerViewClickListener, LoaderManager.LoaderCallbacks<Cursor>{
 
     private static String LOG_TAG = "PodcastActivity";
+
+    // Identifies a particular Loader being used in this component
+    private static final int PODCAST_LOADER_BY_FEED_URL = 0;
+    private static final int EPISODES_LOADER = 1;
 
     private Toolbar mToolbar;
     private CollapsingToolbarLayout mCollapsingToolbarLayout;
@@ -60,7 +57,7 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private LinearLayoutManager mLayoutManager;
-    private FloatingActionButton mFloatingActionButton;
+    private FabButton mFloatingActionButton;
     private ProgressBar mProgressBar;
 
     @Override
@@ -74,9 +71,16 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
 
         mFeedLoader = new FeedLoader(getApplicationContext(), this);
 
+        mImageLoader = new ImageLoader(getApplicationContext());
+
         loadPodcast();
 
-        mImageLoader = new ImageLoader(getApplicationContext());
+        loadUI();
+
+    }
+
+
+    private void loadUI(){
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
@@ -101,14 +105,14 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mAdapter = new EpisodesRecyclerViewAdapter(mEpisodes, mPodcast, getApplicationContext(), (RecyclerViewClickListener) this);
+        mAdapter = new EpisodesRecyclerViewAdapter(mEpisodes, mPodcast, getApplicationContext(), this);
 
         mRecyclerView.setAdapter(mAdapter);
 
         mProgressBar = (ProgressBar)findViewById(R.id.progress_bar);
 
         // Get Floating Button from Layout
-        mFloatingActionButton = (FloatingActionButton)findViewById(R.id.floating_action_button);
+        mFloatingActionButton = (FabButton) findViewById(R.id.floating_action_button);
 
         mFloatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -116,42 +120,81 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
                 onFloatingActionButtonPressed();
             }
         });
+    }
 
+    private void loadSubscribedButton(){
 
-        // Get XML From URL
-        loadPodcastItems();
+        // Set visibility
+        mFloatingActionButton.setVisibility(View.VISIBLE);
+
+        if(mPodcast.getId()==null) {
+
+            // Set icons
+            mFloatingActionButton.setIcon(R.drawable.ic_add, R.drawable.ic_fab_complete);
+
+        }else{
+
+            // Set icons
+            mFloatingActionButton.setIcon(R.drawable.ic_fab_complete,R.drawable.ic_add);
+
+        }
 
     }
 
+
     private void loadPodcast(){
+
         // GetPodcast Information from caller activity
         Intent intent = getIntent();
 
         // Set podcast's data into Podcast Object
         mPodcast = new Podcast();
-        mPodcast.setTitle(intent.getStringExtra("title"));
-        mPodcast.setFeedUrl(intent.getStringExtra("feedUrl"));
-        mPodcast.setImageUrl(intent.getStringExtra("imageUrl"));
-    }
+        mPodcast.loadFrom(intent);
 
-    private void loadPodcastItems(){
+        // If we have and Id, we have to get the episodes from database
+        if(mPodcast.getId()!=null){
 
-        mProgressBar.setVisibility(View.VISIBLE);
+            Log.d(LOG_TAG, "Load Button");
 
-        // Get URL to download Podcast Episodies
-        // Get Podcast from Itunes API
-        new ItunesAppleAPI(new ItunesAppleAPI.ItunesAppleAPIListener() {
-            @Override
-            public void onError(Exception e) {
+            Log.d(LOG_TAG,"Subscribed Podcast");
+
+            // Init loader to check if we have a mPodcast in the DB
+            getLoaderManager().initLoader(EPISODES_LOADER,null,this);
+
+        }else{ // We have to check if the Podcast are in the DB from the feed url
+
+            // We have to check if the selected podcast has an feed url from itunes
+            if(mPodcast.getFeedUrl().indexOf("itunes")!=-1){ // From TopPodcast
+
+                // Call ItunesAPI to get feed URL for downloading Podcast Episodies
+                new ItunesAppleAPI(new ItunesAppleAPI.ItunesAppleAPIListener() {
+                    @Override
+                    public void onError(Exception e) {
+
+                    }
+
+                    @Override
+                    public void onSuccess(Object arg) {
+
+                        Log.d(LOG_TAG, "URL Feed -->" + String.valueOf(arg));
+
+                        // Set feed url
+                        mPodcast.setFeedUrl(String.valueOf(arg));
+
+                        // Init loader to check if we have a mPodcast in the DB
+                        getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL,null, PodcastActivity.this);
+
+                    }
+                }).getUrlFeed(mPodcast.getFeedUrl());
+
+            }else{ // From Search
+
+                // Init loader to check if we have a mPodcast in the DB
+                getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL,null,this);
 
             }
 
-            @Override
-            public void onSuccess(Object arg) {
-                Log.d(LOG_TAG, "URL Feed -->"+String.valueOf(arg));
-                mFeedLoader.loadFeed(String.valueOf(arg));
-            }
-        }).getUrlFeed(mPodcast.getFeedUrl());
+        }
 
     }
 
@@ -161,7 +204,7 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
 
         Log.d(LOG_TAG,"Podcast Loaded -->"+podcast.getEpisodes().size());
 
-        // Set Podcast Information
+        // Update Podcast Information
         mPodcast = podcast;
 
         // Load Episodes List
@@ -169,9 +212,15 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
         mEpisodes.addAll(podcast.getEpisodes());
         mAdapter.notifyDataSetChanged();
 
+        // Load button subscribe/unsubscribe
+        loadSubscribedButton();
+
+        // hide progressbar reciclerview
         mProgressBar.setVisibility(View.GONE);
 
+
     }
+
 
     @Override
     public void onRecyclerViewListClicked(View v, int position) {
@@ -196,10 +245,12 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
 
     private void onFloatingActionButtonPressed(){
 
+        mFloatingActionButton.showProgress(true);
+
         // Check if we have to subscribe or if we have to unsuscribe
         if(mPodcast.getId() == null){ // Subscribe
 
-            new InsertPodcast(getApplicationContext(), new InsertPodcast.InsertPodcastListener() {
+            new InsertPodcast(this, new InsertPodcast.InsertPodcastListener() {
                 @Override
                 public void onPodcastInserted(Uri mNewPodcastUri) {
 
@@ -210,26 +261,26 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
 
                     mPodcast.setId(podcastId);
 
-                    mFloatingActionButton.setImageResource(R.drawable.ic_check);
-                    mFloatingActionButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorSubscribed)));
+                    mFloatingActionButton.onProgressCompleted();
 
                 }
             }).execute(mPodcast);
 
         }else{ // Unsuscribe
 
-            new DeletePodcast(getApplicationContext(), new DeletePodcast.DeletePodcastListener() {
+            new DeletePodcast(this, new DeletePodcast.DeletePodcastListener() {
                 @Override
                 public void onPodcastDeleted(int deletedRows) {
 
                     Log.d(LOG_TAG,"Delete Rows -->"+deletedRows);
 
-                    // Change Button Look and feel
-                    mFloatingActionButton.setImageResource(R.drawable.ic_favorite_border);
-                    mFloatingActionButton.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorPrimary)));
-
                     // Remove Id
                     mPodcast.setId(null);
+
+                    // Set FAB Button to finish
+                    mFloatingActionButton.showProgress(false);
+                    mFloatingActionButton.onProgressCompleted();
+
 
                 }
             }).execute(mPodcast);
@@ -238,4 +289,120 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
 
     }
 
+    @Override
+    public Loader<Cursor> onCreateLoader(int loaderID, Bundle bundle) {
+
+        switch (loaderID) {
+
+            case PODCAST_LOADER_BY_FEED_URL:
+
+                // Returns a new CursorLoader
+                return new CursorLoader(
+                        this,   // Parent activity context
+                        PodcastManagerContentProvider.PODCAST_CONTENT_URI,          // Table to query
+                        PodcastManagerContract.Podcast.PROJECTION_ALL,              // Projection to return
+                        PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL+"=?",   // Selection clause
+                        new String[]{mPodcast.getFeedUrl()},                        // Selection arguments
+                        null                                                        // Default sort order
+                );
+
+            case EPISODES_LOADER:
+
+                // Returns a new CursorLoader
+                return new CursorLoader(
+                        this,   // Parent activity context
+                        PodcastManagerContentProvider.EPISODE_CONTENT_URI,          // Table to query
+                        PodcastManagerContract.Episode.PROJECTION_ALL,              // Projection to return
+                        PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID+"=?", // No selection clause
+                        new String[]{String.valueOf(mPodcast.getId())},             // No selection arguments
+                        null                                                        // Default sort order
+                );
+
+            default:
+                break;
+
+        }
+
+        return null;
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+
+        switch (loader.getId()) {
+
+            case PODCAST_LOADER_BY_FEED_URL:
+
+                Log.d(LOG_TAG, "Load Podcast by Feed Url");
+
+                // if we have a row
+                if(cursor.moveToFirst()){
+
+                    // Get cursor and load podcast
+                    mPodcast.loadFrom(cursor);
+
+                    // Load Podcast Episodes from Database
+                    getLoaderManager().initLoader(EPISODES_LOADER,null,this);
+
+                }else{ // We don't have a record so we are no subscribed to the current podcast
+
+                    Log.d(LOG_TAG, "Load from Feed");
+
+                    // Let's download from XML Feed
+                    mFeedLoader.loadFeed(mPodcast.getFeedUrl());
+
+                }
+
+                break;
+
+            case EPISODES_LOADER:
+
+                Log.d(LOG_TAG, "Load from DB");
+
+                // Load Episodes from Database
+                ((EpisodesRecyclerViewAdapter)mAdapter).setCursor(cursor);
+
+                Log.d(LOG_TAG, "Load Button");
+
+                // Load button subscribe/unsubscribe
+                loadSubscribedButton();
+
+                // hide progressbar reciclerview
+                mProgressBar.setVisibility(View.GONE);
+
+                break;
+
+            default:
+
+                break;
+
+        }
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+        switch (loader.getId()) {
+
+            case PODCAST_LOADER_BY_FEED_URL:
+
+                break;
+
+            case EPISODES_LOADER:
+
+                Log.d(LOG_TAG, "Reset Episodes Loader");
+
+                // Load Episodes from Database
+                ((EpisodesRecyclerViewAdapter)mAdapter).setCursor(null);
+
+                break;
+
+            default:
+
+                break;
+
+        }
+
+    }
 }

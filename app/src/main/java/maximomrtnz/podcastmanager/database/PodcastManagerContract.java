@@ -35,6 +35,21 @@ public class PodcastManagerContract {
 
         public static final String WHERE_ID_EQUALS = _ID + " =?";
 
+
+        public static final String[] PROJECTION_ALL = {
+                                                        _ID,
+                                                        COLUMN_NAME_FEED_URL,
+                                                        COLUMN_NAME_COPYRIGHT,
+                                                        COLUMN_NAME_DESCRIPTION,
+                                                        COLUMN_NAME_IMAGE_URL,
+                                                        COLUMN_NAME_ITUNES_AUTHOR,
+                                                        COLUMN_NAME_ITUNES_SUMMARY,
+                                                        COLUMN_NAME_LANGUAGE,
+                                                        COLUMN_NAME_LAST_BUILD_DATE,
+                                                        COLUMN_NAME_PUB_DATE,
+                                                        COLUMN_NAME_TITLE,
+                                                        COLUMN_NAME_LINK
+                                                    };
     }
 
     /**
@@ -65,6 +80,21 @@ public class PodcastManagerContract {
 
         public static final String WHERE_ID_EQUALS = _ID + " =?";
 
+        public static final String[] PROJECTION_ALL = {
+                _ID,
+                COLUMN_NAME_PODCAST_ID,
+                COLUMN_NAME_ITUNES_DURATION,
+                COLUMN_NAME_DESCRIPTION,
+                COLUMN_NAME_IMAGE_URL,
+                COLUMN_NAME_ITUNES_AUTHOR,
+                COLUMN_NAME_ITUNES_SUMMARY,
+                COLUMN_NAME_GUID,
+                COLUMN_NAME_ITUNES_SUBTITLE,
+                COLUMN_NAME_PUB_DATE,
+                COLUMN_NAME_TITLE,
+                COLUMN_NAME_LINK
+        };
+
     }
 
     /**
@@ -87,6 +117,14 @@ public class PodcastManagerContract {
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.podcastmanager_database.enclosures";
 
         public static final String WHERE_ID_EQUALS = _ID + " =?";
+
+        public static final String[] PROJECTION_ALL = {
+                                                        _ID,
+                                                        COLUMN_NAME_URL,
+                                                        COLUMN_NAME_TYPE,
+                                                        COLUMN_NAME_LENGTH,
+                                                        COLUMN_EPISODE_ID
+        };
 
     }
 

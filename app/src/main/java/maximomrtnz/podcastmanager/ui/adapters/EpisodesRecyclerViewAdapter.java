@@ -1,6 +1,7 @@
 package maximomrtnz.podcastmanager.ui.adapters;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -22,53 +23,77 @@ import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
  * Created by maximo on 20/06/16.
  */
 
-public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRecyclerViewAdapter.PodcastViewHolder> {
+public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRecyclerViewAdapter.EpisodeViewHolder> {
 
     private static String LOG_TAG = "RecyclerViewAdapter";
-    private static RecyclerViewClickListener mItemListener;
 
+    private RecyclerViewClickListener mItemListener;
     private List<Episode> mDataset;
     private Podcast mPodcast;
     private ImageLoader mImageLoader;
+    private Cursor mCursor;
 
     public EpisodesRecyclerViewAdapter(List<Episode> dataset, Podcast podcast, Context context, RecyclerViewClickListener itemListener){
         this.mDataset = dataset;
         this.mImageLoader = new ImageLoader(context);
         this.mPodcast = podcast;
-        mItemListener = itemListener;
+        this.mItemListener = itemListener;
     }
 
+
+    public EpisodesRecyclerViewAdapter(Podcast podcast, Context context, RecyclerViewClickListener itemListener){
+        this.mImageLoader = new ImageLoader(context);
+        this.mPodcast = podcast;
+        this.mItemListener = itemListener;
+    }
 
     @Override
     public int getItemCount() {
-        return mDataset.size();
+        if(mCursor!=null) {
+            return mCursor.getCount();
+        }else if(mDataset!=null){
+            return mDataset.size();
+        }
+        return 0;
     }
 
     @Override
-    public PodcastViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+    public EpisodeViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+
         View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.episode_sources_item, viewGroup, false);
-        PodcastViewHolder pvh = new PodcastViewHolder(v);
-        return pvh;
+
+        final EpisodeViewHolder evh = new EpisodeViewHolder(v);
+
+        v.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int position = evh.getLayoutPosition();
+                // Set Podcast Into View's tag
+                v.setTag(getItem(position));
+                if (mItemListener != null) mItemListener.onRecyclerViewListClicked(v, position);
+            }
+        });
+
+        return evh;
     }
 
     @Override
-    public void onBindViewHolder(PodcastViewHolder personViewHolder, int i) {
+    public void onBindViewHolder(EpisodeViewHolder personViewHolder, int i) {
 
-        String description = mDataset.get(i).getDescription();
+        Episode episode = getItem(i);
 
-        if(mDataset.get(i).getImageUrl()!=null) {
-            mImageLoader.displayImage(mDataset.get(i).getImageUrl(), personViewHolder.mEpisodeImage);
+        if(episode.getImageUrl()!=null) {
+            mImageLoader.displayImage(episode.getImageUrl(), personViewHolder.mEpisodeImage);
         }else{
             mImageLoader.displayImage(mPodcast.getImageUrl(), personViewHolder.mEpisodeImage);
         }
 
-        if(description!=null){
-            personViewHolder.mEpisodeDescription.setText(description);
+        if(episode.getDescription()!=null){
+            personViewHolder.mEpisodeDescription.setText(episode.getDescription());
         }
 
-        personViewHolder.mEpisodeTitle.setText(mDataset.get(i).getTitle());
-        personViewHolder.mEpisodeDuration.setText(mDataset.get(i).getItunesDuration());
-        personViewHolder.mEpisode = mDataset.get(i);
+        personViewHolder.mEpisodeTitle.setText(episode.getTitle());
+        personViewHolder.mEpisodeDuration.setText(episode.getItunesDuration());
 
     }
 
@@ -77,18 +102,16 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
         super.onAttachedToRecyclerView(recyclerView);
     }
 
-    public static class PodcastViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public static class EpisodeViewHolder extends RecyclerView.ViewHolder {
 
         CardView mCV;
         TextView mEpisodeTitle;
         TextView mEpisodeDescription;
         TextView mEpisodeDuration;
         ImageView mEpisodeImage;
-        Episode mEpisode;
 
-        PodcastViewHolder(View itemView) {
+        EpisodeViewHolder(View itemView) {
             super(itemView);
-            itemView.setOnClickListener(this);
             mCV = (CardView)itemView.findViewById(R.id.cv);
             mEpisodeTitle = (TextView)itemView.findViewById(R.id.episode_title);
             mEpisodeDescription = (TextView) itemView.findViewById(R.id.episode_description);
@@ -96,13 +119,32 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
             mEpisodeImage = (ImageView)itemView.findViewById(R.id.episode_image);
         }
 
-        @Override
-        public void onClick(View view) {
-            Log.d(LOG_TAG, "onClick " + this.getLayoutPosition() + mEpisode.getTitle());
-            view.setTag(mEpisode);
-            mItemListener.onRecyclerViewListClicked(view,getLayoutPosition());
+    }
+
+    public Episode getItem(int position){
+
+        Episode episode = null;
+
+        if(mCursor != null) {
+
+            episode = new Episode();
+
+            mCursor.moveToPosition(position);
+
+            episode.loadFrom(mCursor);
+
+        }else{
+
+            episode = mDataset.get(position);
+
         }
 
+        return episode;
+    }
+
+    public void setCursor(Cursor newCursor){
+        mCursor = newCursor;
+        notifyDataSetChanged();
     }
 
 }

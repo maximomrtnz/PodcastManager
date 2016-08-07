@@ -1,7 +1,14 @@
 package maximomrtnz.podcastmanager.asynktasks;
 
+import android.content.ContentProviderOperation;
+import android.content.ContentProviderResult;
 import android.content.Context;
+import android.content.OperationApplicationException;
 import android.os.AsyncTask;
+import android.os.RemoteException;
+import android.util.Log;
+
+import java.util.ArrayList;
 
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
@@ -29,17 +36,33 @@ public class DeletePodcast extends AsyncTask<Podcast,Integer, Integer> {
     }
 
     @Override
-    protected Integer doInBackground(Podcast... podcasts) {
+    protected Integer doInBackground(Podcast... args) {
 
         // Get podcast from arguments
-        Podcast podcast = podcasts[0];
+        Podcast podcast = args[0];
+
+        ArrayList<ContentProviderOperation> podcasts = new ArrayList<ContentProviderOperation>();
+
+        // Add podcast
+        podcasts.add(ContentProviderOperation.newDelete(PodcastManagerContentProvider.PODCAST_CONTENT_URI)
+                .withSelection(PodcastManagerContract.Podcast.WHERE_ID_EQUALS,new String[]{String.valueOf(podcast.getId())})
+                .build());
 
         // Delete Podcast
-        int deletedRows = mContext.getContentResolver().delete(PodcastManagerContentProvider.PODCAST_CONTENT_URI, PodcastManagerContract.Podcast.WHERE_ID_EQUALS, new String[]{String.valueOf(podcast.getId())});
+        ContentProviderResult[] results = null;
+
+        try{
+            results = mContext.getContentResolver().applyBatch(PodcastManagerContentProvider.AUTHORITY,podcasts);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
+        } catch (OperationApplicationException e) {
+            e.printStackTrace();
+            Log.e(LOG_TAG, e.getMessage());
+        }
 
         // TODO: Delete Podcast Files such as Episode's Images saved on cache and Episode's Audios
-
-        return deletedRows;
+        return results.length;
     }
 
     @Override
