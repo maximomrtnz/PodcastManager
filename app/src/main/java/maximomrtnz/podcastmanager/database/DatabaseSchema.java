@@ -23,16 +23,6 @@ interface DatabaseSchema {
     static final String COMMA_SEP = ",";
 
 
-    static final String SQL_CREATE_ENTRY_ENCLOSURE =
-            "CREATE TABLE " + PodcastManagerContract.Enclosure.TABLE_NAME + " (" +
-                    PodcastManagerContract.Enclosure._ID + INTEGER_TYPE + PRIMARY_KEY + AUTOINCREMENT + COMMA_SEP +
-                    PodcastManagerContract.Enclosure.COLUMN_NAME_LENGTH + INTEGER_TYPE + COMMA_SEP +
-                    PodcastManagerContract.Enclosure.COLUMN_NAME_TYPE + TEXT_TYPE + COMMA_SEP +
-                    PodcastManagerContract.Enclosure.COLUMN_NAME_URL + TEXT_TYPE + COMMA_SEP +
-                    PodcastManagerContract.Enclosure.COLUMN_EPISODE_ID + TEXT_TYPE + COMMA_SEP +
-                    FOREIGN_KEY + " ("+PodcastManagerContract.Enclosure.COLUMN_EPISODE_ID+") "+REFERENCES+" "+PodcastManagerContract.Episode.TABLE_NAME+"("+PodcastManagerContract.Episode._ID+") " + ON_DELETE_CASCADE +
-                    " )";
-
     static final String SQL_CREATE_ENTRY_PODCAST =
             "CREATE TABLE " + PodcastManagerContract.Podcast.TABLE_NAME + " (" +
                     PodcastManagerContract.Podcast._ID + INTEGER_TYPE + PRIMARY_KEY + AUTOINCREMENT + COMMA_SEP +
@@ -64,13 +54,13 @@ interface DatabaseSchema {
                     PodcastManagerContract.Episode.COLUMN_NAME_IMAGE_URL + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Episode.COLUMN_NAME_LINK + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE + INTEGER_TYPE + COMMA_SEP +
+                    PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL + TEXT_TYPE + COMMA_SEP +
                     FOREIGN_KEY + " ("+PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID+") "+REFERENCES+" "+PodcastManagerContract.Podcast.TABLE_NAME+"("+PodcastManagerContract.Podcast._ID+") "+ ON_DELETE_CASCADE +
                     " )";
 
 
     static final String SQL_DELETE_ENTRY_CHANNEL = "DROP TABLE IF EXISTS " + PodcastManagerContract.Podcast.TABLE_NAME;
     static final String SQL_DELETE_ENTRY_ITEM = "DROP TABLE IF EXISTS " + PodcastManagerContract.Episode.TABLE_NAME;
-    static final String SQL_DELETE_ENTRY_ENCLOSURE = "DROP TABLE IF EXISTS " + PodcastManagerContract.Enclosure.TABLE_NAME;
 
 
 }

@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +33,7 @@ import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.network.ItunesAppleAPI;
 import maximomrtnz.podcastmanager.ui.adapters.EpisodesRecyclerViewAdapter;
+import maximomrtnz.podcastmanager.ui.dialogs.ConfirmDialog;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 import mbanje.kurt.fabbutton.FabButton;
 
@@ -39,7 +41,7 @@ import mbanje.kurt.fabbutton.FabButton;
  * Created by maximo on 26/07/16.
  */
 
-public class PodcastActivity extends AppCompatActivity implements FeedLoader.FeedLoaderListener, RecyclerViewClickListener, LoaderManager.LoaderCallbacks<Cursor>{
+public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoaderListener, RecyclerViewClickListener, LoaderManager.LoaderCallbacks<Cursor>{
 
     private static String LOG_TAG = "PodcastActivity";
 
@@ -59,6 +61,8 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
     private LinearLayoutManager mLayoutManager;
     private FabButton mFloatingActionButton;
     private ProgressBar mProgressBar;
+    private boolean mInsert;
+    private boolean mDelete;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -245,10 +249,15 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
 
     private void onFloatingActionButtonPressed(){
 
-        mFloatingActionButton.showProgress(true);
+
 
         // Check if we have to subscribe or if we have to unsuscribe
         if(mPodcast.getId() == null){ // Subscribe
+
+            mFloatingActionButton.showProgress(true);
+
+            // Set insert flag
+            mInsert = true;
 
             new InsertPodcast(this, new InsertPodcast.InsertPodcastListener() {
                 @Override
@@ -256,11 +265,10 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
 
                     Log.d(LOG_TAG,"New Podcast Subscription -->"+mNewPodcastUri.toString());
 
-                    // Get Podcast Database Id
-                    long podcastId = Long.valueOf(mNewPodcastUri.getLastPathSegment());
+                    // Set Podcast Id
+                    mPodcast.setId(Long.valueOf(mNewPodcastUri.getLastPathSegment()));
 
-                    mPodcast.setId(podcastId);
-
+                    mFloatingActionButton.showProgress(false);
                     mFloatingActionButton.onProgressCompleted();
 
                 }
@@ -268,22 +276,44 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
 
         }else{ // Unsuscribe
 
-            new DeletePodcast(this, new DeletePodcast.DeletePodcastListener() {
+            ConfirmDialog dialog = new ConfirmDialog ();
+
+            dialog.setArgs(new ConfirmDialog.ConfirmDialogListener() {
                 @Override
-                public void onPodcastDeleted(int deletedRows) {
+                public void onConfirm() {
 
-                    Log.d(LOG_TAG,"Delete Rows -->"+deletedRows);
+                    // Set delete flag
+                    mDelete = true;
 
-                    // Remove Id
-                    mPodcast.setId(null);
+                    // Show progress dialog bar
+                    mFloatingActionButton.showProgress(true);
 
-                    // Set FAB Button to finish
-                    mFloatingActionButton.showProgress(false);
-                    mFloatingActionButton.onProgressCompleted();
+                    new DeletePodcast(PodcastActivity.this, new DeletePodcast.DeletePodcastListener() {
+                        @Override
+                        public void onPodcastDeleted(int deletedRows) {
 
+                            Log.d(LOG_TAG,"Delete Rows -->"+deletedRows);
+
+                            // Delete id
+                            mPodcast.setId(null);
+
+                            // Set FAB Button to finish
+                            mFloatingActionButton.showProgress(false);
+                            mFloatingActionButton.onProgressCompleted();
+
+
+                        }
+                    }).execute(mPodcast);
+                }
+
+                @Override
+                public void onCancel() {
 
                 }
-            }).execute(mPodcast);
+            }, getString(R.string.dialog_title_confirm_deletion), MessageFormat.format(getResources().getString(R.string.dialog_message_confirm_deletion),new Object[]{mPodcast.getTitle()}).toString(), getString(R.string.dialog_ok), getString(R.string.dialog_cancel));
+
+            // Show confirm dialog
+            showDialogFragment(dialog);
 
         }
 
@@ -296,6 +326,8 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
 
             case PODCAST_LOADER_BY_FEED_URL:
 
+                Log.d(LOG_TAG, "Created Podcast Loader");
+
                 // Returns a new CursorLoader
                 return new CursorLoader(
                         this,   // Parent activity context
@@ -307,6 +339,8 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
                 );
 
             case EPISODES_LOADER:
+
+                Log.d(LOG_TAG, "Created Episodes Loader");
 
                 // Returns a new CursorLoader
                 return new CursorLoader(
@@ -341,8 +375,18 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
                     // Get cursor and load podcast
                     mPodcast.loadFrom(cursor);
 
-                    // Load Podcast Episodes from Database
-                    getLoaderManager().initLoader(EPISODES_LOADER,null,this);
+                    if(!mInsert && !mDelete) { // Check flags
+
+                        // Load Podcast Episodes from Database
+                        getLoaderManager().initLoader(EPISODES_LOADER, null, this);
+
+                    }else {
+
+                        // Reset flags
+                        mInsert = false;
+                        mDelete = false;
+
+                    }
 
                 }else{ // We don't have a record so we are no subscribed to the current podcast
 
@@ -359,8 +403,18 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
 
                 Log.d(LOG_TAG, "Load from DB");
 
-                // Load Episodes from Database
-                ((EpisodesRecyclerViewAdapter)mAdapter).setCursor(cursor);
+                // Load episodes
+                mEpisodes.clear();
+
+                while (cursor.moveToNext()){
+                    Episode episode = new Episode();
+                    episode.loadFrom(cursor);
+                    mEpisodes.add(episode);
+                }
+
+                mPodcast.setEpisodes(mEpisodes);
+
+                mAdapter.notifyDataSetChanged();
 
                 Log.d(LOG_TAG, "Load Button");
 
@@ -394,7 +448,10 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
                 Log.d(LOG_TAG, "Reset Episodes Loader");
 
                 // Load Episodes from Database
-                ((EpisodesRecyclerViewAdapter)mAdapter).setCursor(null);
+
+                mEpisodes.clear();
+
+                mAdapter.notifyDataSetChanged();
 
                 break;
 
@@ -405,4 +462,7 @@ public class PodcastActivity extends AppCompatActivity implements FeedLoader.Fee
         }
 
     }
+
+
+
 }

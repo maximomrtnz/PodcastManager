@@ -33,8 +33,6 @@ public class PodcastManagerContentProvider extends ContentProvider {
 
     public static final Uri EPISODE_CONTENT_URI = Uri.withAppendedPath(PodcastManagerContentProvider.AUTHORITY_URI, PodcastManagerContract.Episode.CONTENT_PATH);
 
-    public static final Uri ENCLOSURE_CONTENT_URI = Uri.withAppendedPath(PodcastManagerContentProvider.AUTHORITY_URI, PodcastManagerContract.Enclosure.CONTENT_PATH);
-
     private static final UriMatcher URI_MATCHER;
 
 
@@ -43,8 +41,6 @@ public class PodcastManagerContentProvider extends ContentProvider {
     private static final int PODCAST_ID = 1;
     private static final int EPISODE_DIR = 2;
     private static final int EPISODE_ID = 3;
-    private static final int ENCLOSURE_DIR = 4;
-    private static final int ENCLOSURE_ID = 5;
 
 
     static {
@@ -57,8 +53,6 @@ public class PodcastManagerContentProvider extends ContentProvider {
         URI_MATCHER.addURI(AUTHORITY, PodcastManagerContract.Episode.CONTENT_PATH, EPISODE_DIR);
         URI_MATCHER.addURI(AUTHORITY, PodcastManagerContract.Episode.CONTENT_PATH + "/#", EPISODE_ID);
 
-        URI_MATCHER.addURI(AUTHORITY, PodcastManagerContract.Enclosure.CONTENT_PATH, ENCLOSURE_DIR);
-        URI_MATCHER.addURI(AUTHORITY, PodcastManagerContract.Enclosure.CONTENT_PATH + "/#", ENCLOSURE_ID);
     }
 
     @Override
@@ -90,12 +84,6 @@ public class PodcastManagerContentProvider extends ContentProvider {
                 queryBuilder.setTables(PodcastManagerContract.Episode.TABLE_NAME);
                 break;
 
-            case ENCLOSURE_ID:
-                queryBuilder.appendWhere(PodcastManagerContract.Enclosure._ID + "=" + uri.getLastPathSegment());
-            case ENCLOSURE_DIR:
-                queryBuilder.setTables(PodcastManagerContract.Enclosure.TABLE_NAME);
-                break;
-
             default :
                 throw new IllegalArgumentException("Unsupported URI:" + uri);
         }
@@ -123,11 +111,6 @@ public class PodcastManagerContentProvider extends ContentProvider {
                 return PodcastManagerContract.Episode.CONTENT_TYPE;
             case EPISODE_ID:
                 return PodcastManagerContract.Episode.CONTENT_ITEM_TYPE;
-
-            case ENCLOSURE_DIR:
-                return PodcastManagerContract.Enclosure.CONTENT_TYPE;
-            case ENCLOSURE_ID:
-                return PodcastManagerContract.Enclosure.CONTENT_ITEM_TYPE;
 
             default:
                 throw new IllegalArgumentException("Unsupported URI: " + uri);
@@ -173,20 +156,6 @@ public class PodcastManagerContentProvider extends ContentProvider {
                     dbConnection.setTransactionSuccessful();
 
                     return newEpisodeUri;
-
-                case ENCLOSURE_DIR:
-
-                case ENCLOSURE_ID:
-
-                    final long enclosureId = dbConnection.insertOrThrow(PodcastManagerContract.Enclosure.TABLE_NAME, null, values);
-
-                    final Uri newEnclosureUri = ContentUris.withAppendedId(ENCLOSURE_CONTENT_URI, enclosureId);
-
-                    getContext().getContentResolver().notifyChange(newEnclosureUri, null);
-
-                    dbConnection.setTransactionSuccessful();
-
-                    return newEnclosureUri;
 
                 default :
 
@@ -245,22 +214,6 @@ public class PodcastManagerContentProvider extends ContentProvider {
                 case EPISODE_ID:
 
                     deleteCount = dbConnection.delete(PodcastManagerContract.Episode.TABLE_NAME, PodcastManagerContract.Episode.WHERE_ID_EQUALS, new String[] { uri.getLastPathSegment() });
-
-                    dbConnection.setTransactionSuccessful();
-
-                    break;
-
-                case ENCLOSURE_DIR:
-
-                    deleteCount = dbConnection.delete(PodcastManagerContract.Enclosure.TABLE_NAME, selection, selectionArgs);
-
-                    dbConnection.setTransactionSuccessful();
-
-                    break;
-
-                case ENCLOSURE_ID:
-
-                    deleteCount = dbConnection.delete(PodcastManagerContract.Enclosure.TABLE_NAME, PodcastManagerContract.Enclosure.WHERE_ID_EQUALS, new String[] { uri.getLastPathSegment() });
 
                     dbConnection.setTransactionSuccessful();
 
@@ -326,24 +279,6 @@ public class PodcastManagerContentProvider extends ContentProvider {
                     final long episodeId = ContentUris.parseId(uri);
 
                     updateCount = dbConnection.update(PodcastManagerContract.Episode.TABLE_NAME, values, PodcastManagerContract.Episode._ID + "=" + episodeId + (TextUtils.isEmpty(selection) ? "" : " AND (" + selection + ")"), selectionArgs);
-
-                    dbConnection.setTransactionSuccessful();
-
-                    break;
-
-                case ENCLOSURE_DIR:
-
-                    updateCount = dbConnection.update(PodcastManagerContract.Enclosure.TABLE_NAME, values, selection, selectionArgs);
-
-                    dbConnection.setTransactionSuccessful();
-
-                    break;
-
-                case ENCLOSURE_ID:
-
-                    final long enclosureId = ContentUris.parseId(uri);
-
-                    updateCount = dbConnection.update(PodcastManagerContract.Enclosure.TABLE_NAME, values, PodcastManagerContract.Enclosure._ID + "=" + enclosureId + (TextUtils.isEmpty(selection) ? "" : " AND (" + selection + ")"), selectionArgs);
 
                     dbConnection.setTransactionSuccessful();
 

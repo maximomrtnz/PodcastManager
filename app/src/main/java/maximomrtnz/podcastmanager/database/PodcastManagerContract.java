@@ -70,6 +70,7 @@ public class PodcastManagerContract {
         public static final String COLUMN_NAME_GUID = "guid";
         public static final String COLUMN_NAME_DESCRIPTION = "description";
         public static final String COLUMN_NAME_IMAGE_URL = "image_url";
+        public static final String COLUMN_NAME_EPISODE_URL = "episode_url";
 
         /**
          * Content Provider
@@ -92,41 +93,12 @@ public class PodcastManagerContract {
                 COLUMN_NAME_ITUNES_SUBTITLE,
                 COLUMN_NAME_PUB_DATE,
                 COLUMN_NAME_TITLE,
-                COLUMN_NAME_LINK
+                COLUMN_NAME_LINK,
+                COLUMN_NAME_EPISODE_URL
         };
 
     }
 
-    /**
-     * Enclosure Columns
-     */
-    public static abstract class Enclosure implements BaseColumns{
-
-        public static final String TABLE_NAME = "enclosures";
-        public static final String TYPE = "enclosure";
-        public static final String COLUMN_NAME_URL = "url";
-        public static final String COLUMN_NAME_TYPE = "type";
-        public static final String COLUMN_NAME_LENGTH = "length";
-        public static final String COLUMN_EPISODE_ID = "episode_id";
-
-        /**
-         * Content Provider
-         */
-        public static final String CONTENT_PATH = "enclosures";
-        public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.podcastmanager_database.enclosures";
-        public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.podcastmanager_database.enclosures";
-
-        public static final String WHERE_ID_EQUALS = _ID + " =?";
-
-        public static final String[] PROJECTION_ALL = {
-                                                        _ID,
-                                                        COLUMN_NAME_URL,
-                                                        COLUMN_NAME_TYPE,
-                                                        COLUMN_NAME_LENGTH,
-                                                        COLUMN_EPISODE_ID
-        };
-
-    }
 
 
 }

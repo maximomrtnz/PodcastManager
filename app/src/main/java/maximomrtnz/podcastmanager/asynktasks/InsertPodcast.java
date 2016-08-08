@@ -13,7 +13,6 @@ import android.util.Log;
 import java.util.ArrayList;
 
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
-import maximomrtnz.podcastmanager.models.pojos.Enclosure;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 
@@ -113,54 +112,7 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
             Log.e(LOG_TAG, e.getMessage());
         }
 
-        if(results!=null){
-
-            ArrayList<ContentProviderOperation> enclosures = new ArrayList<>();
-
-            // Insert Episodes Enclosures
-            for(Integer i = 0; i < results.length ; i++){
-
-                ContentValues enclosureContentValue = new ContentValues();
-
-                Episode episode = podcast.getEpisodes().get(i);
-
-                ContentProviderResult result = results[i];
-
-                Enclosure enclosure = episode.getEnclosure();
-
-                // Get Podcast Database Id
-                long episodetId = Long.valueOf(result.uri.getLastPathSegment());
-
-                Log.d(LOG_TAG,"New Podcast Episode -->"+result.uri.toString());
-
-                // Set Episode Id
-                enclosure.setEpisodeId(episodetId);
-
-                enclosure.loadTo(enclosureContentValue);
-
-                enclosures.add(ContentProviderOperation.newInsert(PodcastManagerContentProvider.ENCLOSURE_CONTENT_URI)
-                        .withValues(enclosureContentValue)
-                        .build());
-
-            }
-
-            results = null;
-
-            try{
-                results = mContext.getContentResolver().applyBatch(PodcastManagerContentProvider.AUTHORITY,enclosures);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-                Log.e(LOG_TAG, e.getMessage());
-            } catch (OperationApplicationException e) {
-                e.printStackTrace();
-                Log.e(LOG_TAG, e.getMessage());
-            }
-
-        }
-
         return mNewPodcastUri;
-
-
     }
 
     @Override

@@ -24,9 +24,9 @@ public class Episode {
     private String itunesSubtitle;
     private String itunesSummary;
     private Calendar pubDate;
-    private Enclosure enclosure;
     private String guid;
     private String description;
+    private String episodeUrl;
 
     public String getTitle() {
         return title;
@@ -76,13 +76,6 @@ public class Episode {
         this.pubDate = pubDate;
     }
 
-    public Enclosure getEnclosure() {
-        return enclosure;
-    }
-
-    public void setEnclosure(Enclosure enclosure) {
-        this.enclosure = enclosure;
-    }
 
     public String getGuid() {
         return guid;
@@ -132,6 +125,14 @@ public class Episode {
         this.podcastId = podcastId;
     }
 
+    public String getEpisodeUrl() {
+        return episodeUrl;
+    }
+
+    public void setEpisodeUrl(String episodeUrl) {
+        this.episodeUrl = episodeUrl;
+    }
+
     public void loadTo(ContentValues mNewValues){
 
         /*
@@ -154,6 +155,7 @@ public class Episode {
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_DURATION, getItunesDuration());
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUBTITLE, getItunesSubtitle());
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUMMARY, getItunesSummary());
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL, getEpisodeUrl());
     }
 
 
@@ -171,6 +173,7 @@ public class Episode {
         this.setLink(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_LINK)));
         this.setItunesSubtitle(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUBTITLE)));
         this.setGuid(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_GUID)));
+        this.setEpisodeUrl(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL)));
 
     }
 

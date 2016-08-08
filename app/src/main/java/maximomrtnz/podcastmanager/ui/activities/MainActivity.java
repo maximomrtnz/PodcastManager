@@ -31,7 +31,7 @@ import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 import maximomrtnz.podcastmanager.ui.views.SlidingTabLayout;
 import maximomrtnz.podcastmanager.utils.Utils;
 
-public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener, MenuItemCompat.OnActionExpandListener, RecyclerViewClickListener{
+public class MainActivity extends BaseActivity implements SearchView.OnQueryTextListener, MenuItemCompat.OnActionExpandListener, RecyclerViewClickListener{
 
     private static String LOG_TAG = "MainActivity";
     private static final int NUMBER_OF_TABS =2;

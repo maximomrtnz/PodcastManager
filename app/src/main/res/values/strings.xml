@@ -3,7 +3,12 @@
     <string name="action_settings">Settings</string>
     <string name="action_search">Search</string>
 
-    <string name="label.your_podcasts">Subcriptions</string>
-    <string name="label.discover">Browse</string>
+    <string name="label_your_podcasts">Subcriptions</string>
+    <string name="label_discover">Browse</string>
+
+    <string name="dialog_ok">Ok</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_message_confirm_deletion">Are you want to unsubscribe from {0}?</string>
+    <string name="dialog_title_confirm_deletion">Unsubscribe</string>
 
 </resources>

@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
-import maximomrtnz.podcastmanager.models.pojos.Enclosure;
+
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 
@@ -245,7 +245,7 @@ public class PodcastXMLParser {
             } else if (name.equals("enclosure")) {
 
                 // Example <enclosure url="http://media.libsyn.com/media/podcast411/411_060325.mp3" length="11779397" type="audio/mpeg"/>
-                episode.setEnclosure(readEnclosure(parser));
+                episode.setEpisodeUrl(readEpisodeUrl(parser));
 
 
             } else if(name.equals("itunes:summary")) {
@@ -306,15 +306,11 @@ public class PodcastXMLParser {
     /**
      * Processes link tags in the feed.
      */
-    private static Enclosure readEnclosure(XmlPullParser parser) throws IOException, XmlPullParserException {
+    private static String readEpisodeUrl(XmlPullParser parser) throws IOException, XmlPullParserException {
 
-        Enclosure enclosure = new Enclosure();
+        String episodeUrl;
 
-        parser.require(XmlPullParser.START_TAG, ns, "enclosure");
-
-        enclosure.setLength(Long.getLong(parser.getAttributeValue(null, "length")));
-        enclosure.setType(parser.getAttributeValue(null, "type"));
-        enclosure.setUrl(parser.getAttributeValue(null, "url"));
+        episodeUrl = parser.getAttributeValue(null, "url");
 
         while (true) {
             if (parser.nextTag() == XmlPullParser.END_TAG){
@@ -322,7 +318,7 @@ public class PodcastXMLParser {
             }
             // Intentionally break; consumes any remaining sub-tags.
         }
-        return enclosure;
+        return episodeUrl;
     }
 
     /**

@@ -15,7 +15,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(DatabaseSchema.SQL_CREATE_ENTRY_ENCLOSURE);
         db.execSQL(DatabaseSchema.SQL_CREATE_ENTRY_PODCAST);
         db.execSQL(DatabaseSchema.SQL_CREATE_ENTRY_EPISODE);
     }
@@ -24,7 +23,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         // to simply to discard the data and start over
         db.execSQL(DatabaseSchema.SQL_DELETE_ENTRY_ITEM);
         db.execSQL(DatabaseSchema.SQL_DELETE_ENTRY_CHANNEL);
-        db.execSQL(DatabaseSchema.SQL_DELETE_ENTRY_ENCLOSURE);
         onCreate(db);
     }
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
