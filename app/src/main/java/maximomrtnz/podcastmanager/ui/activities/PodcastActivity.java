@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -35,6 +34,7 @@ import maximomrtnz.podcastmanager.network.ItunesAppleAPI;
 import maximomrtnz.podcastmanager.ui.adapters.EpisodesRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.dialogs.ConfirmDialog;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
+import maximomrtnz.podcastmanager.utils.Utils;
 import mbanje.kurt.fabbutton.FabButton;
 
 /**
@@ -49,6 +49,9 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
     private static final int PODCAST_LOADER_BY_FEED_URL = 0;
     private static final int EPISODES_LOADER = 1;
 
+    // restart service every hour
+    private static final long REPEAT_TIME = 1000 * 3600;
+
     private Toolbar mToolbar;
     private CollapsingToolbarLayout mCollapsingToolbarLayout;
     private Podcast mPodcast;
@@ -61,8 +64,6 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
     private LinearLayoutManager mLayoutManager;
     private FabButton mFloatingActionButton;
     private ProgressBar mProgressBar;
-    private boolean mInsert;
-    private boolean mDelete;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,8 +84,8 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
     }
 
-
-    private void loadUI(){
+    @Override
+    public void loadUI(){
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
@@ -165,10 +166,10 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
             // Init loader to check if we have a mPodcast in the DB
             getLoaderManager().initLoader(EPISODES_LOADER,null,this);
 
-        }else{ // We have to check if the Podcast are in the DB from the feed url
+        }else { // We have to check if the Podcast are in the DB from the feed url
 
             // We have to check if the selected podcast has an feed url from itunes
-            if(mPodcast.getFeedUrl().indexOf("itunes")!=-1){ // From TopPodcast
+            if (mPodcast.getFeedUrl().indexOf("itunes") != -1) { // From TopPodcast
 
                 // Call ItunesAPI to get feed URL for downloading Podcast Episodies
                 new ItunesAppleAPI(new ItunesAppleAPI.ItunesAppleAPIListener() {
@@ -186,15 +187,15 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                         mPodcast.setFeedUrl(String.valueOf(arg));
 
                         // Init loader to check if we have a mPodcast in the DB
-                        getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL,null, PodcastActivity.this);
+                        getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL, null, PodcastActivity.this);
 
                     }
                 }).getUrlFeed(mPodcast.getFeedUrl());
 
-            }else{ // From Search
+            } else { // From Search or Subscriptions
 
                 // Init loader to check if we have a mPodcast in the DB
-                getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL,null,this);
+                getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL, null, this);
 
             }
 
@@ -229,6 +230,18 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
     @Override
     public void onRecyclerViewListClicked(View v, int position) {
         Episode episode = (Episode)v.getTag();
+
+        Log.d(LOG_TAG, episode.getTitle());
+
+        Intent i = new Intent(getApplicationContext(), AudioPlayerActivity.class);
+
+        // Pass episode data
+        episode.loadTo(i);
+
+        startActivity(i);
+
+        overridePendingTransition(R.anim.enter, R.anim.exit);
+
     }
 
     @Override
@@ -249,15 +262,10 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
     private void onFloatingActionButtonPressed(){
 
-
-
         // Check if we have to subscribe or if we have to unsuscribe
         if(mPodcast.getId() == null){ // Subscribe
 
             mFloatingActionButton.showProgress(true);
-
-            // Set insert flag
-            mInsert = true;
 
             new InsertPodcast(this, new InsertPodcast.InsertPodcastListener() {
                 @Override
@@ -271,6 +279,11 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                     mFloatingActionButton.showProgress(false);
                     mFloatingActionButton.onProgressCompleted();
 
+                    // switch icons
+                    loadSubscribedButton();
+
+                    Utils.scheduleTask(PodcastActivity.this,REPEAT_TIME);
+
                 }
             }).execute(mPodcast);
 
@@ -281,9 +294,6 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
             dialog.setArgs(new ConfirmDialog.ConfirmDialogListener() {
                 @Override
                 public void onConfirm() {
-
-                    // Set delete flag
-                    mDelete = true;
 
                     // Show progress dialog bar
                     mFloatingActionButton.showProgress(true);
@@ -301,6 +311,8 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                             mFloatingActionButton.showProgress(false);
                             mFloatingActionButton.onProgressCompleted();
 
+                            // switch icons
+                            loadSubscribedButton();
 
                         }
                     }).execute(mPodcast);
@@ -375,18 +387,8 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                     // Get cursor and load podcast
                     mPodcast.loadFrom(cursor);
 
-                    if(!mInsert && !mDelete) { // Check flags
-
                         // Load Podcast Episodes from Database
-                        getLoaderManager().initLoader(EPISODES_LOADER, null, this);
-
-                    }else {
-
-                        // Reset flags
-                        mInsert = false;
-                        mDelete = false;
-
-                    }
+                    getLoaderManager().initLoader(EPISODES_LOADER, null, this);
 
                 }else{ // We don't have a record so we are no subscribed to the current podcast
 
@@ -396,6 +398,9 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                     mFeedLoader.loadFeed(mPodcast.getFeedUrl());
 
                 }
+
+                // Unsuscribe
+                getLoaderManager().destroyLoader(PODCAST_LOADER_BY_FEED_URL);
 
                 break;
 
@@ -416,13 +421,14 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
                 mAdapter.notifyDataSetChanged();
 
-                Log.d(LOG_TAG, "Load Button");
-
                 // Load button subscribe/unsubscribe
                 loadSubscribedButton();
 
                 // hide progressbar reciclerview
                 mProgressBar.setVisibility(View.GONE);
+
+                // Unsuscribe
+                getLoaderManager().destroyLoader(EPISODES_LOADER);
 
                 break;
 
@@ -436,30 +442,6 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-
-        switch (loader.getId()) {
-
-            case PODCAST_LOADER_BY_FEED_URL:
-
-                break;
-
-            case EPISODES_LOADER:
-
-                Log.d(LOG_TAG, "Reset Episodes Loader");
-
-                // Load Episodes from Database
-
-                mEpisodes.clear();
-
-                mAdapter.notifyDataSetChanged();
-
-                break;
-
-            default:
-
-                break;
-
-        }
 
     }
 

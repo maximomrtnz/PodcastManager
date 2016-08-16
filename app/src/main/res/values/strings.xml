@@ -11,4 +11,11 @@
     <string name="dialog_message_confirm_deletion">Are you want to unsubscribe from {0}?</string>
     <string name="dialog_title_confirm_deletion">Unsubscribe</string>
 
+    <string name="notification_text_new_episodes">New episodes available</string>
+
+    <string name="cd_repeat">Repeat one or all</string>
+    <string name="cd_previous">Skip backwards</string>
+    <string name="cd_play">Play and pause</string>
+    <string name="cd_next">Skip forwards</string>
+
 </resources>

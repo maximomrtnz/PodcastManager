@@ -61,7 +61,7 @@ public class ImageLoader {
         executorService.submit(new PhotosLoader(p));
     }
 
-    private Bitmap getBitmap(String url) {
+    public Bitmap getBitmap(String url) {
 
         File f = fileCache.getFile(url);
 

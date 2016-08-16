@@ -77,6 +77,8 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
         // Get URI
         mNewPodcastUri = results[0].uri;
 
+        Log.d(LOG_TAG, ""+mNewPodcastUri);
+
         // Get Podcast Database Id
         long podcastId = Long.valueOf(mNewPodcastUri.getLastPathSegment());
 
@@ -92,7 +94,7 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
 
             episode.loadTo(episodeContentValue);
 
-            // Add apisode to bath list
+            // Add apisode to batch list
             episodes.add(ContentProviderOperation.newInsert(PodcastManagerContentProvider.EPISODE_CONTENT_URI)
                     .withValues(episodeContentValue)
                     .build());

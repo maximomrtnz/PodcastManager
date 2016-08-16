@@ -1,6 +1,7 @@
 package maximomrtnz.podcastmanager.models.pojos;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 
 import java.util.Calendar;
@@ -174,6 +175,31 @@ public class Episode {
         this.setItunesSubtitle(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUBTITLE)));
         this.setGuid(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_GUID)));
         this.setEpisodeUrl(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL)));
+
+    }
+
+    public void loadTo(Intent i){
+
+        i.putExtra("title",getTitle());
+        i.putExtra("episodeUrl",getEpisodeUrl());
+        i.putExtra("imageUrl",getImageUrl());
+        i.putExtra("id",getId());
+        i.putExtra("itunesDuration",getItunesDuration());
+
+    }
+
+    public void loadFrom(Intent i){
+
+        long id = i.getLongExtra("id",-1);
+
+        if(id!=-1) {
+            setId(id);
+        }
+
+        setTitle(i.getStringExtra("title"));
+        setEpisodeUrl(i.getStringExtra("episodeUrl"));
+        setImageUrl(i.getStringExtra("imageUrl"));
+        setItunesDuration(i.getStringExtra("itunesDuration"));
 
     }
 

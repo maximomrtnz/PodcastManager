@@ -9,7 +9,7 @@ import android.support.v7.app.AppCompatActivity;
  * Created by maximo on 07/08/16.
  */
 
-public class BaseActivity extends AppCompatActivity {
+public abstract class BaseActivity extends AppCompatActivity {
 
     /**
      * Global method to show dialog fragment
@@ -28,5 +28,7 @@ public class BaseActivity extends AppCompatActivity {
         ft.addToBackStack("dialog");
         newFragment.show(ft, "dialog");
     }
+
+    public abstract void loadUI();
 
 }

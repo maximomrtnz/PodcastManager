@@ -1,5 +1,8 @@
 package maximomrtnz.podcastmanager.utils;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
@@ -14,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import maximomrtnz.podcastmanager.broadcastreceivers.AlarmReceiver;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 
 /**
@@ -117,7 +121,37 @@ public class Utils {
         int m = (seconds - (h*3600))/60;
         int s = (seconds - (h*3600) - (m*60));
 
-        return (h<9?"0"+h:h)+":"+(m<9?"0"+m:m)+":"+(s<9?"0"+s:s);
+        return (h<=9?"0"+h:h)+":"+(m<=9?"0"+m:m)+":"+(s<=9?"0"+s:s);
     }
+
+    public static String  formatSeconds(long seconds){
+
+        long h =  seconds / 3600;
+        long m = (seconds - (h*3600))/60;
+        long s = (seconds - (h*3600) - (m*60));
+
+        return (h<=9?"0"+h:h)+":"+(m<=9?"0"+m:m)+":"+(s<=9?"0"+s:s);
+    }
+
+    public static void scheduleTask(Context context, long repeatTime){
+
+        Log.d(LOG_TAG,"Scheduling Task");
+
+        // Set the alarm to fire Background Cron Task, because we need to do it after every re boot
+        Intent alarmIntent = new Intent(context, AlarmReceiver.class);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, AlarmReceiver.REQUEST_CODE, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        calendar.add(Calendar.MINUTE, 1);
+
+        // fetch every hour seconds
+        // InexactRepeating allows Android to optimize the energy consumption
+        manager.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), repeatTime, pendingIntent);
+    }
+
 
 }

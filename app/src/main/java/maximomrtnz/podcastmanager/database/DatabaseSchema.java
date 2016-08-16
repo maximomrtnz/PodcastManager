@@ -26,7 +26,7 @@ interface DatabaseSchema {
     static final String SQL_CREATE_ENTRY_PODCAST =
             "CREATE TABLE " + PodcastManagerContract.Podcast.TABLE_NAME + " (" +
                     PodcastManagerContract.Podcast._ID + INTEGER_TYPE + PRIMARY_KEY + AUTOINCREMENT + COMMA_SEP +
-                    PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL + TEXT_TYPE + COMMA_SEP +
+                    PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL + TEXT_TYPE +NOT_NULL + COMMA_SEP +
                     PodcastManagerContract.Podcast.COLUMN_NAME_COPYRIGHT + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Podcast.COLUMN_NAME_DESCRIPTION + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_AUTHOR + TEXT_TYPE + COMMA_SEP +
@@ -36,7 +36,8 @@ interface DatabaseSchema {
                     PodcastManagerContract.Podcast.COLUMN_NAME_TITLE + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE + INTEGER_TYPE + COMMA_SEP +
                     PodcastManagerContract.Podcast.COLUMN_NAME_LINK + TEXT_TYPE + COMMA_SEP +
-                    PodcastManagerContract.Episode.COLUMN_NAME_IMAGE_URL + TEXT_TYPE +
+                    PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL + TEXT_TYPE + COMMA_SEP +
+                    UNIQUE +"("+PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL+")" +
                     " )";
 
 
@@ -55,6 +56,7 @@ interface DatabaseSchema {
                     PodcastManagerContract.Episode.COLUMN_NAME_LINK + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE + INTEGER_TYPE + COMMA_SEP +
                     PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL + TEXT_TYPE + COMMA_SEP +
+                    UNIQUE +"("+PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL+")" +
                     FOREIGN_KEY + " ("+PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID+") "+REFERENCES+" "+PodcastManagerContract.Podcast.TABLE_NAME+"("+PodcastManagerContract.Podcast._ID+") "+ ON_DELETE_CASCADE +
                     " )";
 

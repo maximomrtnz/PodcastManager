@@ -48,6 +48,10 @@ public class FeedLoader {
         mFeedLoaderListener = feedLoaderListener;
     }
 
+    public FeedLoader(Context context){
+        mFileCache = new FileCache(context, DIRECTORY);
+    }
+
     public void loadFeed(String url){
 
         Podcast podcast = (Podcast) mMemoryCache.get(url);
@@ -67,7 +71,7 @@ public class FeedLoader {
         }
     }
 
-    private Podcast getFeed(String url) {
+    public Podcast getFeed(String url) {
 
         File f = mFileCache.getFile(url);
 
@@ -167,5 +171,8 @@ public class FeedLoader {
 
     }
 
+    public void clearCache(){
+        mFileCache.clear();
+    }
 
 }

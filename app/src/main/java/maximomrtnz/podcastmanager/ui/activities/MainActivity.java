@@ -48,7 +48,15 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
+
+        loadUI();
+
+    }
+
+    @Override
+    public void loadUI() {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -82,9 +90,6 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
 
         // Setting the ViewPager For the SlidingTabsLayout
         mTabs.setViewPager(mViewPager);
-
-
-
     }
 
     @Override
