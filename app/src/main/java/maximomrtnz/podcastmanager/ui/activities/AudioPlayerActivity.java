@@ -1,20 +1,29 @@
 package maximomrtnz.podcastmanager.ui.activities;
 
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +45,7 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
 
     private MusicController mController;
     private AudioService mAudioService;
+    private Toolbar mToolbar;
     private ImageLoader mImageLoader;
     private ImageView mImageViewEpisode;
     private TextView mEpisodeTitle;
@@ -50,7 +60,8 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
     private int mForwardTime = 2000;
     private int mBackwardTime = 2000;
     private Handler durationHandler = new Handler();
-
+    private DownloadManager mDownloadManager;
+    private long enqueue;
 
 
     //binding
@@ -63,6 +74,19 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
     private Intent playIntent;
 
     private List<Episode> mEpisodeList;
+
+    private BroadcastReceiver mDownloadServiceReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
+                long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
+            }
+        }
+
+    };
+
 
 
     //connect to the service
@@ -116,6 +140,17 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
 
     @Override
     public void loadUI() {
+
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        mToolbar.setTitle(getString(R.string.label_now_playing));
+
+        setSupportActionBar(mToolbar);
+
+        // Enabling Back Button
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+
 
         mImageLoader = new ImageLoader(getApplicationContext());
 
@@ -326,6 +361,7 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
     @Override
     protected void onResume(){
         super.onResume();
+        registerReceiver(mDownloadServiceReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
         if(mPaused){
             setController();
             mPaused=false;
@@ -334,6 +370,7 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
 
     @Override
     protected void onStop() {
+        unregisterReceiver(mDownloadServiceReceiver);
         mController.hide();
         super.onStop();
     }
@@ -415,4 +452,47 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
     };
 
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+
+            case android.R.id.home:
+                finish(); // close this activity and return to preview activity (if there is any)
+                overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left);
+                return true;
+
+            case R.id.action_download:
+                downloadFile();
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_audio_player_activity, menu);
+        return true;
+    }
+
+    private void downloadFile(){
+
+        mDownloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+
+        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(mEpisodeList.get(0).getEpisodeUrl()));
+
+        // only download via WIFI
+        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI);
+        request.setTitle(mEpisodeList.get(0).getTitle());
+        request.setDescription(getString(R.string.notification_text_download_in_progress));
+
+        // we just want to download silently
+        request.setDestinationInExternalFilesDir(this, "PodcastManager/Downloads", URLEncoder.encode(mEpisodeList.get(0).getEpisodeUrl()));
+
+        enqueue = mDownloadManager.enqueue(request);
+    }
 }

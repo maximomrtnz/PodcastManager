@@ -8,6 +8,7 @@ import java.util.Calendar;
 import java.util.List;
 
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
+import maximomrtnz.podcastmanager.utils.DateUtils;
 import maximomrtnz.podcastmanager.utils.Utils;
 
 /**
@@ -149,10 +150,10 @@ public class Podcast {
             mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_DESCRIPTION, getDescription());
             mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_COPYRIGHT, getCopyright());
             mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_AUTHOR, getItunesAuthor());
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE, Utils.formatDateAsLong(getPubDate()));
+            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE, DateUtils.formatDateAsLong(getPubDate()));
             mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_LINK, getLink());
             mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_LANGUAGE, getLanguage());
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE, Utils.formatDateAsLong(getLastBuildDate()));
+            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE, DateUtils.formatDateAsLong(getLastBuildDate()));
             mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_SUMMARY, getItunesSumary());
             mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL, getFeedUrl());
             mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL, getImageUrl());
@@ -170,8 +171,8 @@ public class Podcast {
             this.setItunesAuthor(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_AUTHOR)));
             this.setItunesSumary(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_SUMMARY)));
             this.setLanguage(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LANGUAGE)));
-            this.setLastBuildDate(Utils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE))));
-            this.setPubDate(Utils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE))));
+            this.setLastBuildDate(DateUtils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE))));
+            this.setPubDate(DateUtils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE))));
             this.setLink(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LINK)));
 
         }

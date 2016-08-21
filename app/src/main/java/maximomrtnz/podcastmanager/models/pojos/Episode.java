@@ -8,6 +8,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
+import maximomrtnz.podcastmanager.utils.DateUtils;
 import maximomrtnz.podcastmanager.utils.Utils;
 
 /**
@@ -148,7 +149,7 @@ public class Episode {
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_TITLE, getTitle());
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_DESCRIPTION, getDescription());
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_AUTHOR, getItunesAuthor());
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE, Utils.formatDateAsLong(getPubDate()));
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE, DateUtils.formatDateAsLong(getPubDate()));
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_LINK, getLink());
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_IMAGE_URL, getImageUrl());
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID, getPodcastId());
@@ -170,7 +171,7 @@ public class Episode {
         this.setDescription(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_DESCRIPTION)));
         this.setItunesAuthor(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_AUTHOR)));
         this.setItunesSummary(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUMMARY)));
-        this.setPubDate(Utils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE))));
+        this.setPubDate(DateUtils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE))));
         this.setLink(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_LINK)));
         this.setItunesSubtitle(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUBTITLE)));
         this.setGuid(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_GUID)));

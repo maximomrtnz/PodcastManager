@@ -1,17 +1,22 @@
 package maximomrtnz.podcastmanager.ui.activities;
 
 import android.app.LoaderManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -31,9 +36,11 @@ import maximomrtnz.podcastmanager.database.PodcastManagerContract;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.network.ItunesAppleAPI;
+import maximomrtnz.podcastmanager.services.SynchronizeService;
 import maximomrtnz.podcastmanager.ui.adapters.EpisodesRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.dialogs.ConfirmDialog;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
+import maximomrtnz.podcastmanager.utils.Constants;
 import maximomrtnz.podcastmanager.utils.Utils;
 import mbanje.kurt.fabbutton.FabButton;
 
@@ -49,9 +56,6 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
     private static final int PODCAST_LOADER_BY_FEED_URL = 0;
     private static final int EPISODES_LOADER = 1;
 
-    // restart service every hour
-    private static final long REPEAT_TIME = 1000 * 3600;
-
     private Toolbar mToolbar;
     private CollapsingToolbarLayout mCollapsingToolbarLayout;
     private Podcast mPodcast;
@@ -64,6 +68,23 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
     private LinearLayoutManager mLayoutManager;
     private FabButton mFloatingActionButton;
     private ProgressBar mProgressBar;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+
+
+    private BroadcastReceiver mSynchronizeServiceReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            Bundle bundle = intent.getExtras();
+
+            if(bundle.getInt(Constants.SYNCHRONIZE_SERVICE.RESULT)==RESULT_OK){
+                mSwipeRefreshLayout.setRefreshing(false);
+            }
+
+        }
+
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,6 +146,17 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                 onFloatingActionButtonPressed();
             }
         });
+
+        mSwipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.swipe_refresh_layout);
+
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                // Refresh items
+                refreshItems();
+            }
+        });
+
     }
 
     private void loadSubscribedButton(){
@@ -221,8 +253,13 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
         loadSubscribedButton();
 
         // hide progressbar reciclerview
-        mProgressBar.setVisibility(View.GONE);
+        if(mProgressBar.getVisibility()==View.VISIBLE) {
+            mProgressBar.setVisibility(View.GONE);
+        }
 
+        if(mSwipeRefreshLayout.isRefreshing()) {
+            mSwipeRefreshLayout.setRefreshing(false);
+        }
 
     }
 
@@ -246,12 +283,24 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // handle arrow click here
-        if (item.getItemId() == android.R.id.home) {
-            finish(); // close this activity and return to preview activity (if there is any)
-            overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left);
+
+        switch (item.getItemId()) {
+
+            case android.R.id.home:
+                finish(); // close this activity and return to preview activity (if there is any)
+                overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left);
+                return true;
+
+            case R.id.action_refresh:
+
+                refreshItems();
+
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
+
     }
 
     @Override
@@ -287,7 +336,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                         // switch icons
                         loadSubscribedButton();
 
-                        Utils.scheduleTask(PodcastActivity.this, REPEAT_TIME);
+                        Utils.scheduleTask(PodcastActivity.this, Constants.SYNCHRONIZE_SERVICE.REPEAT_TIME);
 
                     }
 
@@ -402,7 +451,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                     Log.d(LOG_TAG, "Load from Feed");
 
                     // Let's download from XML Feed
-                    mFeedLoader.loadFeed(mPodcast.getFeedUrl());
+                    mFeedLoader.loadFeed(mPodcast.getFeedUrl(),false);
 
                 }
 
@@ -454,5 +503,45 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
     }
 
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_podcast_activity, menu);
+        return true;
+    }
 
+    private void refreshItems(){
+
+        if(!mSwipeRefreshLayout.isRefreshing()){
+            mSwipeRefreshLayout.setRefreshing(true);
+        }
+
+        if(mPodcast.getId() != null){
+
+            //Call synchronizeservice
+            Intent i = new Intent(this, SynchronizeService.class);
+
+            mPodcast.loadTo(i);
+
+            startService(i);
+
+        }else{
+
+            // Load again from XML Feed
+            mFeedLoader.loadFeed(mPodcast.getFeedUrl(),true);
+
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(mSynchronizeServiceReceiver);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(mSynchronizeServiceReceiver, new IntentFilter(Constants.SYNCHRONIZE_SERVICE.NOTIFICATION));
+    }
 }

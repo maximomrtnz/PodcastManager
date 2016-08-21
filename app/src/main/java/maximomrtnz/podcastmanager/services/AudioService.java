@@ -136,7 +136,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public void pausePlayer(){
-        mNotificationHelper.setIcon(R.drawable.ic_play_notification_icon).show(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE);
+        mNotificationHelper.setIcon(R.drawable.ic_pause_notification_icon).show(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE);
         mNotificationHelper.getContentView().setImageViewResource(R.id.status_bar_play, R.drawable.ic_pause);
         mPlayer.pause();
     }
@@ -146,7 +146,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public void go(){
-        mNotificationHelper.setIcon(R.drawable.ic_pause_notification_icon).show(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE);
+        mNotificationHelper.setIcon(R.drawable.ic_play_notification_icon).show(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE);
         mNotificationHelper.getContentView().setImageViewResource(R.id.status_bar_play, R.drawable.ic_play);
         mPlayer.start();
     }
@@ -226,7 +226,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         RemoteViews views = new RemoteViews(getPackageName(), R.layout.status_bar);
 
         mNotificationHelper = new NotificationHelper(this)
-                .setIcon(R.drawable.ic_pause_notification_icon)
+                .setIcon(R.drawable.ic_play_notification_icon)
                 .setContentView(views)
                 .setIntent(notificationIntent);
 
@@ -236,7 +236,10 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         mNotificationHelper.getContentView().setOnClickPendingIntent(R.id.status_bar_collapse, pcloseIntent);
         mNotificationHelper.getContentView().setImageViewResource(R.id.status_bar_play, R.drawable.ic_pause);
         mNotificationHelper.getContentView().setTextViewText(R.id.status_bar_track_name, episode.getTitle());
-        mNotificationHelper.getContentView().setImageViewBitmap(R.id.status_bar_icon, mImageLoader.getBitmap(episode.getImageUrl()));
+
+        if(episode.getImageUrl()!=null) {
+            mNotificationHelper.getContentView().setImageViewBitmap(R.id.status_bar_icon, mImageLoader.getBitmap(episode.getImageUrl()));
+        }
 
         // Show Notification
         mNotificationHelper.show(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE);

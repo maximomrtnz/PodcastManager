@@ -72,7 +72,9 @@ public class ItunesAppleAPI{
 
                         Podcast podcast = new Podcast();
 
-                        podcast.setTitle(entry.getJSONObject("title").getString("label"));
+                        podcast.setTitle(entry.getJSONObject("im:name").getString("label"));
+
+                        podcast.setItunesAuthor(entry.getJSONObject("im:artist").getString("label"));
 
                         JSONArray images =  entry.getJSONArray("im:image");
 
@@ -148,6 +150,8 @@ public class ItunesAppleAPI{
                         Podcast podcast = new Podcast();
 
                         podcast.setTitle(entry.getString("trackName"));
+
+                        podcast.setItunesAuthor(entry.getString("artistName"));
 
                         podcast.setImageUrl(entry.getString("artworkUrl600"));
 

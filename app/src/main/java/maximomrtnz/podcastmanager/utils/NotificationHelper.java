@@ -59,6 +59,16 @@ public class NotificationHelper {
 
     }
 
+    public NotificationHelper setContentText(String contentText){
+        mBuilder.setContentText(contentText);
+        return this;
+    }
+
+    public NotificationHelper setProgress(int max, int current, boolean isIndeterminate){
+        mBuilder.setProgress(max,current,isIndeterminate);
+        return this;
+    }
+
     public NotificationHelper setContentView(RemoteViews contentView){
         mContentView = contentView;
         mBuilder.setContent(contentView);

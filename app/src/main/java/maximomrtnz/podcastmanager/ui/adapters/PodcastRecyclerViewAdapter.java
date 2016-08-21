@@ -71,13 +71,14 @@ public class PodcastRecyclerViewAdapter extends RecyclerView.Adapter<PodcastRecy
     }
 
     @Override
-    public void onBindViewHolder(PodcastViewHolder personViewHolder, int i) {
+    public void onBindViewHolder(PodcastViewHolder podcastViewHolder, int i) {
 
         Podcast podcast = getItem(i);
 
-        personViewHolder.mPodcastTitle.setText(podcast.getTitle());
+        podcastViewHolder.mPodcastTitle.setText(podcast.getTitle());
+        podcastViewHolder.mPodcastAuthor.setText(podcast.getItunesAuthor());
 
-        mImageLoader.displayImage(podcast.getImageUrl(),personViewHolder.mPodcastImage);
+        mImageLoader.displayImage(podcast.getImageUrl(),podcastViewHolder.mPodcastImage);
 
     }
 
@@ -90,12 +91,14 @@ public class PodcastRecyclerViewAdapter extends RecyclerView.Adapter<PodcastRecy
 
         CardView mCV;
         TextView mPodcastTitle;
+        TextView mPodcastAuthor;
         ImageView mPodcastImage;
 
         PodcastViewHolder(View itemView) {
             super(itemView);
             mCV = (CardView)itemView.findViewById(R.id.cv);
             mPodcastTitle = (TextView)itemView.findViewById(R.id.podcast_title);
+            mPodcastAuthor = (TextView)itemView.findViewById(R.id.podcast_author);
             mPodcastImage = (ImageView)itemView.findViewById(R.id.podcast_image);
         }
 

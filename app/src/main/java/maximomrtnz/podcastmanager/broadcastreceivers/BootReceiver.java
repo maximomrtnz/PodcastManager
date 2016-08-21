@@ -9,6 +9,7 @@ import android.content.Intent;
 import java.util.Calendar;
 
 import maximomrtnz.podcastmanager.services.SynchronizeService;
+import maximomrtnz.podcastmanager.utils.Constants;
 import maximomrtnz.podcastmanager.utils.Utils;
 
 /**
@@ -17,15 +18,13 @@ import maximomrtnz.podcastmanager.utils.Utils;
 
 public class BootReceiver extends BroadcastReceiver {
 
-    // restart service every hour
-    private static final long REPEAT_TIME = 1000 * 3600;
 
     @Override
     public void onReceive(Context context, Intent intent) {
 
         if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
 
-            Utils.scheduleTask(context, REPEAT_TIME);
+            Utils.scheduleTask(context, Constants.SYNCHRONIZE_SERVICE.REPEAT_TIME);
 
         }
 

@@ -17,7 +17,15 @@ public class Constants {
     }
 
     public interface NOTIFICATION_ID {
-        public static int FOREGROUND_SERVICE = 101;
+        static int FOREGROUND_SERVICE = 101;
+        static int DOWNLOAD_SERVICE = 102;
     }
+
+    public interface  SYNCHRONIZE_SERVICE{
+        static final long REPEAT_TIME = 1000 * 3600;
+        static final String NOTIFICATION = "maximomrtnz.podcastmanager.services.receiver";
+        static final String RESULT = "result";
+    }
+
 
 }

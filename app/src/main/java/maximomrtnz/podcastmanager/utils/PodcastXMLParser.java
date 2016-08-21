@@ -160,7 +160,7 @@ public class PodcastXMLParser {
             }else if(name.equals("pubDate")) {
 
                 // Example <pubDate>Thu, 03 Dec 2015 12:15:47 +0000</pubDate>
-                channel.setPubDate(Utils.getCalendarFromString(readBasicTag(parser, "pubDate")));
+                channel.setPubDate(DateUtils.getCalendarFromString(readBasicTag(parser, "pubDate")));
 
             }else if(name.equals("itunes:image")){
 
@@ -170,7 +170,7 @@ public class PodcastXMLParser {
             }else if(name.equals("lastBuildDate")){
 
                 // Example <lastBuildDate>Fri, 29 Jul 2016 03:01:27 -0400</lastBuildDate>
-                channel.setLastBuildDate(Utils.getCalendarFromString(readBasicTag(parser, "lastBuildDate")));
+                channel.setLastBuildDate(DateUtils.getCalendarFromString(readBasicTag(parser, "lastBuildDate")));
 
             }else{
 
@@ -245,7 +245,7 @@ public class PodcastXMLParser {
 
                 // Example <pubDate>Thu, 03 Dec 2015 12:14:24 +0000</pubDate>
 
-                episode.setPubDate(Utils.getCalendarFromString(readBasicTag(parser,"pubDate")));
+                episode.setPubDate(DateUtils.getCalendarFromString(readBasicTag(parser,"pubDate")));
 
             } else if (name.equals("enclosure")) {
 

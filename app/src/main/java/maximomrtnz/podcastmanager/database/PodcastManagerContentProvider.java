@@ -128,7 +128,7 @@ public class PodcastManagerContentProvider extends ContentProvider {
 
         final SQLiteDatabase dbConnection = mDatabase.getWritableDatabase();
 
-        Uri mUri;
+        Object result;
 
         try {
 
@@ -140,25 +140,39 @@ public class PodcastManagerContentProvider extends ContentProvider {
 
                 case PODCAST_ID:
 
-                    mUri = (Uri)upsert(dbConnection,uri,PodcastManagerContract.Podcast.TABLE_NAME, values, PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL);
+                    result = upsert(dbConnection,uri,PodcastManagerContract.Podcast.TABLE_NAME, values, PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL);
 
-                    getContext().getContentResolver().notifyChange(mUri, null);
+                    if(result instanceof Integer){
+                        if(((Integer)result)>0) {
+                            getContext().getContentResolver().notifyChange(uri, null);
+                        }
+                    }else if(result instanceof Uri){
+                        uri = (Uri) result;
+                        getContext().getContentResolver().notifyChange(uri, null);
+                    }
 
                     dbConnection.setTransactionSuccessful();
 
-                    return mUri;
+                    return uri;
 
                 case EPISODE_DIR:
 
                 case EPISODE_ID:
 
-                    mUri = (Uri)upsert(dbConnection,uri,PodcastManagerContract.Episode.TABLE_NAME, values, PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL);
+                    result = upsert(dbConnection,uri,PodcastManagerContract.Episode.TABLE_NAME, values, PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL);
 
-                    getContext().getContentResolver().notifyChange(mUri, null);
+                    if(result instanceof Integer){
+                        if(((Integer)result)>0) {
+                            getContext().getContentResolver().notifyChange(uri, null);
+                        }
+                    }else if(result instanceof Uri){
+                        uri = (Uri) result;
+                        getContext().getContentResolver().notifyChange(uri, null);
+                    }
 
                     dbConnection.setTransactionSuccessful();
 
-                    return mUri;
+                    return uri;
 
                 default :
 
@@ -243,7 +257,6 @@ public class PodcastManagerContentProvider extends ContentProvider {
 
         int updateCount = 0;
 
-        List<Uri> joinUris = new ArrayList<>();
 
         try {
 
@@ -300,10 +313,6 @@ public class PodcastManagerContentProvider extends ContentProvider {
         if (updateCount > 0) {
 
             getContext().getContentResolver().notifyChange(uri, null);
-
-            for (Uri joinUri : joinUris) {
-                getContext().getContentResolver().notifyChange(joinUri, null);
-            }
 
         }
 

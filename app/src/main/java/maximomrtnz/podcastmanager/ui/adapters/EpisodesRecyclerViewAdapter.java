@@ -18,6 +18,7 @@ import maximomrtnz.podcastmanager.cache.ImageLoader;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
+import maximomrtnz.podcastmanager.utils.DateUtils;
 import maximomrtnz.podcastmanager.utils.Utils;
 
 /**
@@ -95,7 +96,7 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
 
         personViewHolder.mEpisodeTitle.setText(episode.getTitle());
         personViewHolder.mEpisodeDuration.setText(episode.getItunesDuration());
-        personViewHolder.mEpisodePubDate.setText(Utils.format(episode.getPubDate(),"MMM d, yyyy"));
+        personViewHolder.mEpisodePubDate.setText(DateUtils.format(episode.getPubDate(),"MMM d, yyyy"));
 
     }
 

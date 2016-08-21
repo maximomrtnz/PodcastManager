@@ -36,7 +36,6 @@
         android:id="@+id/status_bar_play"
         android:layout_width="64dp"
         android:layout_height="64dp"
-        android:contentDescription="@string/cd_play"
         android:background="@null"
         android:gravity="center"/>
 

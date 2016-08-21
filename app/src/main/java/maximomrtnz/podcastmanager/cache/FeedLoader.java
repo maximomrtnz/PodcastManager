@@ -52,7 +52,7 @@ public class FeedLoader {
         mFileCache = new FileCache(context, DIRECTORY);
     }
 
-    public void loadFeed(String url){
+    public void loadFeed(String url,boolean overrideCache){
 
         Podcast podcast = (Podcast) mMemoryCache.get(url);
 
@@ -66,22 +66,28 @@ public class FeedLoader {
         }else{
 
             // Download and storage Feed
-            mExecutorService.execute(new FeedDownloader(url));
+            mExecutorService.execute(new FeedDownloader(url,overrideCache));
 
         }
     }
 
-    public Podcast getFeed(String url) {
+    public Podcast getFeed(String url, boolean overrideCache) {
 
         File f = mFileCache.getFile(url);
 
-        Podcast podcast = decodePodcast(f);
+        Podcast podcast;
 
-        // From SD Cache
-        if(podcast!=null){
-            // Set feed URL
-            podcast.setFeedUrl(url);
-            return podcast;
+        if(!overrideCache){
+
+            podcast = decodePodcast(f);
+
+            // From SD Cache
+            if(podcast!=null){
+                // Set feed URL
+                podcast.setFeedUrl(url);
+                return podcast;
+            }
+
         }
 
         // From web
@@ -133,15 +139,17 @@ public class FeedLoader {
     public class FeedDownloader implements Runnable {
 
         private String mUrl;
+        private boolean mOverrideCache;
 
-        public FeedDownloader(String url){
+        public FeedDownloader(String url, Boolean overrideCache){
             mUrl = url;
+            mOverrideCache = overrideCache;
         }
 
         @Override
         public void run() {
             try{
-                Podcast podcast = getFeed(mUrl);
+                Podcast podcast = getFeed(mUrl,mOverrideCache);
                 mMemoryCache.put(mUrl, podcast);
                 mHandler.post(new FeedSender(podcast));
             }catch(Throwable th){
