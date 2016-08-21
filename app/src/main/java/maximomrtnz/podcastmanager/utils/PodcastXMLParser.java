@@ -1,5 +1,6 @@
 package maximomrtnz.podcastmanager.utils;
 
+import android.text.Html;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -114,7 +115,11 @@ public class PodcastXMLParser {
 
             if (name.equals(ITEM)) {
 
-                episodes.add(readItem(parser));
+                Episode episode = readItem(parser);
+
+                if(episode.getEpisodeUrl() != null) { // Avoid adding no episode item
+                    episodes.add(episode);
+                }
 
             }else if(name.equals("link")) {
 
@@ -130,7 +135,7 @@ public class PodcastXMLParser {
             }else if(name.equals("description")) {
 
                 // Example <description>Description goes here</description>
-                channel.setDescription(readBasicTag(parser, "description"));
+                channel.setDescription(stripHtml(readBasicTag(parser, "description")));
 
             }else if(name.equals("copyright")) {
 
@@ -150,7 +155,7 @@ public class PodcastXMLParser {
             }else if(name.equals("itunes:summary")) {
 
                 // Example <itunes:summary>Itunes Summary goes here</itunes:summary>
-                channel.setItunesSumary(readBasicTag(parser, "itunes:summary"));
+                channel.setItunesSumary(stripHtml(readBasicTag(parser, "itunes:summary")));
 
             }else if(name.equals("pubDate")) {
 
@@ -234,7 +239,7 @@ public class PodcastXMLParser {
 
                 // Example <description>Description goes here</description>
 
-                episode.setDescription(readBasicTag(parser, "description"));
+                episode.setDescription(stripHtml(readBasicTag(parser, "description")));
 
             }else if(name.equals("pubDate")){
 
@@ -251,7 +256,7 @@ public class PodcastXMLParser {
             } else if(name.equals("itunes:summary")) {
 
                 // Example <itunes:summary> Itunes Summary text goes here </itunes:summary>
-                episode.setItunesSummary(readBasicTag(parser, "itunes:summary"));
+                episode.setItunesSummary(stripHtml(readBasicTag(parser, "itunes:summary")));
 
             }else {
 
@@ -365,6 +370,10 @@ public class PodcastXMLParser {
                     break;
             }
         }
+    }
+
+    public static String stripHtml(String html) {
+        return Html.fromHtml(html).toString();
     }
 
 }

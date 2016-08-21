@@ -1,5 +1,6 @@
 package maximomrtnz.podcastmanager.utils;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -7,6 +8,7 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 /**
  * Created by maximo on 14/08/16.
@@ -16,51 +18,65 @@ public class NotificationHelper {
 
     private String LOG_TAG = "NotificationHelper";
 
+    private Notification mNotification;
     private Context mContext;
-    private String mTitle;
-    private String mText;
-    private int mIcon;
+    private NotificationCompat.Builder mBuilder;
+    private NotificationManager mNotificationManager;
+    private RemoteViews mContentView;
 
-    public NotificationHelper(Context context, String title, String text, int icon){
-        this.mContext = context;
-        this.mTitle = title;
-        this.mText = text;
-        this.mIcon = icon;
+    public NotificationHelper(Context context){
+        mContext = context;
+        mBuilder = new NotificationCompat.Builder(mContext);
+        mNotificationManager = (NotificationManager)context.getSystemService(context.NOTIFICATION_SERVICE);
     }
 
-    public void show(int notificationId, Class activityToOpen){
+    public NotificationHelper setIcon(int icon){
+        mBuilder.setSmallIcon(icon);
+        return this;
+    }
 
-        NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
+    public NotificationHelper setTitle(String title){
+        mBuilder.setContentTitle(title);
+        return this;
+    }
 
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(mContext)
-                        .setSmallIcon(mIcon)
-                        .setContentTitle(mText)
-                        .setAutoCancel(true);
+    public NotificationHelper setAutoCancel(boolean isAutocancel){
+        mBuilder.setAutoCancel(isAutocancel);
+        return this;
+    }
 
-        // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(mContext, activityToOpen);
+    public NotificationHelper setIntent(Intent intent){
 
-        // The stack builder object will contain an artificial back stack for the
-        // started Activity.
-        // This ensures that navigating backward from the Activity leads out of
-        // your application to the Home screen.
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(mContext);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                mContext,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
 
-        // Adds the back stack for the Intent (but not the Intent itself)
-        stackBuilder.addParentStack(activityToOpen);
+        mBuilder.setContentIntent(pendingIntent);
 
-        // Adds the Intent that starts the Activity to the top of the stack
-        stackBuilder.addNextIntent(resultIntent);
+        return this;
 
-        PendingIntent resultPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
 
-        mBuilder.setContentIntent(resultPendingIntent);
+    public NotificationHelper setContentView(RemoteViews contentView){
+        mContentView = contentView;
+        mBuilder.setContent(contentView);
+        return this;
+    }
 
-        NotificationManager mNotificationManager = (NotificationManager)mContext.getSystemService(mContext.NOTIFICATION_SERVICE);
+    public NotificationHelper show(int notificationId){
+        mNotification = mBuilder.build();
+        mNotificationManager.notify(notificationId, mNotification);
+        return this;
+    }
 
-        // mId allows you to update the notification later on.
-        mNotificationManager.notify(notificationId, mBuilder.build());
+    public Notification getNotification(){
+        return mNotification;
+    }
 
+    public RemoteViews getContentView(){
+        return mContentView;
     }
 
 }

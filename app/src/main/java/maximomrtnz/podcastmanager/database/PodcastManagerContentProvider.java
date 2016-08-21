@@ -12,6 +12,7 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,8 @@ import maximomrtnz.podcastmanager.database.DatabaseHelper;
  */
 
 public class PodcastManagerContentProvider extends ContentProvider {
+
+    private String LOG_TAG = "PMContentProvider";
 
     private DatabaseHelper mDatabase;
 
@@ -125,6 +128,8 @@ public class PodcastManagerContentProvider extends ContentProvider {
 
         final SQLiteDatabase dbConnection = mDatabase.getWritableDatabase();
 
+        Uri mUri;
+
         try {
 
             dbConnection.beginTransaction();
@@ -135,28 +140,25 @@ public class PodcastManagerContentProvider extends ContentProvider {
 
                 case PODCAST_ID:
 
-                    final long podcastId = dbConnection.insertOrThrow(PodcastManagerContract.Podcast.TABLE_NAME, null, values);
+                    mUri = (Uri)upsert(dbConnection,uri,PodcastManagerContract.Podcast.TABLE_NAME, values, PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL);
 
-                    final Uri newPodcastUri = ContentUris.withAppendedId(PODCAST_CONTENT_URI, podcastId);
-
-                    getContext().getContentResolver().notifyChange(newPodcastUri, null);
+                    getContext().getContentResolver().notifyChange(mUri, null);
 
                     dbConnection.setTransactionSuccessful();
 
-                    return newPodcastUri;
+                    return mUri;
 
                 case EPISODE_DIR:
 
                 case EPISODE_ID:
 
+                    mUri = (Uri)upsert(dbConnection,uri,PodcastManagerContract.Episode.TABLE_NAME, values, PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL);
 
-                    upsert(dbConnection,uri,PodcastManagerContract.Episode.TABLE_NAME, values, PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL);
-
-                    getContext().getContentResolver().notifyChange(uri, null);
+                    getContext().getContentResolver().notifyChange(mUri, null);
 
                     dbConnection.setTransactionSuccessful();
 
-                    return uri;
+                    return mUri;
 
                 default :
 
@@ -318,15 +320,16 @@ public class PodcastManagerContentProvider extends ContentProvider {
      * @param column Column to identify the object.
      * @throws android.database.SQLException
      */
-    private void upsert(SQLiteDatabase db, Uri uri, String table, ContentValues values, String column) throws SQLException {
+    private Object upsert(SQLiteDatabase db, Uri uri, String table, ContentValues values, String column) throws SQLException {
         try {
             long id = db.insertOrThrow(table, null, values);
-            uri= ContentUris.withAppendedId(uri, id);
+            return ContentUris.withAppendedId(uri, id);
         } catch (SQLiteConstraintException e) {
             int nrRows = update(uri, values, column + "=?", new String[]{values.getAsString(column)});
             if (nrRows == 0) {
                 throw e;
             }
+            return nrRows;
         }
     }
 

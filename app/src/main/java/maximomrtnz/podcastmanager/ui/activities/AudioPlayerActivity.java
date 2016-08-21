@@ -142,14 +142,30 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
         mImageButtonPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                // Show Play Button
+                mImageButtonPause.setVisibility(View.VISIBLE);
+
+                // Hide Play button
+                mImageButtonPlay.setVisibility(View.GONE);
+
                 start();
+
             }
+
         });
 
         mImageButtonPause.setOnClickListener(new View.OnClickListener(){
 
             @Override
             public void onClick(View view) {
+
+                // Show Play button
+                mImageButtonPlay.setVisibility(View.VISIBLE);
+
+                // Hide Play Button
+                mImageButtonPause.setVisibility(View.GONE);
+
                 pause();
             }
 
@@ -334,6 +350,7 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
         super.onStart();
         if(playIntent==null){
             playIntent = new Intent(this, AudioService.class);
+            mEpisodeList.get(0).loadTo(playIntent);
             playIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
             bindService(playIntent, mAudioConnection, Context.BIND_AUTO_CREATE);
             startService(playIntent);
@@ -341,8 +358,11 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
     }
 
     public void episodePicked(int episodePosition){
+
         mAudioService.setEpisode(episodePosition);
+
         mAudioService.playEpisode();
+
         if(mPlaybackPaused){
             setController();
             mPlaybackPaused=false;
@@ -368,7 +388,7 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
     private Runnable updateSeekBarTime = new Runnable() {
         public void run() {
 
-            if(mAudioService!=null && mAudioBound && mAudioService.isPng()) {
+            if(mAudioService!=null && mAudioBound && mAudioService.isPng()) { // Playing
 
                 //get current position
                 mTimeElapsed = getCurrentPosition();

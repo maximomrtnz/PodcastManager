@@ -19,6 +19,7 @@ import maximomrtnz.podcastmanager.cache.ImageLoader;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.ui.activities.AudioPlayerActivity;
 import maximomrtnz.podcastmanager.utils.Constants;
+import maximomrtnz.podcastmanager.utils.NotificationHelper;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -34,21 +35,13 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
     //media player
     private MediaPlayer mPlayer;
-
     //song list
     private List<Episode> mEpisodes;
-
     //current position
     private int mEpisodePosition;
-
     private final IBinder mAudioBind = new AudioBinder();
-
-    private Notification status;
-
-    private RemoteViews views;
-    private RemoteViews bigViews;
-
     private ImageLoader mImageLoader;
+    private NotificationHelper mNotificationHelper;
 
     @Nullable
     @Override
@@ -113,16 +106,9 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
         Episode playEpisode = mEpisodes.get(mEpisodePosition);
 
-        //get id
-        long currEpisode = playEpisode.getId();
-
-        //set uri
-        //Uri trackUri = ContentUris.withAppendedId(android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, currEpisode);
-
         Log.e(LOG_TAG, "Playing podcast -->"+playEpisode.getTitle());
 
         try{
-            //mPlayer.setDataSource(getApplicationContext(), trackUri);
             mPlayer.setDataSource(playEpisode.getEpisodeUrl());
         }catch(Exception e){
             Log.e(LOG_TAG, "Error setting data source", e);
@@ -150,6 +136,8 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public void pausePlayer(){
+        mNotificationHelper.setIcon(R.drawable.ic_play_notification_icon).show(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE);
+        mNotificationHelper.getContentView().setImageViewResource(R.id.status_bar_play, R.drawable.ic_pause);
         mPlayer.pause();
     }
 
@@ -158,7 +146,8 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public void go(){
-        Log.e(LOG_TAG, "go()");
+        mNotificationHelper.setIcon(R.drawable.ic_pause_notification_icon).show(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE);
+        mNotificationHelper.getContentView().setImageViewResource(R.id.status_bar_play, R.drawable.ic_play);
         mPlayer.start();
     }
 
@@ -188,7 +177,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         }
 
         if (intent.getAction().equals(Constants.ACTION.STARTFOREGROUND_ACTION)) {
-            showNotification();
+            showNotification(intent);
         } else if (intent.getAction().equals(Constants.ACTION.PREV_ACTION)) {
             Log.i(LOG_TAG, "Clicked Previous");
         } else if (intent.getAction().equals(Constants.ACTION.PLAY_ACTION)) {
@@ -208,24 +197,18 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         return START_STICKY;
     }
 
-    private void showNotification() {
+    private void showNotification(Intent intent) {
+
+        Episode episode = new Episode();
+
+        episode.loadFrom(intent);
 
         mImageLoader = new ImageLoader(this);
 
-        // Using RemoteViews to bind custom layouts into Notification
-        views = new RemoteViews(getPackageName(), R.layout.status_bar);
-        bigViews = new RemoteViews(getPackageName(), R.layout.status_bar_expanded);
-
-        // showing default album image
-        views.setViewVisibility(R.id.status_bar_icon, View.VISIBLE);
-        views.setViewVisibility(R.id.status_bar_album_art, View.GONE);
-
-        //bigViews.setImageViewBitmap(R.id.status_bar_album_art, mImageLoader.getBitmap(mEpisodes.get(mEpisodePosition).getImageUrl()));
-
         Intent notificationIntent = new Intent(this, AudioPlayerActivity.class);
+        episode.loadTo(notificationIntent);
         notificationIntent.setAction(Constants.ACTION.MAIN_ACTION);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
         Intent previousIntent = new Intent(this, AudioService.class);
         previousIntent.setAction(Constants.ACTION.PREV_ACTION);
@@ -235,46 +218,31 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         playIntent.setAction(Constants.ACTION.PLAY_ACTION);
         PendingIntent pplayIntent = PendingIntent.getService(this, 0, playIntent, 0);
 
-        Intent nextIntent = new Intent(this, AudioService.class);
-        nextIntent.setAction(Constants.ACTION.NEXT_ACTION);
-        PendingIntent pnextIntent = PendingIntent.getService(this, 0, nextIntent, 0);
-
         Intent closeIntent = new Intent(this, AudioService.class);
         closeIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
         PendingIntent pcloseIntent = PendingIntent.getService(this, 0, closeIntent, 0);
 
-        views.setOnClickPendingIntent(R.id.status_bar_play, pplayIntent);
-        bigViews.setOnClickPendingIntent(R.id.status_bar_play, pplayIntent);
+        // Using RemoteViews to bind custom layouts into Notification
+        RemoteViews views = new RemoteViews(getPackageName(), R.layout.status_bar);
 
-        views.setOnClickPendingIntent(R.id.status_bar_next, pnextIntent);
-        bigViews.setOnClickPendingIntent(R.id.status_bar_next, pnextIntent);
+        mNotificationHelper = new NotificationHelper(this)
+                .setIcon(R.drawable.ic_pause_notification_icon)
+                .setContentView(views)
+                .setIntent(notificationIntent);
 
-        views.setOnClickPendingIntent(R.id.status_bar_prev, ppreviousIntent);
-        bigViews.setOnClickPendingIntent(R.id.status_bar_prev, ppreviousIntent);
 
-        views.setOnClickPendingIntent(R.id.status_bar_collapse, pcloseIntent);
-        bigViews.setOnClickPendingIntent(R.id.status_bar_collapse, pcloseIntent);
+        mNotificationHelper.getContentView().setViewVisibility(R.id.status_bar_icon, View.VISIBLE);
+        mNotificationHelper.getContentView().setOnClickPendingIntent(R.id.status_bar_play, pplayIntent);
+        mNotificationHelper.getContentView().setOnClickPendingIntent(R.id.status_bar_collapse, pcloseIntent);
+        mNotificationHelper.getContentView().setImageViewResource(R.id.status_bar_play, R.drawable.ic_pause);
+        mNotificationHelper.getContentView().setTextViewText(R.id.status_bar_track_name, episode.getTitle());
+        mNotificationHelper.getContentView().setImageViewBitmap(R.id.status_bar_icon, mImageLoader.getBitmap(episode.getImageUrl()));
 
-        views.setImageViewResource(R.id.status_bar_play, R.drawable.ic_pause);
-        bigViews.setImageViewResource(R.id.status_bar_play, R.drawable.ic_pause);
+        // Show Notification
+        mNotificationHelper.show(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE);
 
-        views.setTextViewText(R.id.status_bar_track_name, "Song Title");
-        bigViews.setTextViewText(R.id.status_bar_track_name, "Song Title");
+        startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, mNotificationHelper.getNotification());
 
-        views.setTextViewText(R.id.status_bar_artist_name, "Artist Name");
-        bigViews.setTextViewText(R.id.status_bar_artist_name, "Artist Name");
-
-        bigViews.setTextViewText(R.id.status_bar_album_name, "Album Name");
-
-        status = new Notification.Builder(this).getNotification();
-        status.contentView = views;
-        if (Build.VERSION.SDK_INT >= 16) {
-            status.bigContentView = bigViews;
-        }
-        status.flags = Notification.FLAG_ONGOING_EVENT;
-        status.icon = R.drawable.ic_play;
-        status.contentIntent = pendingIntent;
-        startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, status);
     }
 
 }

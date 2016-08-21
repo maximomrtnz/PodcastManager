@@ -268,21 +268,28 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
             mFloatingActionButton.showProgress(true);
 
             new InsertPodcast(this, new InsertPodcast.InsertPodcastListener() {
+
                 @Override
-                public void onPodcastInserted(Uri mNewPodcastUri) {
+                public void onPodcastInserted(List<Uri> podcastUris) {
 
-                    Log.d(LOG_TAG,"New Podcast Subscription -->"+mNewPodcastUri.toString());
+                    if(!podcastUris.isEmpty()) {
 
-                    // Set Podcast Id
-                    mPodcast.setId(Long.valueOf(mNewPodcastUri.getLastPathSegment()));
+                        Uri podcastUri = podcastUris.get(0);
 
-                    mFloatingActionButton.showProgress(false);
-                    mFloatingActionButton.onProgressCompleted();
+                        Log.d(LOG_TAG, "New Podcast Subscription -->" + podcastUri.toString());
 
-                    // switch icons
-                    loadSubscribedButton();
+                        // Set Podcast Id
+                        mPodcast.setId(Long.valueOf(podcastUri.getLastPathSegment()));
 
-                    Utils.scheduleTask(PodcastActivity.this,REPEAT_TIME);
+                        mFloatingActionButton.showProgress(false);
+                        mFloatingActionButton.onProgressCompleted();
+
+                        // switch icons
+                        loadSubscribedButton();
+
+                        Utils.scheduleTask(PodcastActivity.this, REPEAT_TIME);
+
+                    }
 
                 }
             }).execute(mPodcast);
@@ -361,7 +368,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                         PodcastManagerContract.Episode.PROJECTION_ALL,              // Projection to return
                         PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID+"=?", // No selection clause
                         new String[]{String.valueOf(mPodcast.getId())},             // No selection arguments
-                        null                                                        // Default sort order
+                        PodcastManagerContract.Episode.SORT_ORDER                                                        // Default sort order
                 );
 
             default:
@@ -406,29 +413,30 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
             case EPISODES_LOADER:
 
-                Log.d(LOG_TAG, "Load from DB");
+               if(cursor!=null && cursor.getCount()>0) {
 
-                // Load episodes
-                mEpisodes.clear();
+                    Log.d(LOG_TAG, "Load from DB");
 
-                while (cursor.moveToNext()){
-                    Episode episode = new Episode();
-                    episode.loadFrom(cursor);
-                    mEpisodes.add(episode);
+                    // Load episodes
+                    mEpisodes.clear();
+
+                    while (cursor.moveToNext()) {
+                        Episode episode = new Episode();
+                        episode.loadFrom(cursor);
+                        mEpisodes.add(episode);
+                    }
+
+                    mPodcast.setEpisodes(mEpisodes);
+
+                    mAdapter.notifyDataSetChanged();
+
+                    // Load button subscribe/unsubscribe
+                    loadSubscribedButton();
+
+                    // hide progressbar reciclerview
+                    mProgressBar.setVisibility(View.GONE);
+
                 }
-
-                mPodcast.setEpisodes(mEpisodes);
-
-                mAdapter.notifyDataSetChanged();
-
-                // Load button subscribe/unsubscribe
-                loadSubscribedButton();
-
-                // hide progressbar reciclerview
-                mProgressBar.setVisibility(View.GONE);
-
-                // Unsuscribe
-                getLoaderManager().destroyLoader(EPISODES_LOADER);
 
                 break;
 

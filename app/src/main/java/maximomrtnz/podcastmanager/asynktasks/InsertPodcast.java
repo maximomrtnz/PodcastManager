@@ -1,5 +1,6 @@
 package maximomrtnz.podcastmanager.asynktasks;
 
+import android.content.ContentProvider;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentValues;
@@ -11,16 +12,20 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
+import maximomrtnz.podcastmanager.utils.ContentProviderUtils;
+import maximomrtnz.podcastmanager.utils.Utils;
 
 /**
  * Created by maximo on 30/07/16.
  */
 
-public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
+public class InsertPodcast extends AsyncTask<Podcast,List<Uri>, List<Uri>>{
 
     private final String LOG_TAG = "InsertPodcast";
 
@@ -29,7 +34,7 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
     private Context mContext;
 
     public interface InsertPodcastListener{
-        void onPodcastInserted(Uri mNewPodcastUri);
+        void onPodcastInserted(List<Uri> podcastUris);
     }
 
 
@@ -39,24 +44,14 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
     }
 
     @Override
-    protected Uri doInBackground(Podcast... args) {
+    protected List<Uri> doInBackground(Podcast... args) {
 
-        Podcast podcast = args[0];
-
-        Uri mNewPodcastUri;
-
-        ContentValues podcastContentValue = new ContentValues();
-
-        podcast.loadTo(podcastContentValue);
+        List<Uri> podcastUris = new ArrayList<>();
 
         // Insert Podcast
-        ArrayList<ContentProviderOperation> podcasts = new ArrayList<>();
+        ArrayList<ContentProviderOperation> podcasts = ContentProviderUtils.toContentProviderOperation(Arrays.asList(args));
 
-        // Add podcast
-        podcasts.add(ContentProviderOperation.newInsert(PodcastManagerContentProvider.PODCAST_CONTENT_URI)
-                .withValues(podcastContentValue)
-                .build());
-
+        ArrayList<ContentProviderOperation> episodes = new ArrayList<>();
 
         ContentProviderResult[] results = null;
 
@@ -74,33 +69,26 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
             return null;
         }
 
-        // Get URI
-        mNewPodcastUri = results[0].uri;
+        for(int i = 0; i < results.length; i++){
 
-        Log.d(LOG_TAG, ""+mNewPodcastUri);
+            // Get podcast
+            Podcast podcast = args[i];
 
-        // Get Podcast Database Id
-        long podcastId = Long.valueOf(mNewPodcastUri.getLastPathSegment());
+            // Get URI
+            Uri podcastUri = results[i].uri;
 
-        // Insert Podcast Episodes
-        ArrayList<ContentProviderOperation> episodes = new ArrayList<>();
+            // Add uri to list
+            podcastUris.add(podcastUri);
 
-        for(Episode episode : podcast.getEpisodes()){
+            Log.d(LOG_TAG, ""+podcastUri);
 
-            ContentValues episodeContentValue = new ContentValues();
+            // Get Podcast Database Id
+            long podcastId = Long.valueOf(podcastUri.getLastPathSegment());
 
-            // Set podcast id
-            episode.setPodcastId(podcastId);
-
-            episode.loadTo(episodeContentValue);
-
-            // Add apisode to batch list
-            episodes.add(ContentProviderOperation.newInsert(PodcastManagerContentProvider.EPISODE_CONTENT_URI)
-                    .withValues(episodeContentValue)
-                    .build());
+            // Insert Podcast Episodes
+            episodes.addAll(ContentProviderUtils.toContentProviderOperation(podcast.getEpisodes(),podcastId));
 
         }
-
 
         results = null;
 
@@ -114,14 +102,14 @@ public class InsertPodcast extends AsyncTask<Podcast,Uri, Uri>{
             Log.e(LOG_TAG, e.getMessage());
         }
 
-        return mNewPodcastUri;
+        return podcastUris;
     }
 
     @Override
-    protected void onPostExecute(Uri mNewPodcastUri) {
-        super.onPostExecute(mNewPodcastUri);
+    protected void onPostExecute(List<Uri> podcastUris) {
+        super.onPostExecute(podcastUris);
         if(mListener!=null){
-            mListener.onPodcastInserted(mNewPodcastUri);
+            mListener.onPodcastInserted(podcastUris);
         }
     }
 }

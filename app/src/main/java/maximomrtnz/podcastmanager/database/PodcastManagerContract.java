@@ -35,6 +35,7 @@ public class PodcastManagerContract {
 
         public static final String WHERE_ID_EQUALS = _ID + " =?";
 
+        public static final String SORT_ORDER = COLUMN_NAME_PUB_DATE+" DESC";
 
         public static final String[] PROJECTION_ALL = {
                                                         _ID,
@@ -80,6 +81,8 @@ public class PodcastManagerContract {
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.podcastmanager_database.episodes";
 
         public static final String WHERE_ID_EQUALS = _ID + " =?";
+
+        public static final String SORT_ORDER = COLUMN_NAME_PUB_DATE+" DESC";
 
         public static final String[] PROJECTION_ALL = {
                 _ID,

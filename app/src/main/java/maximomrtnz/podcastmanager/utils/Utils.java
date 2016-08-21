@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 
 import maximomrtnz.podcastmanager.broadcastreceivers.AlarmReceiver;
-import maximomrtnz.podcastmanager.models.pojos.Podcast;
 
 /**
  * Created by Maxi on 11/22/2015.
@@ -40,6 +39,12 @@ public class Utils {
             return null;
         }
         return Long.parseLong(dateFormat.format(cal.getTime()));
+    }
+
+    public static String format(Calendar calendar, String format){
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format);
+        dateFormat.setTimeZone(calendar.getTimeZone());
+        return dateFormat.format(calendar.getTime());
     }
 
     public static Calendar getCalendarFromFormattedLong(long l){
@@ -152,6 +157,8 @@ public class Utils {
         // InexactRepeating allows Android to optimize the energy consumption
         manager.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), repeatTime, pendingIntent);
     }
+
+
 
 
 }

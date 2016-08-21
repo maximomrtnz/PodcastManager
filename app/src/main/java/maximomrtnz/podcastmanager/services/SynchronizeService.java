@@ -21,7 +21,9 @@ import maximomrtnz.podcastmanager.database.PodcastManagerContract;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.ui.activities.MainActivity;
+import maximomrtnz.podcastmanager.utils.ContentProviderUtils;
 import maximomrtnz.podcastmanager.utils.NotificationHelper;
+import maximomrtnz.podcastmanager.utils.Utils;
 
 /**
  * Created by maximo on 11/08/16.
@@ -47,7 +49,10 @@ public class SynchronizeService extends IntentService{
         List<Podcast> podcasts = new ArrayList<>();
 
         // Episodes List to Upsert
-        ArrayList<ContentProviderOperation> episodes = new ArrayList<>();
+        ArrayList<ContentProviderOperation> episodesToUpsert = new ArrayList<>();
+
+        // Podcast List to Upsert
+        ArrayList<ContentProviderOperation> podcastsToUpsert = new ArrayList<>();
 
         Cursor cursor = null;
 
@@ -106,37 +111,22 @@ public class SynchronizeService extends IntentService{
             // in order to avoid unnecessary db operations
             if(tempPodcast.getPubDate()!=podcast.getPubDate() || tempPodcast.getLastBuildDate()!=podcast.getLastBuildDate()) {
 
-                Log.d(LOG_TAG, podcast.getTitle());
+                podcastsToUpsert.add(ContentProviderUtils.toContentProviderOperation(tempPodcast));
 
-                for (Episode episode : tempPodcast.getEpisodes()) {
+                episodesToUpsert.addAll(ContentProviderUtils.toContentProviderOperation(tempPodcast.getEpisodes(), podcast.getId()));
 
-                    ContentValues episodeContentValue = new ContentValues();
-
-                    // Set Podcast Id
-                    episode.setPodcastId(podcast.getId());
-
-                    // Add episode to episodes list
-                    episode.loadTo(episodeContentValue);
-
-                    // Add apisode to batch list
-                    episodes.add(ContentProviderOperation.newInsert(PodcastManagerContentProvider.EPISODE_CONTENT_URI)
-                            .withValues(episodeContentValue)
-                            .build());
-
-                }
             }
 
         }
 
-        Log.d(LOG_TAG, "Episodes -->"+episodes.size());
 
         //If we have episodes to upsert
-        if(!episodes.isEmpty()) {
+        if(!episodesToUpsert.isEmpty()) {
 
             ContentProviderResult[] results = null;
 
             try {
-                results = getContentResolver().applyBatch(PodcastManagerContentProvider.AUTHORITY, episodes);
+                results = getContentResolver().applyBatch(PodcastManagerContentProvider.AUTHORITY, episodesToUpsert);
             } catch (RemoteException e) {
                 e.printStackTrace();
                 Log.e(LOG_TAG, e.getMessage());
@@ -150,9 +140,12 @@ public class SynchronizeService extends IntentService{
                 Log.d(LOG_TAG, "Showing Notification");
 
                 // Show user notifications
-                NotificationHelper notificationHelper = new NotificationHelper(this,getString(R.string.app_name),getString(R.string.notification_text_new_episodes),R.drawable.ic_new);
-
-                notificationHelper.show(0, MainActivity.class);
+                new NotificationHelper(this)
+                        .setIcon(R.drawable.ic_new)
+                        .setIntent(new Intent(this, MainActivity.class))
+                        .setAutoCancel(true)
+                        .setTitle(getString(R.string.app_name))
+                        .show(0);
 
             }
 
