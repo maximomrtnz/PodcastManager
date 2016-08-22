@@ -12,9 +12,11 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import java.io.File;
 import java.util.List;
 
 import maximomrtnz.podcastmanager.R;
+import maximomrtnz.podcastmanager.cache.FileCache;
 import maximomrtnz.podcastmanager.cache.ImageLoader;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.ui.activities.AudioPlayerActivity;
@@ -41,6 +43,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     private int mEpisodePosition;
     private final IBinder mAudioBind = new AudioBinder();
     private ImageLoader mImageLoader;
+    private FileCache mFileCache;
     private NotificationHelper mNotificationHelper;
 
     @Nullable
@@ -101,6 +104,8 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public void playEpisode(){
+
+        mFileCache = new FileCache(this, Constants.DIRECTORIES.DOWNLOADS);
 
         mPlayer.reset();
 

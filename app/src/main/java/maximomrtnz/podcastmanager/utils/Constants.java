@@ -27,5 +27,12 @@ public class Constants {
         static final String RESULT = "result";
     }
 
+    public interface DIRECTORIES{
+        static final String ROOT = "PodcastManager";
+        static final String IMAGES = "Images";
+        static final String DOWNLOADS = "Downloads";
+        static final String FEEDS = "Feeds";
+    }
+
 
 }

@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.WeakHashMap;
 
+import maximomrtnz.podcastmanager.utils.Constants;
 import maximomrtnz.podcastmanager.utils.Utils;
 
 /**
@@ -31,7 +32,6 @@ import maximomrtnz.podcastmanager.utils.Utils;
 public class ImageLoader {
 
     private static final String LOG_TAG = "ImageLoader";
-    private static final String DIRECTORY = "Images";
 
     private MemoryCache memoryCache = new MemoryCache();
     private FileCache fileCache;
@@ -41,7 +41,7 @@ public class ImageLoader {
 
 
     public ImageLoader(Context context){
-        fileCache = new FileCache(context, DIRECTORY);
+        fileCache = new FileCache(context, Constants.DIRECTORIES.IMAGES);
         executorService = Executors.newFixedThreadPool(5);
     }
 

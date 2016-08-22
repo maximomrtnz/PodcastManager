@@ -87,8 +87,6 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
 
     };
 
-
-
     //connect to the service
     private ServiceConnection mAudioConnection = new ServiceConnection(){
 
@@ -491,7 +489,7 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
         request.setDescription(getString(R.string.notification_text_download_in_progress));
 
         // we just want to download silently
-        request.setDestinationInExternalFilesDir(this, "PodcastManager/Downloads", URLEncoder.encode(mEpisodeList.get(0).getEpisodeUrl()));
+        request.setDestinationInExternalPublicDir(Constants.DIRECTORIES.ROOT+"/"+Constants.DIRECTORIES.DOWNLOADS,Utils.md5Encode(mEpisodeList.get(0).getEpisodeUrl()));
 
         enqueue = mDownloadManager.enqueue(request);
     }

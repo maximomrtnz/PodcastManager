@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
+import maximomrtnz.podcastmanager.utils.Constants;
 import maximomrtnz.podcastmanager.utils.PodcastXMLParser;
 import maximomrtnz.podcastmanager.utils.Utils;
 
@@ -34,7 +35,6 @@ public class FeedLoader {
     }
 
     private static final String LOG_TAG = "FeedLoader";
-    private static final String DIRECTORY = "Feeds";
 
     private FileCache mFileCache;
     private MemoryCache mMemoryCache = new MemoryCache();
@@ -43,13 +43,13 @@ public class FeedLoader {
     private FeedLoaderListener mFeedLoaderListener;
 
     public FeedLoader(Context context, FeedLoaderListener feedLoaderListener){
-        mFileCache = new FileCache(context, DIRECTORY);
+        mFileCache = new FileCache(context, Constants.DIRECTORIES.FEEDS);
         mExecutorService = Executors.newFixedThreadPool(1);
         mFeedLoaderListener = feedLoaderListener;
     }
 
     public FeedLoader(Context context){
-        mFileCache = new FileCache(context, DIRECTORY);
+        mFileCache = new FileCache(context, Constants.DIRECTORIES.FEEDS);
     }
 
     public void loadFeed(String url,boolean overrideCache){
