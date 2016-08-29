@@ -4,7 +4,10 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.util.Log;
+import android.widget.ImageView;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -100,6 +103,13 @@ public class Utils {
             e.printStackTrace();
         }
         return "";
+    }
+
+    public static void applyGrayscale(ImageView imageView){
+        ColorMatrix matrix = new ColorMatrix();
+        matrix.setSaturation(0);
+        ColorMatrixColorFilter filter = new ColorMatrixColorFilter(matrix);
+        imageView.setColorFilter(filter);
     }
 
 }

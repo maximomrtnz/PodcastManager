@@ -38,11 +38,21 @@ public class ImageLoader {
     private Map<ImageView, String> imageViews = Collections.synchronizedMap(new WeakHashMap<ImageView, String>());
     private ExecutorService executorService;
     private Handler handler = new Handler();//handler to display images in UI thread
+    private ImageLoadeListener mImageLoadeListener;
 
+    public interface ImageLoadeListener {
+        void onImageLoader(Bitmap bitmap);
+    }
 
     public ImageLoader(Context context){
         fileCache = new FileCache(context, Constants.DIRECTORIES.IMAGES);
         executorService = Executors.newFixedThreadPool(5);
+    }
+
+    public ImageLoader(Context context, ImageLoadeListener imageLoadeListener){
+        fileCache = new FileCache(context, Constants.DIRECTORIES.IMAGES);
+        executorService = Executors.newFixedThreadPool(5);
+        mImageLoadeListener = imageLoadeListener;
     }
 
     public void displayImage(String url, ImageView imageView) {
@@ -63,7 +73,7 @@ public class ImageLoader {
 
     public Bitmap getBitmap(String url) {
 
-        File f = fileCache.getFile(url);
+        File f = fileCache.getFile(FileCache.getCacheFileName(url));
 
         //from SD cache
         Bitmap b = decodeFile(f);
@@ -107,7 +117,7 @@ public class ImageLoader {
             stream1.close();
 
             //Find the correct scale value. It should be the power of 2.
-            final int REQUIRED_SIZE = 70;
+            final int REQUIRED_SIZE = 140;
             int width_tmp=o.outWidth, height_tmp=o.outHeight;
             int scale=1;
             while(true){
@@ -192,7 +202,13 @@ public class ImageLoader {
                 return;
             }
             if (bitmap != null) {
+
                 photoToLoad.imageView.setImageBitmap(bitmap);
+
+                if(mImageLoadeListener!=null){
+                    mImageLoadeListener.onImageLoader(bitmap);
+                }
+
             } else {
                 //photoToLoad.imageView.setImageResource(stub_id);
             }

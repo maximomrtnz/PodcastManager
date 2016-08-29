@@ -49,7 +49,11 @@ public class InsertPodcast extends AsyncTask<Podcast,List<Uri>, List<Uri>>{
         List<Uri> podcastUris = new ArrayList<>();
 
         // Insert Podcast
-        ArrayList<ContentProviderOperation> podcasts = ContentProviderUtils.toContentProviderOperation(Arrays.asList(args));
+        ArrayList<ContentProviderOperation> podcasts = new ArrayList<>();
+
+        for(Podcast podcast : args){
+            podcasts.add(ContentProviderUtils.toInsertOperation(podcast));
+        }
 
         ArrayList<ContentProviderOperation> episodes = new ArrayList<>();
 
@@ -80,13 +84,17 @@ public class InsertPodcast extends AsyncTask<Podcast,List<Uri>, List<Uri>>{
             // Add uri to list
             podcastUris.add(podcastUri);
 
-            Log.d(LOG_TAG, ""+podcastUri);
-
             // Get Podcast Database Id
             long podcastId = Long.valueOf(podcastUri.getLastPathSegment());
 
             // Insert Podcast Episodes
-            episodes.addAll(ContentProviderUtils.toContentProviderOperation(podcast.getEpisodes(),podcastId));
+            for(Episode episode : podcast.getEpisodes()){
+
+                episode.setPodcastId(podcastId);
+
+                episodes.add(ContentProviderUtils.toInsertOperation(episode));
+
+            }
 
         }
 

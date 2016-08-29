@@ -21,6 +21,7 @@ import maximomrtnz.podcastmanager.cache.ImageLoader;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.ui.activities.AudioPlayerActivity;
 import maximomrtnz.podcastmanager.utils.Constants;
+import maximomrtnz.podcastmanager.utils.JsonUtil;
 import maximomrtnz.podcastmanager.utils.NotificationHelper;
 
 import android.app.Notification;
@@ -71,6 +72,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
+        showNotification();
         mediaPlayer.start();
     }
 
@@ -111,16 +113,23 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
         Episode playEpisode = mEpisodes.get(mEpisodePosition);
 
-        Log.e(LOG_TAG, "Playing podcast -->"+playEpisode.getTitle());
+        // Check if episode is in cache
+
+        File file = mFileCache.getFile(playEpisode.getEpisodeUrl());
 
         try{
-            mPlayer.setDataSource(playEpisode.getEpisodeUrl());
+            if(file.exists()) {
+                mPlayer.setDataSource(file.getAbsolutePath());
+            }else{
+                mPlayer.setDataSource(playEpisode.getEpisodeUrl());
+            }
         }catch(Exception e){
             Log.e(LOG_TAG, "Error setting data source", e);
         }
 
-        mPlayer.prepareAsync();
+        Log.e(LOG_TAG, "Playing podcast -->"+playEpisode.getTitle());
 
+        mPlayer.prepareAsync();
 
     }
 
@@ -181,9 +190,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
             return START_STICKY;
         }
 
-        if (intent.getAction().equals(Constants.ACTION.STARTFOREGROUND_ACTION)) {
-            showNotification(intent);
-        } else if (intent.getAction().equals(Constants.ACTION.PREV_ACTION)) {
+        if (intent.getAction().equals(Constants.ACTION.PREV_ACTION)) {
             Log.i(LOG_TAG, "Clicked Previous");
         } else if (intent.getAction().equals(Constants.ACTION.PLAY_ACTION)) {
             Log.i(LOG_TAG, "Clicked Play");
@@ -202,16 +209,15 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         return START_STICKY;
     }
 
-    private void showNotification(Intent intent) {
+    private void showNotification() {
 
-        Episode episode = new Episode();
-
-        episode.loadFrom(intent);
+        Episode episode = mEpisodes.get(mEpisodePosition);
 
         mImageLoader = new ImageLoader(this);
 
         Intent notificationIntent = new Intent(this, AudioPlayerActivity.class);
-        episode.loadTo(notificationIntent);
+        notificationIntent.putExtra("episode", JsonUtil.getInstance().toJson(episode));
+
         notificationIntent.setAction(Constants.ACTION.MAIN_ACTION);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 

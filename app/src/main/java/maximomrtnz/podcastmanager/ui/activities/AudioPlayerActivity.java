@@ -3,14 +3,19 @@ package maximomrtnz.podcastmanager.ui.activities;
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentProviderOperation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.OperationApplicationException;
 import android.content.ServiceConnection;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.RemoteException;
+import android.support.design.widget.Snackbar;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -21,18 +26,21 @@ import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.net.URLEncoder;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import maximomrtnz.podcastmanager.R;
+import maximomrtnz.podcastmanager.cache.FileCache;
 import maximomrtnz.podcastmanager.cache.ImageLoader;
+import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.services.AudioService;
 import maximomrtnz.podcastmanager.utils.Constants;
+import maximomrtnz.podcastmanager.utils.ContentProviderUtils;
+import maximomrtnz.podcastmanager.utils.JsonUtil;
 import maximomrtnz.podcastmanager.utils.Utils;
 
 /**
@@ -61,8 +69,9 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
     private int mBackwardTime = 2000;
     private Handler durationHandler = new Handler();
     private DownloadManager mDownloadManager;
-    private long enqueue;
-
+    private long mDownloadId;
+    private Boolean mIsUserMovingSeekBar = false;
+    private FileCache mFileCache;
 
     //binding
     private boolean mAudioBound = false;
@@ -79,9 +88,41 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
 
         @Override
         public void onReceive(Context context, Intent intent) {
+
             String action = intent.getAction();
+
             if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
+
                 long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
+
+                if (mDownloadId != downloadId) {
+                    return;
+                }
+
+                DownloadManager.Query query = new DownloadManager.Query();
+
+                query.setFilterById(downloadId);
+
+                Cursor c = mDownloadManager.query(query);
+
+                if (c.moveToFirst()) {
+
+                    int columnIndex = c.getColumnIndex(DownloadManager.COLUMN_STATUS);
+
+                    int message = R.string.notification_text_download_completed;
+
+                    if (DownloadManager.STATUS_SUCCESSFUL != c.getInt(columnIndex)) { // Download Failed
+                        message = R.string.notification_text_download_failed;
+                    }
+
+                    // Display message to user
+                    Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
+
+                    // Reload Toolbar Menus
+                    invalidateOptionsMenu();
+
+                }
+
             }
         }
 
@@ -94,6 +135,7 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
         public void onServiceConnected(ComponentName name, IBinder service) {
 
             AudioService.AudioBinder binder = (AudioService.AudioBinder)service;
+
             //get service
             mAudioService = binder.getService();
 
@@ -112,6 +154,37 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
         }
     };
 
+    //handler to change seekBarTime
+    private Runnable updateSeekBarTime = new Runnable() {
+        public void run() {
+
+            if(mAudioService!=null && mAudioBound && mAudioService.isPng()) { // Playing
+
+                //get current position
+                mTimeElapsed = getCurrentPosition();
+
+                // get final time
+                mFinalTime = getDuration();
+
+                //set seekbar progress
+                mSeekBarEpisodePosition.setProgress((int) mTimeElapsed);
+
+                // set max
+                if(!mIsUserMovingSeekBar) {
+                    mSeekBarEpisodePosition.setMax((int) mFinalTime);
+                }
+
+                //set time remaing
+
+                mEpisodeDuration.setText(String.format("%s / %s", Utils.formatSeconds(TimeUnit.MILLISECONDS.toSeconds(mTimeElapsed)), Utils.formatSeconds(TimeUnit.MILLISECONDS.toSeconds(mFinalTime))));
+
+            }
+
+            //repeat yourself that again in 100 miliseconds
+            durationHandler.postDelayed(this, 100);
+        }
+    };
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
 
@@ -122,9 +195,7 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
         // GetPodcast Information from caller activity
         Intent intent = getIntent();
 
-        Episode episode = new Episode();
-
-        episode.loadFrom(intent);
+        Episode episode = JsonUtil.getInstance().fromJson(intent.getStringExtra("episode"),Episode.class);
 
         mEpisodeList = new ArrayList<>();
 
@@ -133,6 +204,8 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
         setController();
 
         loadUI();
+
+        mFileCache = new FileCache(this,Constants.DIRECTORIES.DOWNLOADS);
 
     }
 
@@ -147,8 +220,6 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
         // Enabling Back Button
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-
-
 
         mImageLoader = new ImageLoader(getApplicationContext());
 
@@ -220,6 +291,26 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
                 forward();
             }
 
+        });
+
+        mSeekBarEpisodePosition.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(fromUser) {
+                    seekTo(progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                mIsUserMovingSeekBar = true;
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mIsUserMovingSeekBar = false;
+            }
         });
 
     }
@@ -351,9 +442,31 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
     }
 
     @Override
-    protected void onPause(){
+    protected void onPause() {
         super.onPause();
-        mPaused=true;
+
+        mPaused = true;
+
+        ArrayList<ContentProviderOperation> episodesToUpsert = new ArrayList<>();
+
+        for(Episode episode : mEpisodeList){
+            if(episode.getDirty()){
+                episodesToUpsert.add(ContentProviderUtils.toInsertOperation(episode));
+                Log.d(LOG_TAG, episode.getPlayed()+"");
+            }
+        }
+
+        // Save episode changes
+        try {
+            getContentResolver().applyBatch(PodcastManagerContentProvider.AUTHORITY, episodesToUpsert);
+        }catch (RemoteException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG, e.getMessage());
+        }catch (OperationApplicationException e){
+            e.printStackTrace();
+            Log.d(LOG_TAG,e.getMessage());
+        }
+
     }
 
     @Override
@@ -385,7 +498,7 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
         super.onStart();
         if(playIntent==null){
             playIntent = new Intent(this, AudioService.class);
-            mEpisodeList.get(0).loadTo(playIntent);
+            playIntent.putExtra("episodes",JsonUtil.getInstance().toJson(mEpisodeList));
             playIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
             bindService(playIntent, mAudioConnection, Context.BIND_AUTO_CREATE);
             startService(playIntent);
@@ -402,6 +515,7 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
             setController();
             mPlaybackPaused=false;
         }
+
         mController.show(0);
 
         mFinalTime = getDuration();
@@ -414,40 +528,13 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
 
         durationHandler.postDelayed(updateSeekBarTime, 100);
 
-        Log.d(LOG_TAG,mFinalTime+"");
-        Log.d(LOG_TAG,mTimeElapsed+"");
+        // Mark episode as played
+        mEpisodeList.get(0).setPlayed(true);
+
+        // Set as a dirty to save changes before activity is closed
+        mEpisodeList.get(0).setDirty(true);
 
     }
-
-    //handler to change seekBarTime
-    private Runnable updateSeekBarTime = new Runnable() {
-        public void run() {
-
-            if(mAudioService!=null && mAudioBound && mAudioService.isPng()) { // Playing
-
-                //get current position
-                mTimeElapsed = getCurrentPosition();
-
-                // get final time
-                mFinalTime = getDuration();
-
-
-                //set seekbar progress
-                mSeekBarEpisodePosition.setProgress((int) mTimeElapsed);
-
-                // set max
-                mSeekBarEpisodePosition.setMax((int) mFinalTime);
-
-                //set time remaing
-
-                mEpisodeDuration.setText(String.format("%s / %s", Utils.formatSeconds(TimeUnit.MILLISECONDS.toSeconds(mTimeElapsed)), Utils.formatSeconds(TimeUnit.MILLISECONDS.toSeconds(mFinalTime))));
-
-            }
-
-            //repeat yourself that again in 100 miliseconds
-            durationHandler.postDelayed(this, 100);
-        }
-    };
 
 
     @Override
@@ -464,6 +551,10 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
                 downloadFile();
                 return true;
 
+            case R.id.action_deleted:
+                deleteFile();
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -472,12 +563,40 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_audio_player_activity, menu);
+
         return true;
     }
 
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+
+
+        File file = mFileCache.getFile(FileCache.getAudioFileName(mEpisodeList.get(0).getEpisodeUrl()));
+
+        if(file.exists()){
+            menu.findItem(R.id.action_deleted).setVisible(true);
+            menu.findItem(R.id.action_download).setVisible(false);
+        }else{
+            menu.findItem(R.id.action_deleted).setVisible(false);
+            menu.findItem(R.id.action_download).setVisible(true);
+        }
+
+        return super.onPrepareOptionsMenu(menu);
+
+    }
+
     private void downloadFile(){
+
+        File file = mFileCache.getFile(FileCache.getAudioFileName(mEpisodeList.get(0).getEpisodeUrl()));
+
+        if(file.exists()) {
+            // Display message to user
+            Snackbar.make(findViewById(android.R.id.content), R.string.notification_text_episode_is_already_being_downloaded, Snackbar.LENGTH_LONG).show();
+            return;
+        }
 
         mDownloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
 
@@ -489,8 +608,21 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
         request.setDescription(getString(R.string.notification_text_download_in_progress));
 
         // we just want to download silently
-        request.setDestinationInExternalPublicDir(Constants.DIRECTORIES.ROOT+"/"+Constants.DIRECTORIES.DOWNLOADS,Utils.md5Encode(mEpisodeList.get(0).getEpisodeUrl()));
+        request.setDestinationInExternalPublicDir(Constants.DIRECTORIES.ROOT + "/" + Constants.DIRECTORIES.DOWNLOADS, FileCache.getAudioFileName(mEpisodeList.get(0).getEpisodeUrl()));
 
-        enqueue = mDownloadManager.enqueue(request);
+        mDownloadId = mDownloadManager.enqueue(request);
+
+    }
+
+    private void deleteFile(){
+
+        File file = mFileCache.getFile(FileCache.getAudioFileName(mEpisodeList.get(0).getEpisodeUrl()));
+
+        if(file.exists()){
+            mFileCache.deleteFile(FileCache.getAudioFileName(mEpisodeList.get(0).getEpisodeUrl()));
+        }
+
+        // Reload Toolbar Menus
+        invalidateOptionsMenu();
     }
 }

@@ -2,9 +2,16 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:padding="5dp"
-    android:background="@color/tabsScrollColor">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/cv"
+        android:layout_marginBottom="@dimen/card_margin_bottom"
+        android:layout_marginLeft="@dimen/card_margin_left"
+        android:layout_marginTop="@dimen/card_margin_top"
+        android:layout_marginRight="@dimen/card_margin_right">
 
         <RelativeLayout
             style="@style/Widget.CardContent"
@@ -17,11 +24,12 @@
 
             <ImageView
                 android:layout_width="@dimen/episode_image_width"
-                android:layout_height="wrap_content"
+                android:layout_height="@dimen/episode_image_height"
                 android:id="@+id/episode_image"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"
-                android:layout_marginRight="4dp" />
+                android:layout_marginRight="4dp"
+                android:scaleType="centerCrop"/>
 
             <TextView
                 android:layout_width="@dimen/episode_title_width"
@@ -65,5 +73,7 @@
                 android:textSize="16sp"/>
 
         </RelativeLayout>
+
+    </android.support.v7.widget.CardView>
 
 </LinearLayout>

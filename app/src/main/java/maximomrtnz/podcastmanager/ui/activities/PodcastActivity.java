@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.Loader;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -41,6 +42,7 @@ import maximomrtnz.podcastmanager.ui.adapters.EpisodesRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.dialogs.ConfirmDialog;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 import maximomrtnz.podcastmanager.utils.Constants;
+import maximomrtnz.podcastmanager.utils.JsonUtil;
 import maximomrtnz.podcastmanager.utils.Utils;
 import mbanje.kurt.fabbutton.FabButton;
 
@@ -70,7 +72,6 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
     private ProgressBar mProgressBar;
     private SwipeRefreshLayout mSwipeRefreshLayout;
 
-
     private BroadcastReceiver mSynchronizeServiceReceiver = new BroadcastReceiver() {
 
         @Override
@@ -97,7 +98,14 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
         mFeedLoader = new FeedLoader(getApplicationContext(), this);
 
-        mImageLoader = new ImageLoader(getApplicationContext());
+        mImageLoader = new ImageLoader(getApplicationContext(), new ImageLoader.ImageLoadeListener() {
+
+            @Override
+            public void onImageLoader(Bitmap bitmap) {
+                extractPaletteColors(bitmap);
+            }
+
+        });
 
         loadPodcast();
 
@@ -185,8 +193,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
         Intent intent = getIntent();
 
         // Set podcast's data into Podcast Object
-        mPodcast = new Podcast();
-        mPodcast.loadFrom(intent);
+        mPodcast = JsonUtil.getInstance().fromJson(intent.getStringExtra("podcast"),Podcast.class);
 
         // If we have and Id, we have to get the episodes from database
         if(mPodcast.getId()!=null){
@@ -272,8 +279,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
         Intent i = new Intent(getApplicationContext(), AudioPlayerActivity.class);
 
-        // Pass episode data
-        episode.loadTo(i);
+        i.putExtra("episode",JsonUtil.getInstance().toJson(episode));
 
         startActivity(i);
 
@@ -521,7 +527,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
             //Call synchronizeservice
             Intent i = new Intent(this, SynchronizeService.class);
 
-            mPodcast.loadTo(i);
+            i.putExtra("podcast",JsonUtil.getInstance().toJson(mPodcast));
 
             startService(i);
 
@@ -543,5 +549,17 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
     protected void onResume() {
         super.onResume();
         registerReceiver(mSynchronizeServiceReceiver, new IntentFilter(Constants.SYNCHRONIZE_SERVICE.NOTIFICATION));
+    }
+
+    @Override
+    public void setPrimaryColor(int color) {
+
+        super.setPrimaryColor(color);
+
+        if(mCollapsingToolbarLayout!=null) {
+            mCollapsingToolbarLayout.setStatusBarScrimColor(color);
+            mCollapsingToolbarLayout.setContentScrimColor(color);
+        }
+
     }
 }

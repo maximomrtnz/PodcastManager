@@ -24,7 +24,7 @@
 
             <ImageView
                 android:layout_width="@dimen/podcast_image_width"
-                android:layout_height="wrap_content"
+                android:layout_height="@dimen/podcast_image_height"
                 android:id="@+id/podcast_image"
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"

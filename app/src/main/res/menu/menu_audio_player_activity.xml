@@ -9,4 +9,9 @@
         android:title="@string/action_download"
         app:showAsAction="collapseActionView" />
 
+    <item
+        android:id="@+id/action_deleted"
+        android:title="@string/action_deleted"
+        app:showAsAction="collapseActionView" />
+
 </menu>

@@ -30,16 +30,18 @@
     <!--Episode-->
     <dimen name="episode_title_width">130dp</dimen>
     <dimen name="episode_description_width">180dp</dimen>
-    <dimen name="episode_item_list_padding_top">8dp</dimen>
-    <dimen name="episode_item_list_padding_bottom">8dp</dimen>
+    <dimen name="episode_item_list_padding_top">0dp</dimen>
+    <dimen name="episode_item_list_padding_bottom">0dp</dimen>
     <dimen name="episode_item_list_padding_right">8dp</dimen>
     <dimen name="episode_item_list_padding_left">0dp</dimen>
     <dimen name="episode_image_width">80dp</dimen>
+    <dimen name="episode_image_height">80dp</dimen>
 
     <!--Podcast-->
     <dimen name="podcast_image_width">80dp</dimen>
-    <dimen name="podcast_item_list_padding_top">8dp</dimen>
-    <dimen name="podcast_item_list_padding_bottom">8dp</dimen>
+    <dimen name="podcast_image_height">80dp</dimen>
+    <dimen name="podcast_item_list_padding_top">0dp</dimen>
+    <dimen name="podcast_item_list_padding_bottom">0dp</dimen>
     <dimen name="podcast_item_list_padding_right">8dp</dimen>
     <dimen name="podcast_item_list_padding_left">0dp</dimen>
 

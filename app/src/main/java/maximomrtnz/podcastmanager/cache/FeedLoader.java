@@ -54,7 +54,11 @@ public class FeedLoader {
 
     public void loadFeed(String url,boolean overrideCache){
 
-        Podcast podcast = (Podcast) mMemoryCache.get(url);
+        Podcast podcast = null;
+
+        if(!overrideCache) {
+            podcast = (Podcast) mMemoryCache.get(url);
+        }
 
         if(podcast!=null) {
 
@@ -73,21 +77,19 @@ public class FeedLoader {
 
     public Podcast getFeed(String url, boolean overrideCache) {
 
-        File f = mFileCache.getFile(url);
+        if(overrideCache){
+            mFileCache.deleteFile(url);
+        }
 
-        Podcast podcast;
+        File f = mFileCache.getFile(FileCache.getCacheFileName(url));
 
-        if(!overrideCache){
+        Podcast podcast = decodePodcast(f);
 
-            podcast = decodePodcast(f);
-
-            // From SD Cache
-            if(podcast!=null){
-                // Set feed URL
-                podcast.setFeedUrl(url);
-                return podcast;
-            }
-
+        // From SD Cache
+        if(podcast!=null){
+            // Set feed URL
+            podcast.setFeedUrl(url);
+            return podcast;
         }
 
         // From web

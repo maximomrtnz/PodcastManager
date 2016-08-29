@@ -2,6 +2,7 @@ package maximomrtnz.podcastmanager.ui.adapters;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -88,6 +89,13 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
             mImageLoader.displayImage(episode.getImageUrl(), personViewHolder.mEpisodeImage);
         }else{
             mImageLoader.displayImage(mPodcast.getImageUrl(), personViewHolder.mEpisodeImage);
+        }
+
+        Log.d(LOG_TAG,episode.getPlayed()+"");
+
+        if(episode.getPlayed()){
+            Utils.applyGrayscale(personViewHolder.mEpisodeImage);
+            personViewHolder.mEpisodeTitle.setTextColor(Color.GRAY);
         }
 
         if(episode.getDescription()!=null){

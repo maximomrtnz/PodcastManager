@@ -72,6 +72,7 @@ public class PodcastManagerContract {
         public static final String COLUMN_NAME_DESCRIPTION = "description";
         public static final String COLUMN_NAME_IMAGE_URL = "image_url";
         public static final String COLUMN_NAME_EPISODE_URL = "episode_url";
+        public static final String COLUMN_NAME_FLAG_PLAYED = "flag_played";
 
         /**
          * Content Provider
@@ -81,6 +82,7 @@ public class PodcastManagerContract {
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.podcastmanager_database.episodes";
 
         public static final String WHERE_ID_EQUALS = _ID + " =?";
+        public static final String WHERE_EPISODE_URL = COLUMN_NAME_EPISODE_URL + " =?";
 
         public static final String SORT_ORDER = COLUMN_NAME_PUB_DATE+" DESC";
 
@@ -97,7 +99,8 @@ public class PodcastManagerContract {
                 COLUMN_NAME_PUB_DATE,
                 COLUMN_NAME_TITLE,
                 COLUMN_NAME_LINK,
-                COLUMN_NAME_EPISODE_URL
+                COLUMN_NAME_EPISODE_URL,
+                COLUMN_NAME_FLAG_PLAYED
         };
 
     }

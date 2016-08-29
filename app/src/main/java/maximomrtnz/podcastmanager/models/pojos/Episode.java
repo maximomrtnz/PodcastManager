@@ -3,10 +3,12 @@ package maximomrtnz.podcastmanager.models.pojos;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.util.Log;
 
 import java.util.Calendar;
 import java.util.Date;
 
+import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
 import maximomrtnz.podcastmanager.utils.DateUtils;
 import maximomrtnz.podcastmanager.utils.Utils;
@@ -29,6 +31,8 @@ public class Episode {
     private String guid;
     private String description;
     private String episodeUrl;
+    private Boolean isPlayed = false;
+    private Boolean isDirty;
 
     public String getTitle() {
         return title;
@@ -135,6 +139,23 @@ public class Episode {
         this.episodeUrl = episodeUrl;
     }
 
+    public Boolean getPlayed() {
+        return isPlayed;
+    }
+
+    public void setPlayed(Boolean played) {
+        isPlayed = played;
+    }
+
+
+    public Boolean getDirty() {
+        return isDirty;
+    }
+
+    public void setDirty(Boolean dirty) {
+        isDirty = dirty;
+    }
+
     public void loadTo(ContentValues mNewValues){
 
         /*
@@ -158,6 +179,8 @@ public class Episode {
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUBTITLE, getItunesSubtitle());
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUMMARY, getItunesSummary());
         mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL, getEpisodeUrl());
+        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_FLAG_PLAYED, (getPlayed())?1:0);
+
     }
 
 
@@ -176,31 +199,7 @@ public class Episode {
         this.setItunesSubtitle(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUBTITLE)));
         this.setGuid(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_GUID)));
         this.setEpisodeUrl(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL)));
-
-    }
-
-    public void loadTo(Intent i){
-
-        i.putExtra("title",getTitle());
-        i.putExtra("episodeUrl",getEpisodeUrl());
-        i.putExtra("imageUrl",getImageUrl());
-        i.putExtra("id",getId());
-        i.putExtra("itunesDuration",getItunesDuration());
-
-    }
-
-    public void loadFrom(Intent i){
-
-        long id = i.getLongExtra("id",-1);
-
-        if(id!=-1) {
-            setId(id);
-        }
-
-        setTitle(i.getStringExtra("title"));
-        setEpisodeUrl(i.getStringExtra("episodeUrl"));
-        setImageUrl(i.getStringExtra("imageUrl"));
-        setItunesDuration(i.getStringExtra("itunesDuration"));
+        this.setPlayed(cursor.getInt(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_FLAG_PLAYED)) == 1);
 
     }
 

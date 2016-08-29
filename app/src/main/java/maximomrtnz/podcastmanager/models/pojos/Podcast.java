@@ -177,27 +177,4 @@ public class Podcast {
 
         }
 
-        public void loadTo(Intent i){
-
-            i.putExtra("title",getTitle());
-            i.putExtra("feedUrl",getFeedUrl());
-            i.putExtra("imageUrl",getImageUrl());
-            i.putExtra("id",getId());
-
-        }
-
-        public void loadFrom(Intent i){
-
-            long id = i.getLongExtra("id",-1);
-
-            if(id!=-1) {
-                setId(id);
-            }
-
-            setTitle(i.getStringExtra("title"));
-            setFeedUrl(i.getStringExtra("feedUrl"));
-            setImageUrl(i.getStringExtra("imageUrl"));
-
-        }
-
 }

@@ -11,6 +11,7 @@ import android.database.Cursor;
 import android.os.RemoteException;
 import android.util.Log;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -25,6 +26,7 @@ import maximomrtnz.podcastmanager.ui.activities.MainActivity;
 import maximomrtnz.podcastmanager.utils.Constants;
 import maximomrtnz.podcastmanager.utils.ContentProviderUtils;
 import maximomrtnz.podcastmanager.utils.DateUtils;
+import maximomrtnz.podcastmanager.utils.JsonUtil;
 import maximomrtnz.podcastmanager.utils.NotificationHelper;
 import maximomrtnz.podcastmanager.utils.Utils;
 
@@ -77,9 +79,7 @@ public class SynchronizeService extends IntentService{
 
             }else{
 
-                Podcast podcast = new Podcast();
-
-                podcast.loadFrom(intent);
+                Podcast podcast = JsonUtil.getInstance().fromJson(intent.getStringExtra("podcast"),Podcast.class);
 
                 // Get Podcast from Database
                 cursor = getContentResolver().query(
@@ -139,24 +139,18 @@ public class SynchronizeService extends IntentService{
                 }
             }
 
-            Log.d(LOG_TAG, podcast.getFeedUrl());
-            if(tempPodcast.getPubDate()!=null) {
-                Log.d(LOG_TAG, DateUtils.format(tempPodcast.getPubDate(), "EEE, dd MMM yyyy HH:mm:ss Z"));
-            }
-
-            if(tempPodcast.getLastBuildDate()!=null) {
-                Log.d(LOG_TAG, DateUtils.format(tempPodcast.getLastBuildDate(), "EEE, dd MMM yyyy HH:mm:ss Z"));
-            }
-
             if(!DateUtils.areEquals(tempPodcast.getPubDate(),podcast.getPubDate()) || !DateUtils.areEquals(tempPodcast.getLastBuildDate(),podcast.getLastBuildDate())) {
 
-                Log.d(LOG_TAG, DateUtils.areEquals(tempPodcast.getPubDate(),podcast.getPubDate())+"");
-                Log.d(LOG_TAG, DateUtils.areEquals(tempPodcast.getLastBuildDate(),podcast.getLastBuildDate())+"");
+                podcastsToUpsert.add(ContentProviderUtils.toInsertOperation(tempPodcast));
 
-                podcastsToUpsert.add(ContentProviderUtils.toContentProviderOperation(tempPodcast));
+                for(Episode episode : tempPodcast.getEpisodes()) {
 
-                episodesToUpsert.addAll(ContentProviderUtils.toContentProviderOperation(tempPodcast.getEpisodes(), podcast.getId()));
+                    if(episode.getEpisodeUrl()!=null){
+                        episode.setPodcastId(podcast.getId());
+                        episodesToUpsert.add(ContentProviderUtils.toInsertOperation(episode));
+                    }
 
+                }
             }
 
         }
@@ -198,15 +192,29 @@ public class SynchronizeService extends IntentService{
 
         if(results!=null){
 
-            Log.d(LOG_TAG, "Showing Notification");
+            // Check results, and count the number of new episodes added
+            int newEpisodesAddes = 0;
 
-            // Show user notifications
-            new NotificationHelper(this)
-                    .setIcon(R.drawable.ic_new)
-                    .setIntent(new Intent(this, MainActivity.class))
-                    .setAutoCancel(true)
-                    .setTitle(getString(R.string.app_name))
-                    .show(0);
+            for(ContentProviderResult result : results){
+                if(ContentProviderUtils.isEpisodeInsert(result.uri)){
+                    newEpisodesAddes++;
+                }
+            }
+
+            if(newEpisodesAddes>0) {
+
+                Log.d(LOG_TAG, "Showing Notification");
+
+                // Show user notifications
+                new NotificationHelper(this)
+                        .setIcon(R.drawable.ic_new)
+                        .setIntent(new Intent(this, MainActivity.class))
+                        .setAutoCancel(true)
+                        .setTitle(getString(R.string.app_name))
+                        .setContentText(MessageFormat.format(getString(R.string.notification_content_text_new_episodes), new String[]{String.valueOf(newEpisodesAddes)}))
+                        .show(0);
+
+            }
 
             publishResults(Activity.RESULT_OK);
 

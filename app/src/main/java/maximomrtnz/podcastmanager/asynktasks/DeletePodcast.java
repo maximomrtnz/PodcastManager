@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
+import maximomrtnz.podcastmanager.utils.ContentProviderUtils;
 
 /**
  * Created by maximo on 31/07/16.
@@ -38,15 +39,12 @@ public class DeletePodcast extends AsyncTask<Podcast,Integer, Integer> {
     @Override
     protected Integer doInBackground(Podcast... args) {
 
-        // Get podcast from arguments
-        Podcast podcast = args[0];
-
         ArrayList<ContentProviderOperation> podcasts = new ArrayList<ContentProviderOperation>();
 
-        // Add podcast
-        podcasts.add(ContentProviderOperation.newDelete(PodcastManagerContentProvider.PODCAST_CONTENT_URI)
-                .withSelection(PodcastManagerContract.Podcast.WHERE_ID_EQUALS,new String[]{String.valueOf(podcast.getId())})
-                .build());
+        for (Podcast podcast : args){
+            // Add podcast
+            podcasts.add(ContentProviderUtils.toDeleteOperation(podcast));
+        }
 
         // Delete Podcast
         ContentProviderResult[] results = null;

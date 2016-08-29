@@ -28,10 +28,14 @@ public class FileCache {
         }
     }
 
-    public File getFile(String url){
-        String filename = Utils.md5Encode(url);
+    public File getFile(String filename){
         File f = new File(cacheDir, filename);
         return f;
+    }
+
+    public boolean deleteFile(String fileName) {
+        File file = new File(cacheDir, fileName);
+        return file.delete();
     }
 
     public void clear(){
@@ -42,5 +46,21 @@ public class FileCache {
         for(File f:files) {
             f.delete();
         }
+    }
+
+    public static String getCacheFileName(String url){
+        return Utils.md5Encode(url);
+    }
+
+    public static String getAudioFileName(String url){
+        String fileName = getCacheFileName(url);
+        if(url.toLowerCase().contains(".mp3")){
+            fileName +=".mp3";
+        }else if(url.toLowerCase().contains(".ogg")){
+            fileName +=".ogg";
+        }else if(url.toLowerCase().contains(".wav")){
+            fileName +=".wav";
+        }
+        return fileName;
     }
 }

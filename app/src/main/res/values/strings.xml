@@ -4,6 +4,7 @@
     <string name="action_search">Search</string>
     <string name="action_refresh">Refresh</string>
     <string name="action_download">Download</string>
+    <string name="action_deleted">Delete</string>
 
     <string name="label_your_podcasts">Subcriptions</string>
     <string name="label_discover">Browse</string>
@@ -15,10 +16,15 @@
     <string name="dialog_title_confirm_deletion">Unsubscribe</string>
 
     <string name="notification_text_new_episodes">New episodes available</string>
+    <string name="notification_content_text_new_episodes">New {0} episodes added</string>
 
     <string name="notification_text_download_in_progress">Download in progress</string>
 
+    <string name="notification_text_download_failed">Download Failed</string>
+
     <string name="notification_text_download_completed">Download complete</string>
+
+    <string name="notification_text_episode_is_already_being_downloaded">Episode is already being downloaded</string>
 
 
 
