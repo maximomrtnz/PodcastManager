@@ -1,6 +1,7 @@
 package maximomrtnz.podcastmanager.utils;
 
 import android.text.Html;
+import android.util.Log;
 import android.util.Xml;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -25,6 +26,7 @@ public class PodcastXMLParser {
     private static final String CHANNEL = "channel";
     private static final String ITEM = "item";
     private static final String RSS = "rss";
+    private static final String LOG_TAG = "PodcastXMLParser";
 
 
     /** Parse an Podcast XML, returning a Podacast Channel.
@@ -113,15 +115,7 @@ public class PodcastXMLParser {
 
             String name = parser.getName();
 
-            if (name.equals(ITEM)) {
-
-                Episode episode = readItem(parser);
-
-                if(episode.getEpisodeUrl() != null) { // Avoid adding no episode item
-                    episodes.add(episode);
-                }
-
-            }else if(name.equals("link")) {
+            if(name.equals("link")) {
 
                 // Example <link>http://www.example.con/podcast</link>
 
@@ -167,10 +161,25 @@ public class PodcastXMLParser {
                 // Example <itunes:image href="https://example/i/10874674.jpg"/>
                 channel.setImageUrl(readItunesImage(parser));
 
-            }else if(name.equals("lastBuildDate")){
+            }else if(name.equals("lastBuildDate")) {
 
                 // Example <lastBuildDate>Fri, 29 Jul 2016 03:01:27 -0400</lastBuildDate>
                 channel.setLastBuildDate(DateUtils.getCalendarFromString(readBasicTag(parser, "lastBuildDate")));
+
+            }else if (name.equals(ITEM)) {
+
+                Episode episode = readItem(parser);
+
+                if(episode.getEpisodeUrl() == null) { // Avoid adding no episode item
+                    continue;
+                }
+
+                // Check if episode has image
+                if(episode.getImageUrl() == null){
+                    episode.setImageUrl(channel.getImageUrl());
+                }
+
+                episodes.add(episode);
 
             }else{
 

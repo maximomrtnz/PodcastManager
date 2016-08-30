@@ -32,22 +32,22 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
 
     private RecyclerViewClickListener mItemListener;
     private List<Episode> mDataset;
-    private Podcast mPodcast;
     private ImageLoader mImageLoader;
     private Cursor mCursor;
+    private Context mContext;
 
-    public EpisodesRecyclerViewAdapter(List<Episode> dataset, Podcast podcast, Context context, RecyclerViewClickListener itemListener){
+    public EpisodesRecyclerViewAdapter(List<Episode> dataset, Context context, RecyclerViewClickListener itemListener){
         this.mDataset = dataset;
         this.mImageLoader = new ImageLoader(context);
-        this.mPodcast = podcast;
         this.mItemListener = itemListener;
+        this.mContext = context;
     }
 
 
-    public EpisodesRecyclerViewAdapter(Podcast podcast, Context context, RecyclerViewClickListener itemListener){
+    public EpisodesRecyclerViewAdapter(Context context, RecyclerViewClickListener itemListener){
         this.mImageLoader = new ImageLoader(context);
-        this.mPodcast = podcast;
         this.mItemListener = itemListener;
+        this.mContext = context;
     }
 
     @Override
@@ -85,17 +85,16 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
 
         Episode episode = getItem(i);
 
-        if(episode.getImageUrl()!=null) {
-            mImageLoader.displayImage(episode.getImageUrl(), personViewHolder.mEpisodeImage);
-        }else{
-            mImageLoader.displayImage(mPodcast.getImageUrl(), personViewHolder.mEpisodeImage);
-        }
+        mImageLoader.displayImage(episode.getImageUrl(), personViewHolder.mEpisodeImage);
 
         Log.d(LOG_TAG,episode.getPlayed()+"");
 
         if(episode.getPlayed()){
             Utils.applyGrayscale(personViewHolder.mEpisodeImage);
-            personViewHolder.mEpisodeTitle.setTextColor(Color.GRAY);
+            personViewHolder.mEpisodeTitle.setTextColor(mContext.getResources().getColor(R.color.podcastTitlePlayedListColor));
+        }else{
+            personViewHolder.mEpisodeImage.setColorFilter(null);
+            personViewHolder.mEpisodeTitle.setTextColor(mContext.getResources().getColor(R.color.podcastTitleListColor));
         }
 
         if(episode.getDescription()!=null){

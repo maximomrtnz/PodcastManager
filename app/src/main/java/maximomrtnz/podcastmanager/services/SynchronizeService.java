@@ -157,6 +157,7 @@ public class SynchronizeService extends IntentService{
 
         // If we have podcast to upsert
         if(podcastsToUpsert.isEmpty()){
+            Log.d(LOG_TAG,"NO PODCAST TO UPDATE");
             publishResults(Activity.RESULT_OK);
             return;
         }

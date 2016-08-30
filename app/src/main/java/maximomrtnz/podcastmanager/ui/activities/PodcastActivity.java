@@ -139,7 +139,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mAdapter = new EpisodesRecyclerViewAdapter(mEpisodes, mPodcast, getApplicationContext(), this);
+        mAdapter = new EpisodesRecyclerViewAdapter(mEpisodes, getApplicationContext(), this);
 
         mRecyclerView.setAdapter(mAdapter);
 
@@ -518,6 +518,8 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
     private void refreshItems(){
 
+        Log.d(LOG_TAG, "REFRESHING ITEMS-->"+mPodcast.getId());
+
         if(!mSwipeRefreshLayout.isRefreshing()){
             mSwipeRefreshLayout.setRefreshing(true);
         }
@@ -527,7 +529,13 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
             //Call synchronizeservice
             Intent i = new Intent(this, SynchronizeService.class);
 
-            i.putExtra("podcast",JsonUtil.getInstance().toJson(mPodcast));
+            // Pass only the data that we need to avoid hit the 1MB limit
+            Podcast podcast = new Podcast();
+
+            podcast.setId(mPodcast.getId());
+            podcast.setFeedUrl(mPodcast.getFeedUrl());
+
+            i.putExtra("podcast",JsonUtil.getInstance().toJson(podcast));
 
             startService(i);
 
