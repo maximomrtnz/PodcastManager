@@ -78,7 +78,7 @@ public class FeedLoader {
     public Podcast getFeed(String url, boolean overrideCache) {
 
         if(overrideCache){
-            mFileCache.deleteFile(url);
+            mFileCache.deleteFile(FileCache.getCacheFileName(url));
         }
 
         File f = mFileCache.getFile(FileCache.getCacheFileName(url));
