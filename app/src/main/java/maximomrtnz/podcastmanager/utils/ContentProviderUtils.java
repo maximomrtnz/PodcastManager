@@ -2,6 +2,7 @@ package maximomrtnz.podcastmanager.utils;
 
 import android.content.ContentProviderOperation;
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.net.Uri;
 
 import java.util.ArrayList;
@@ -17,49 +18,6 @@ import maximomrtnz.podcastmanager.models.pojos.Podcast;
  */
 
 public class ContentProviderUtils {
-
-    public static ContentProviderOperation toDeleteOperation(Podcast podcast){
-
-        return ContentProviderOperation.newDelete(PodcastManagerContentProvider.PODCAST_CONTENT_URI)
-                .withSelection(PodcastManagerContract.Podcast.WHERE_ID_EQUALS,new String[]{String.valueOf(podcast.getId())})
-                .build();
-
-    }
-
-    public static ContentProviderOperation toInsertOperation(Podcast podcast){
-
-        ContentValues podcastContentValue = new ContentValues();
-
-        podcast.loadTo(podcastContentValue);
-
-        return  ContentProviderOperation.newInsert(PodcastManagerContentProvider.PODCAST_CONTENT_URI)
-                .withValues(podcastContentValue)
-                .build();
-
-    }
-
-    public static ContentProviderOperation toInsertOperation(Episode episode){
-        ContentValues episodeContentValue = new ContentValues();
-
-        episode.loadTo(episodeContentValue);
-
-        // Add episode to batch list
-        return ContentProviderOperation.newInsert(PodcastManagerContentProvider.EPISODE_CONTENT_URI)
-                .withValues(episodeContentValue)
-                .build();
-    }
-
-    public static ContentProviderOperation toUpdateOperation(Episode episode){
-        ContentValues episodeContentValue = new ContentValues();
-
-        episode.loadTo(episodeContentValue);
-
-        // Add episode to batch list
-        return ContentProviderOperation.newUpdate(PodcastManagerContentProvider.EPISODE_CONTENT_URI)
-                .withSelection(PodcastManagerContract.Episode.WHERE_ID_EQUALS,new String[]{String.valueOf(episode.getId())})
-                .withValues(episodeContentValue)
-                .build();
-    }
 
     public static boolean isEpisodeInsert(Uri uri){
         String regex = "\\d+";

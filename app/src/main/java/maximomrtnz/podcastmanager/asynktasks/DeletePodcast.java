@@ -10,6 +10,8 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
+import maximomrtnz.podcastmanager.database.Converter;
+import maximomrtnz.podcastmanager.database.PodcastConverter;
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
@@ -41,9 +43,11 @@ public class DeletePodcast extends AsyncTask<Podcast,Integer, Integer> {
 
         ArrayList<ContentProviderOperation> podcasts = new ArrayList<ContentProviderOperation>();
 
+        Converter converter = new PodcastConverter();
+
         for (Podcast podcast : args){
             // Add podcast
-            podcasts.add(ContentProviderUtils.toDeleteOperation(podcast));
+            podcasts.add(converter.toDeleteOperation(podcast));
         }
 
         // Delete Podcast

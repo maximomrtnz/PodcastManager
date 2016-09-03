@@ -13,6 +13,7 @@ import android.widget.TextView;
 import java.util.List;
 import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.cache.ImageLoader;
+import maximomrtnz.podcastmanager.database.PodcastConverter;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 
@@ -119,11 +120,9 @@ public class PodcastRecyclerViewAdapter extends RecyclerView.Adapter<PodcastRecy
 
         }else{
 
-            podcast = new Podcast();
-
             mCursor.moveToPosition(position);
 
-            podcast.loadFrom(mCursor);
+            podcast = new PodcastConverter().loadFrom(mCursor);
 
         }
 

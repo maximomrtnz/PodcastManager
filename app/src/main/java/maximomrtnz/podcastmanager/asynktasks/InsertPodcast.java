@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import maximomrtnz.podcastmanager.database.Converter;
+import maximomrtnz.podcastmanager.database.EpisodeConverter;
+import maximomrtnz.podcastmanager.database.PodcastConverter;
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
@@ -51,8 +54,12 @@ public class InsertPodcast extends AsyncTask<Podcast,List<Uri>, List<Uri>>{
         // Insert Podcast
         ArrayList<ContentProviderOperation> podcasts = new ArrayList<>();
 
+        Converter podcastConverter = new PodcastConverter();
+
+        Converter episodeConverter = new EpisodeConverter();
+
         for(Podcast podcast : args){
-            podcasts.add(ContentProviderUtils.toInsertOperation(podcast));
+            podcasts.add(podcastConverter.toInsertOperation(podcast));
         }
 
         ArrayList<ContentProviderOperation> episodes = new ArrayList<>();
@@ -92,7 +99,7 @@ public class InsertPodcast extends AsyncTask<Podcast,List<Uri>, List<Uri>>{
 
                 episode.setPodcastId(podcastId);
 
-                episodes.add(ContentProviderUtils.toInsertOperation(episode));
+                episodes.add(episodeConverter.toInsertOperation(episode));
 
             }
 

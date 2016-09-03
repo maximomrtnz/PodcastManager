@@ -32,6 +32,8 @@ import maximomrtnz.podcastmanager.asynktasks.DeletePodcast;
 import maximomrtnz.podcastmanager.asynktasks.InsertPodcast;
 import maximomrtnz.podcastmanager.cache.FeedLoader;
 import maximomrtnz.podcastmanager.cache.ImageLoader;
+import maximomrtnz.podcastmanager.database.EpisodeConverter;
+import maximomrtnz.podcastmanager.database.PodcastConverter;
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
@@ -447,7 +449,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                 if(cursor.moveToFirst()){
 
                     // Get cursor and load podcast
-                    mPodcast.loadFrom(cursor);
+                    mPodcast = new PodcastConverter().loadFrom(cursor);
 
                         // Load Podcast Episodes from Database
                     getLoaderManager().initLoader(EPISODES_LOADER, null, this);
@@ -476,8 +478,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                     mEpisodes.clear();
 
                     while (cursor.moveToNext()) {
-                        Episode episode = new Episode();
-                        episode.loadFrom(cursor);
+                        Episode episode = new EpisodeConverter().loadFrom(cursor);
                         mEpisodes.add(episode);
                     }
 

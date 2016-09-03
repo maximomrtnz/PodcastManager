@@ -135,46 +135,5 @@ public class Podcast {
             this.imageUrl = imageUrl;
         }
 
-        public void loadTo(ContentValues mNewValues){
-
-            /*
-             * Sets the values of each column and inserts the word. The arguments to the "put"
-             * method are "column name" and "value"
-             */
-
-            if(getId()!=null){
-                mNewValues.put(PodcastManagerContract.Podcast._ID, getId());
-            }
-
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_TITLE, getTitle());
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_DESCRIPTION, getDescription());
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_COPYRIGHT, getCopyright());
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_AUTHOR, getItunesAuthor());
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE, DateUtils.formatDateAsLong(getPubDate()));
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_LINK, getLink());
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_LANGUAGE, getLanguage());
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE, DateUtils.formatDateAsLong(getLastBuildDate()));
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_SUMMARY, getItunesSumary());
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL, getFeedUrl());
-            mNewValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL, getImageUrl());
-
-        }
-
-        public void loadFrom(Cursor cursor){
-
-            this.setId(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast._ID)));
-            this.setTitle(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_TITLE)));
-            this.setFeedUrl(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL)));
-            this.setImageUrl(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL)));
-            this.setCopyright(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_COPYRIGHT)));
-            this.setDescription(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_DESCRIPTION)));
-            this.setItunesAuthor(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_AUTHOR)));
-            this.setItunesSumary(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_ITUNES_SUMMARY)));
-            this.setLanguage(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LANGUAGE)));
-            this.setLastBuildDate(DateUtils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE))));
-            this.setPubDate(DateUtils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE))));
-            this.setLink(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LINK)));
-
-        }
 
 }

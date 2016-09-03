@@ -18,6 +18,9 @@ import java.util.List;
 
 import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.cache.FeedLoader;
+import maximomrtnz.podcastmanager.database.Converter;
+import maximomrtnz.podcastmanager.database.EpisodeConverter;
+import maximomrtnz.podcastmanager.database.PodcastConverter;
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
@@ -49,6 +52,10 @@ public class SynchronizeService extends IntentService{
     protected void onHandleIntent(Intent intent) {
 
         Log.d(LOG_TAG, "Running SynchronizeService");
+
+        Converter podcastConverter = new PodcastConverter();
+
+        Converter episodeConverter = new EpisodeConverter();
 
         // Podcast List
         List<Podcast> podcasts = new ArrayList<>();
@@ -98,10 +105,7 @@ public class SynchronizeService extends IntentService{
                 while(cursor.moveToNext()) {
 
                     // Instantiate a Podcast Object
-                    Podcast podcast = new Podcast();
-
-                    // Load Podcast from Cursor
-                    podcast.loadFrom(cursor);
+                    Podcast podcast = (Podcast)podcastConverter.loadFrom(cursor);
 
                     // Add to Podcast List
                     podcasts.add(podcast);
@@ -141,13 +145,13 @@ public class SynchronizeService extends IntentService{
 
             if(!DateUtils.areEquals(tempPodcast.getPubDate(),podcast.getPubDate()) || !DateUtils.areEquals(tempPodcast.getLastBuildDate(),podcast.getLastBuildDate())) {
 
-                podcastsToUpsert.add(ContentProviderUtils.toInsertOperation(tempPodcast));
+                podcastsToUpsert.add(podcastConverter.toInsertOperation(tempPodcast));
 
                 for(Episode episode : tempPodcast.getEpisodes()) {
 
                     if(episode.getEpisodeUrl()!=null){
                         episode.setPodcastId(podcast.getId());
-                        episodesToUpsert.add(ContentProviderUtils.toInsertOperation(episode));
+                        episodesToUpsert.add(episodeConverter.toInsertOperation(episode));
                     }
 
                 }

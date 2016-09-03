@@ -16,6 +16,7 @@ import java.util.List;
 
 import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.cache.ImageLoader;
+import maximomrtnz.podcastmanager.database.EpisodeConverter;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
@@ -87,9 +88,7 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
 
         mImageLoader.displayImage(episode.getImageUrl(), personViewHolder.mEpisodeImage);
 
-        Log.d(LOG_TAG,episode.getPlayed()+"");
-
-        if(episode.getPlayed()){
+        if(episode.getPlayed()!=null && episode.getPlayed()){
             Utils.applyGrayscale(personViewHolder.mEpisodeImage);
             personViewHolder.mEpisodeTitle.setTextColor(mContext.getResources().getColor(R.color.podcastTitlePlayedListColor));
         }else{
@@ -139,11 +138,10 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
 
         if(mCursor != null) {
 
-            episode = new Episode();
-
             mCursor.moveToPosition(position);
 
-            episode.loadFrom(mCursor);
+            episode = new EpisodeConverter().loadFrom(mCursor);
+
 
         }else{
 

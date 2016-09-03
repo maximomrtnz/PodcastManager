@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.cache.FileCache;
 import maximomrtnz.podcastmanager.cache.ImageLoader;
+import maximomrtnz.podcastmanager.database.EpisodeConverter;
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.services.AudioService;
@@ -449,10 +450,11 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
 
         ArrayList<ContentProviderOperation> episodesToUpsert = new ArrayList<>();
 
+        EpisodeConverter episodeConverter = new EpisodeConverter();
+
         for(Episode episode : mEpisodeList){
             if(episode.getDirty()){
-                episodesToUpsert.add(ContentProviderUtils.toInsertOperation(episode));
-                Log.d(LOG_TAG, episode.getPlayed()+"");
+                episodesToUpsert.add(episodeConverter.toUpdateOperation(episode));
             }
         }
 
@@ -590,17 +592,12 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
 
     private void downloadFile(){
 
-        File file = mFileCache.getFile(FileCache.getAudioFileName(mEpisodeList.get(0).getEpisodeUrl()));
-
-        if(file.exists()) {
-            // Display message to user
-            Snackbar.make(findViewById(android.R.id.content), R.string.notification_text_episode_is_already_being_downloaded, Snackbar.LENGTH_LONG).show();
-            return;
-        }
-
         mDownloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
 
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(mEpisodeList.get(0).getEpisodeUrl()));
+
+        // Don't show file on download files
+        request.setVisibleInDownloadsUi(false);
 
         // only download via WIFI
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI);
@@ -611,6 +608,12 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
         request.setDestinationInExternalPublicDir(Constants.DIRECTORIES.ROOT + "/" + Constants.DIRECTORIES.DOWNLOADS, FileCache.getAudioFileName(mEpisodeList.get(0).getEpisodeUrl()));
 
         mDownloadId = mDownloadManager.enqueue(request);
+
+        // Save downloadId on episode to track download progress
+        mEpisodeList.get(0).setDownloadId(mDownloadId);
+
+        // Set as a dirty to save changes before activity is closed
+        mEpisodeList.get(0).setDirty(true);
 
     }
 

@@ -20,6 +20,7 @@ public class Episode {
 
     private Long id;
     private Long podcastId;
+    private Long downloadId;
     private String title;
     private String link;
     private String imageUrl;
@@ -31,7 +32,7 @@ public class Episode {
     private String guid;
     private String description;
     private String episodeUrl;
-    private Boolean isPlayed = false;
+    private Boolean isPlayed;
     private Boolean isDirty;
 
     public String getTitle() {
@@ -147,7 +148,6 @@ public class Episode {
         isPlayed = played;
     }
 
-
     public Boolean getDirty() {
         return isDirty;
     }
@@ -156,51 +156,11 @@ public class Episode {
         isDirty = dirty;
     }
 
-    public void loadTo(ContentValues mNewValues){
-
-        /*
-         * Sets the values of each column and inserts the word. The arguments to the "put"
-         * method are "column name" and "value"
-         */
-
-        if(getId()!=null){
-            mNewValues.put(PodcastManagerContract.Episode._ID, getId());
-        }
-
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_TITLE, getTitle());
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_DESCRIPTION, getDescription());
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_AUTHOR, getItunesAuthor());
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE, DateUtils.formatDateAsLong(getPubDate()));
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_LINK, getLink());
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_IMAGE_URL, getImageUrl());
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID, getPodcastId());
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_GUID, getGuid());
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_DURATION, getItunesDuration());
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUBTITLE, getItunesSubtitle());
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUMMARY, getItunesSummary());
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL, getEpisodeUrl());
-        mNewValues.put(PodcastManagerContract.Episode.COLUMN_NAME_FLAG_PLAYED, (getPlayed())?1:0);
-
+    public Long getDownloadId() {
+        return downloadId;
     }
 
-
-    public void loadFrom(Cursor cursor){
-
-        this.setId(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode._ID)));
-        this.setTitle(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_TITLE)));
-        this.setPodcastId(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID)));
-        this.setImageUrl(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_IMAGE_URL)));
-        this.setItunesDuration(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_DURATION)));
-        this.setDescription(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_DESCRIPTION)));
-        this.setItunesAuthor(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_AUTHOR)));
-        this.setItunesSummary(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUMMARY)));
-        this.setPubDate(DateUtils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE))));
-        this.setLink(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_LINK)));
-        this.setItunesSubtitle(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUBTITLE)));
-        this.setGuid(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_GUID)));
-        this.setEpisodeUrl(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL)));
-        this.setPlayed(cursor.getInt(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_FLAG_PLAYED)) == 1);
-
+    public void setDownloadId(Long downloadId) {
+        this.downloadId = downloadId;
     }
-
 }
