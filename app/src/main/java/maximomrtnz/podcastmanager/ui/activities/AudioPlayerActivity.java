@@ -41,8 +41,10 @@ import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.services.AudioService;
 import maximomrtnz.podcastmanager.utils.Constants;
 import maximomrtnz.podcastmanager.utils.ContentProviderUtils;
+import maximomrtnz.podcastmanager.utils.DownloadManagerHelper;
 import maximomrtnz.podcastmanager.utils.JsonUtil;
 import maximomrtnz.podcastmanager.utils.Utils;
+import mbanje.kurt.fabbutton.FabButton;
 
 /**
  * Created by maximo on 14/08/16.
@@ -68,11 +70,13 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
     private long mFinalTime = 0;
     private int mForwardTime = 2000;
     private int mBackwardTime = 2000;
-    private Handler durationHandler = new Handler();
-    private DownloadManager mDownloadManager;
+    private Handler mDurationHandler = new Handler();
+    private Handler mProgressHandler = new Handler();
+    private DownloadManagerHelper mDownloadManagerHelper;
     private long mDownloadId;
     private Boolean mIsUserMovingSeekBar = false;
     private FileCache mFileCache;
+    private FabButton mFloatingActionButton;
 
     //binding
     private boolean mAudioBound = false;
@@ -84,50 +88,6 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
     private Intent playIntent;
 
     private List<Episode> mEpisodeList;
-
-    private BroadcastReceiver mDownloadServiceReceiver = new BroadcastReceiver() {
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            String action = intent.getAction();
-
-            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
-
-                long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
-
-                if (mDownloadId != downloadId) {
-                    return;
-                }
-
-                DownloadManager.Query query = new DownloadManager.Query();
-
-                query.setFilterById(downloadId);
-
-                Cursor c = mDownloadManager.query(query);
-
-                if (c.moveToFirst()) {
-
-                    int columnIndex = c.getColumnIndex(DownloadManager.COLUMN_STATUS);
-
-                    int message = R.string.notification_text_download_completed;
-
-                    if (DownloadManager.STATUS_SUCCESSFUL != c.getInt(columnIndex)) { // Download Failed
-                        message = R.string.notification_text_download_failed;
-                    }
-
-                    // Display message to user
-                    Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_LONG).show();
-
-                    // Reload Toolbar Menus
-                    invalidateOptionsMenu();
-
-                }
-
-            }
-        }
-
-    };
 
     //connect to the service
     private ServiceConnection mAudioConnection = new ServiceConnection(){
@@ -182,7 +142,26 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
             }
 
             //repeat yourself that again in 100 miliseconds
-            durationHandler.postDelayed(this, 100);
+            mDurationHandler.postDelayed(this, 100);
+        }
+    };
+
+
+    /**
+     * Checks download progress and updates status, then re-schedules itself.
+     */
+    private Runnable progressChecker = new Runnable() {
+        @Override
+        public void run() {
+            float progress = 0;
+            try {
+                progress = mDownloadManagerHelper.getProgressPercentage(mDownloadId);
+                mFloatingActionButton.setProgress(progress);
+            } finally {
+                if (progress < 100) {
+                    mProgressHandler.postDelayed(progressChecker, 1000);
+                }
+            }
         }
     };
 
@@ -207,6 +186,10 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
         loadUI();
 
         mFileCache = new FileCache(this,Constants.DIRECTORIES.DOWNLOADS);
+
+        mDownloadManagerHelper = new DownloadManagerHelper(this);
+
+        checkIfIsDownloading();
 
     }
 
@@ -311,6 +294,16 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 mIsUserMovingSeekBar = false;
+            }
+        });
+
+        mFloatingActionButton = (FabButton) findViewById(R.id.floating_action_button);
+
+
+        mFloatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                downloadFile();
             }
         });
 
@@ -474,7 +467,6 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
     @Override
     protected void onResume(){
         super.onResume();
-        registerReceiver(mDownloadServiceReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
         if(mPaused){
             setController();
             mPaused=false;
@@ -483,7 +475,6 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
 
     @Override
     protected void onStop() {
-        unregisterReceiver(mDownloadServiceReceiver);
         mController.hide();
         super.onStop();
     }
@@ -528,7 +519,7 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
 
         mSeekBarEpisodePosition.setProgress((int) mTimeElapsed);
 
-        durationHandler.postDelayed(updateSeekBarTime, 100);
+        mDurationHandler.postDelayed(updateSeekBarTime, 100);
 
         // Mark episode as played
         mEpisodeList.get(0).setPlayed(true);
@@ -575,10 +566,9 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
 
+        Episode currentEpisode = mEpisodeList.get(0);
 
-        File file = mFileCache.getFile(FileCache.getAudioFileName(mEpisodeList.get(0).getEpisodeUrl()));
-
-        if(file.exists()){
+        if(currentEpisode.getDownloadId() != null){
             menu.findItem(R.id.action_deleted).setVisible(true);
             menu.findItem(R.id.action_download).setVisible(false);
         }else{
@@ -592,40 +582,86 @@ public class AudioPlayerActivity extends BaseActivity implements MediaController
 
     private void downloadFile(){
 
-        mDownloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+        Episode currentEpisode = mEpisodeList.get(0);
 
-        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(mEpisodeList.get(0).getEpisodeUrl()));
+        if(currentEpisode.getDownloadId()==0){
 
-        // Don't show file on download files
-        request.setVisibleInDownloadsUi(false);
+            mDownloadId = mDownloadManagerHelper.download(currentEpisode.getEpisodeUrl(), Constants.DIRECTORIES.ROOT + "/" + Constants.DIRECTORIES.DOWNLOADS, FileCache.getAudioFileName(currentEpisode.getEpisodeUrl()), currentEpisode.getTitle(), getString(R.string.notification_text_download_in_progress));
 
-        // only download via WIFI
-        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI);
-        request.setTitle(mEpisodeList.get(0).getTitle());
-        request.setDescription(getString(R.string.notification_text_download_in_progress));
+            // Save downloadId on episode to track download progress
+            currentEpisode.setDownloadId(mDownloadId);
 
-        // we just want to download silently
-        request.setDestinationInExternalPublicDir(Constants.DIRECTORIES.ROOT + "/" + Constants.DIRECTORIES.DOWNLOADS, FileCache.getAudioFileName(mEpisodeList.get(0).getEpisodeUrl()));
+            // Set as a dirty to save changes before activity is closed
+            currentEpisode.setDirty(true);
 
-        mDownloadId = mDownloadManager.enqueue(request);
+            showDownloadingFabButton();
 
-        // Save downloadId on episode to track download progress
-        mEpisodeList.get(0).setDownloadId(mDownloadId);
+        }else{
 
-        // Set as a dirty to save changes before activity is closed
-        mEpisodeList.get(0).setDirty(true);
+            deleteFile();
+
+        }
 
     }
 
     private void deleteFile(){
 
-        File file = mFileCache.getFile(FileCache.getAudioFileName(mEpisodeList.get(0).getEpisodeUrl()));
+        mProgressHandler.removeCallbacks(progressChecker);
 
-        if(file.exists()){
-            mFileCache.deleteFile(FileCache.getAudioFileName(mEpisodeList.get(0).getEpisodeUrl()));
-        }
+        mFloatingActionButton.showProgress(false);
+
+        Episode currentEpisode = mEpisodeList.get(0);
+
+        mDownloadManagerHelper.deleteDownload(currentEpisode.getDownloadId());
+
+        // Remove Download Id
+        currentEpisode.setDownloadId(0L);
+
+        // Set as a dirty to save changes before activity is closed
+        currentEpisode.setDirty(true);
 
         // Reload Toolbar Menus
         invalidateOptionsMenu();
+
+        mFloatingActionButton.resetIcon();
+
     }
+
+    private void checkIfIsDownloading(){
+
+        Episode currentEpisode = mEpisodeList.get(0);
+
+        if(currentEpisode.getDownloadId()!=0){
+
+            int status = mDownloadManagerHelper.getDownloadStatus(currentEpisode.getDownloadId());
+
+            mDownloadId = currentEpisode.getDownloadId();
+
+            // If currently running
+            switch (status){
+                case DownloadManager.STATUS_RUNNING:
+                    showDownloadingFabButton();
+                    break;
+                case DownloadManager.STATUS_SUCCESSFUL:
+                    showDeleteFabButton();
+                    break;
+                default:
+                    break;
+            }
+
+        }
+
+    }
+
+    private void showDownloadingFabButton(){
+        mFloatingActionButton.showProgress(true);
+        mFloatingActionButton.setProgress(0);
+        // Start progress handler
+        progressChecker.run();
+    }
+
+    private void showDeleteFabButton(){
+        mFloatingActionButton.onProgressCompleted();
+    }
+
 }

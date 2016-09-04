@@ -73,6 +73,7 @@ public class PodcastManagerContract {
         public static final String COLUMN_NAME_IMAGE_URL = "image_url";
         public static final String COLUMN_NAME_EPISODE_URL = "episode_url";
         public static final String COLUMN_NAME_FLAG_PLAYED = "flag_played";
+        public static final String COLUMN_NAME_DOWNLOAD_MANAGER_ID = "download_manager_id";
 
         /**
          * Content Provider
@@ -100,7 +101,8 @@ public class PodcastManagerContract {
                 COLUMN_NAME_TITLE,
                 COLUMN_NAME_LINK,
                 COLUMN_NAME_EPISODE_URL,
-                COLUMN_NAME_FLAG_PLAYED
+                COLUMN_NAME_FLAG_PLAYED,
+                COLUMN_NAME_DOWNLOAD_MANAGER_ID
         };
 
     }

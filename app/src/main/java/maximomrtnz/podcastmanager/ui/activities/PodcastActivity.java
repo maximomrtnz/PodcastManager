@@ -177,12 +177,12 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
         if(mPodcast.getId()==null) {
 
             // Set icons
-            mFloatingActionButton.setIcon(R.drawable.ic_add, R.drawable.ic_fab_complete);
+            mFloatingActionButton.setIcon(R.drawable.ic_fab_add, R.drawable.ic_fab_complete);
 
         }else{
 
             // Set icons
-            mFloatingActionButton.setIcon(R.drawable.ic_fab_complete,R.drawable.ic_add);
+            mFloatingActionButton.setIcon(R.drawable.ic_fab_complete,R.drawable.ic_fab_add);
 
         }
 

@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".ui.activities.AudioPlayerActivity">
+    tools:context=".ui.activities.AudioPlayerActivity"
+    android:id="@+id/coordinatorLayout">
 
 
     <android.support.design.widget.AppBarLayout
@@ -146,9 +147,32 @@
 
                 </LinearLayout>
             </LinearLayout>
+
         </android.support.v7.widget.CardView>
 
     </LinearLayout>
+
+    <view
+        class="mbanje.kurt.fabbutton.FabButton"
+        android:id="@+id/floating_action_button"
+        android:layout_width="@dimen/fab_button_size"
+        android:layout_height="@dimen/fab_button_size"
+        android:layout_margin="16dp"
+        android:clickable="true"
+        android:src="@drawable/ic_fab_download"
+        android:color="@color/colorPrimary"
+        app:layout_anchor="@+id/coordinatorLayout"
+        app:layout_anchorGravity="bottom|right|end"
+        app:fbb_endBitmap="@drawable/ic_fab_delete"
+        app:fbb_showEndBitmap="true"
+        app:fbb_progressColor="?attr/colorAccent"
+        app:fbb_hideProgressOnComplete="true"
+        android:max="100"
+        app:fbb_showShadow="true"
+        app:fbb_autoStart="true"
+        android:indeterminate="false"
+        app:fbb_progressWidthRatio="0.1"/>
+
 
 </android.support.design.widget.CoordinatorLayout>
 
