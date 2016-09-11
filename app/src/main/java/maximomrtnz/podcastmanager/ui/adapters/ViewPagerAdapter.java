@@ -6,11 +6,8 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.util.SparseArray;
 import android.view.ViewGroup;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import maximomrtnz.podcastmanager.ui.fragments.PodcastSourcesFragment;
-import maximomrtnz.podcastmanager.ui.fragments.PodcastSubscribedFragment;
+import maximomrtnz.podcastmanager.ui.fragments.TopChartsFragment;
+import maximomrtnz.podcastmanager.ui.fragments.SubscriptionsFragment;
 
 /**
  * Created by maximo on 17/06/16.
@@ -38,9 +35,9 @@ public class ViewPagerAdapter extends FragmentStatePagerAdapter {
     public Fragment getItem(int position) {
 
         if(position == 0){
-            return  new PodcastSubscribedFragment();
+            return  new SubscriptionsFragment();
         }else{
-            return new PodcastSourcesFragment();
+            return new TopChartsFragment();
         }
 
     }

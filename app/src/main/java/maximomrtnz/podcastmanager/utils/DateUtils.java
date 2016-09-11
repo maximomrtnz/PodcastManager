@@ -131,4 +131,57 @@ public class DateUtils {
         return parser;
     }
 
+    public static Long timeToSeconds(String time){
+
+        Log.d(LOG_TAG,time);
+
+        if(time == null){
+            return 0L;
+        }
+
+        String[] units = time.split(":");
+
+        long minutes = 0;
+        long seconds = 0;
+        long hours = 0;
+
+        if(units.length==2){
+            minutes = Integer.parseInt(units[0]);
+            seconds = Integer.parseInt(units[1]);
+        }else if(units.length==3){
+            hours = Integer.parseInt(units[0]);
+            minutes = Integer.parseInt(units[1]);
+            seconds = Integer.parseInt(units[2]);
+        }
+
+        return hours*3600 + 60 * minutes + seconds;
+
+    }
+
+    public static String  formatSeconds(Integer seconds){
+
+        int h =  seconds / 3600;
+        int m = (seconds - (h*3600))/60;
+        int s = (seconds - (h*3600) - (m*60));
+
+        if(h > 0) {
+            return (h <= 9 ? "0" + h : h) + ":" + (m <= 9 ? "0" + m : m) + ":" + (s <= 9 ? "0" + s : s);
+        }else{
+            return (m <= 9 ? "0" + m : m) + ":" + (s <= 9 ? "0" + s : s);
+        }
+    }
+
+    public static String  formatSeconds(long seconds){
+
+        long h =  seconds / 3600;
+        long m = (seconds - (h*3600))/60;
+        long s = (seconds - (h*3600) - (m*60));
+
+        if(h > 0) {
+            return (h <= 9 ? "0" + h : h) + ":" + (m <= 9 ? "0" + m : m) + ":" + (s <= 9 ? "0" + s : s);
+        }else{
+            return (m <= 9 ? "0" + m : m) + ":" + (s <= 9 ? "0" + s : s);
+        }
+    }
+
 }

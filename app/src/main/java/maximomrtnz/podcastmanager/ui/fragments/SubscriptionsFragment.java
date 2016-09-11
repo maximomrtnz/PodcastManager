@@ -1,14 +1,17 @@
 package maximomrtnz.podcastmanager.ui.fragments;
 
 import android.app.LoaderManager;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,14 +20,17 @@ import android.widget.ProgressBar;
 import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
+import maximomrtnz.podcastmanager.models.pojos.Podcast;
+import maximomrtnz.podcastmanager.ui.activities.MainActivity;
 import maximomrtnz.podcastmanager.ui.adapters.PodcastRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
+import maximomrtnz.podcastmanager.utils.JsonUtil;
 
 /**
  * Created by maximo on 17/06/16.
  */
 
-public class PodcastSubscribedFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
+public class SubscriptionsFragment extends BaseFragment implements LoaderManager.LoaderCallbacks<Cursor>, RecyclerViewClickListener{
 
     // Identifies a particular Loader being used in this component
     private static final int PODCAST_SUBSCRIBED_LOADER = 0;
@@ -38,18 +44,11 @@ public class PodcastSubscribedFragment extends Fragment implements LoaderManager
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        View v =inflater.inflate(R.layout.fragment_podcast_subscribed,container,false);
+        View v =inflater.inflate(R.layout.fragment_subscriptions,container,false);
 
-        mLayoutManager = new LinearLayoutManager(getActivity());
-        mRecyclerView = (RecyclerView) v.findViewById(R.id.recycler_view);
-        mRecyclerView.setHasFixedSize(true);
-        mRecyclerView.setLayoutManager(mLayoutManager);
+        loadUIComponents(v);
 
-        mAdapter = new PodcastRecyclerViewAdapter(getContext(), (RecyclerViewClickListener) getActivity());
-
-        mRecyclerView.setAdapter(mAdapter);
-
-        mProgressBar = (ProgressBar)v.findViewById(R.id.progress_bar);
+        setToolbar(v);
 
         loadPodcastsList();
 
@@ -118,4 +117,32 @@ public class PodcastSubscribedFragment extends Fragment implements LoaderManager
     public void onLoaderReset(Loader<Cursor> loader) {
         ((PodcastRecyclerViewAdapter)mAdapter).setCursor(null);
     }
+
+    @Override
+    public void loadUIComponents(View view) {
+
+        mLayoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
+        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+        mAdapter = new PodcastRecyclerViewAdapter(getContext(), this);
+
+        mRecyclerView.setAdapter(mAdapter);
+
+        mProgressBar = (ProgressBar)view.findViewById(R.id.progress_bar);
+
+    }
+
+    @Override
+    public void onRecyclerViewListClicked(View v, int position) {
+
+        Podcast podcast = (Podcast)v.getTag();
+
+        if(mActivity!=null) {
+            mActivity.showPodcast(podcast);
+        }
+
+    }
+
 }

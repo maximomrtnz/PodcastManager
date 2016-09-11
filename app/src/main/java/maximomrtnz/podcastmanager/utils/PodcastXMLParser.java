@@ -355,7 +355,7 @@ public class PodcastXMLParser {
         if(duration.indexOf(":")!=-1){ // Format hh:mm:ss
             return duration;
         }else{
-            return Utils.formatSeconds(Integer.valueOf(duration));
+            return DateUtils.formatSeconds(Integer.valueOf(duration));
         }
     }
 

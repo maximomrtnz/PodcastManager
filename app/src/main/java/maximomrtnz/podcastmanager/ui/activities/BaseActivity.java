@@ -3,9 +3,13 @@ package maximomrtnz.podcastmanager.ui.activities;
 import android.graphics.Bitmap;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
+
+import maximomrtnz.podcastmanager.R;
+import maximomrtnz.podcastmanager.ui.fragments.BaseFragment;
 
 /**
  * Created by maximo on 07/08/16.
@@ -31,42 +35,13 @@ public abstract class BaseActivity extends AppCompatActivity {
         newFragment.show(ft, "dialog");
     }
 
-    public abstract void loadUI();
-
-    protected void extractPaletteColors(Bitmap bitmap) {
-
-        Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
-
-              @Override
-              public void onGenerated(Palette palette) {
-
-                  if(palette == null){
-                      return;
-                  }
-
-                  Palette.Swatch vibrantSwatch = palette.getVibrantSwatch();
-
-                  if(vibrantSwatch==null){
-                      return;
-                  }
-
-                  int primaryColor = vibrantSwatch.getRgb();
-                  int accentColor = vibrantSwatch.getBodyTextColor();
-
-                  setPrimaryColor(primaryColor);
-
-                  setAccentColor(accentColor);
-
-              }
-
-            }
-
-        );
-
+    public void showBaseFragment(BaseFragment newFragment, int container, String tag){
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.replace(container, newFragment, tag);
+        ft.commit();
     }
 
-    public void setPrimaryColor(int color){}
+    public abstract void loadUIComponents();
 
-    public void setAccentColor(int color){};
 
 }

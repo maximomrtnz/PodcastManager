@@ -1,13 +1,13 @@
 package maximomrtnz.podcastmanager.utils;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
-import android.util.Log;
+import android.graphics.Bitmap;
+import android.support.v7.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v7.app.NotificationCompat.MediaStyle;
 import android.widget.RemoteViews;
 
 /**
@@ -21,13 +21,13 @@ public class NotificationHelper {
     private Notification mNotification;
     private Context mContext;
     private NotificationCompat.Builder mBuilder;
-    private NotificationManager mNotificationManager;
+    private NotificationManagerCompat mNotificationManager;
     private RemoteViews mContentView;
 
     public NotificationHelper(Context context){
         mContext = context;
         mBuilder = new NotificationCompat.Builder(mContext);
-        mNotificationManager = (NotificationManager)context.getSystemService(context.NOTIFICATION_SERVICE);
+        mNotificationManager = NotificationManagerCompat.from(mContext);
     }
 
     public NotificationHelper setIcon(int icon){
@@ -35,7 +35,7 @@ public class NotificationHelper {
         return this;
     }
 
-    public NotificationHelper setTitle(String title){
+    public NotificationHelper setTitle(CharSequence title){
         mBuilder.setContentTitle(title);
         return this;
     }
@@ -59,7 +59,7 @@ public class NotificationHelper {
 
     }
 
-    public NotificationHelper setContentText(String contentText){
+    public NotificationHelper setContentText(CharSequence contentText){
         mBuilder.setContentText(contentText);
         return this;
     }
@@ -76,17 +76,71 @@ public class NotificationHelper {
     }
 
     public NotificationHelper show(int notificationId){
-        mNotification = mBuilder.build();
         mNotificationManager.notify(notificationId, mNotification);
         return this;
     }
 
-    public Notification getNotification(){
+    public RemoteViews getContentView(){
+        return mContentView;
+    }
+
+    public void cancelAll(){
+        mNotificationManager.cancelAll();
+    }
+
+    public NotificationHelper addAction(NotificationCompat.Action action){
+        mBuilder.addAction(action);
+        return this;
+    }
+
+    public NotificationHelper setStyle(NotificationCompat.MediaStyle mediaStyle){
+        mBuilder.setStyle(mediaStyle);
+        return this;
+    }
+
+    public NotificationHelper setSmallIcon(int resource){
+        mBuilder.setSmallIcon(resource);
+        return this;
+    }
+
+    public NotificationHelper setVisibility(int visibility){
+        mBuilder.setVisibility(visibility);
+        return this;
+    }
+
+    public NotificationHelper setContentIntent(PendingIntent contentIntent){
+        mBuilder.setContentIntent(contentIntent);
+        return this;
+    }
+
+    public Notification build(){
+        mNotification = mBuilder.build();
         return mNotification;
     }
 
-    public RemoteViews getContentView(){
-        return mContentView;
+    public NotificationHelper setLargeIcon(Bitmap largeIcon){
+        mBuilder.setLargeIcon(largeIcon);
+        return this;
+    }
+
+    public NotificationHelper setOngoing(boolean ongoing){
+        mBuilder.setOngoing(ongoing);
+        return this;
+    }
+
+    public NotificationHelper setWhen(long when){
+        mBuilder.setWhen(when);
+        return this;
+    }
+
+    public NotificationHelper setShowWhen(boolean showWhen){
+        mBuilder.setShowWhen(showWhen);
+        return this;
+    }
+
+    public NotificationHelper setUsesChronometer(boolean usesChronometer){
+        mBuilder.setUsesChronometer(usesChronometer);
+        return this;
     }
 
 }

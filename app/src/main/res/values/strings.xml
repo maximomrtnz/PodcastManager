@@ -9,6 +9,10 @@
     <string name="label_your_podcasts">Subcriptions</string>
     <string name="label_discover">Browse</string>
     <string name="label_now_playing">Now Playing</string>
+    <string name="label_play">Play</string>
+    <string name="label_pause">Pause</string>
+    <string name="label_next">Next</string>
+    <string name="label_previous">Previous</string>
 
     <string name="dialog_ok">Ok</string>
     <string name="dialog_cancel">Cancel</string>
@@ -27,6 +31,15 @@
     <string name="notification_text_episode_is_already_being_downloaded">Episode is already being downloaded</string>
 
 
-
+    <!--Menu Drawer-->
+    <string name="action_drawer_subcriptions">Subcriptions</string>
+    <string name="action_drawer_top_charts">Top Charts</string>
+    <string name="action_drawer_downloads">Downloads</string>
+    <string name="action_drawer_favorites">Favorites</string>
+    <string name="action_drawer_search">Search</string>
+    <string name="action_drawer_playlist">Playlist</string>
+    <string name="action_drawer_settings">Settings</string>
+    <string name="action_drawer_rate_this_app">Rate this App</string>
+    <string name="action_drawer_invite_friends">Invite friends</string>
 
 </resources>

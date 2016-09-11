@@ -1,18 +1,16 @@
 package maximomrtnz.podcastmanager.ui.activities;
 
-import android.app.LoaderManager;
 import android.app.SearchManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.CursorLoader;
 import android.content.Intent;
-import android.content.Loader;
-import android.database.Cursor;
 import android.os.Bundle;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -21,29 +19,33 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
+
 import maximomrtnz.podcastmanager.R;
-import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
-import maximomrtnz.podcastmanager.database.PodcastManagerContract;
+import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.ui.adapters.ViewPagerAdapter;
+import maximomrtnz.podcastmanager.ui.fragments.BaseFragment;
+import maximomrtnz.podcastmanager.ui.fragments.PlayerFragment;
+import maximomrtnz.podcastmanager.ui.fragments.PodcastFragment;
+import maximomrtnz.podcastmanager.ui.fragments.SubscriptionsFragment;
+import maximomrtnz.podcastmanager.ui.fragments.TopChartsFragment;
 import maximomrtnz.podcastmanager.ui.listeners.EventSendedListener;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 import maximomrtnz.podcastmanager.ui.views.SlidingTabLayout;
+import maximomrtnz.podcastmanager.utils.EpisodePlaylist;
 import maximomrtnz.podcastmanager.utils.JsonUtil;
-import maximomrtnz.podcastmanager.utils.Utils;
 
-public class MainActivity extends BaseActivity implements SearchView.OnQueryTextListener, MenuItemCompat.OnActionExpandListener, RecyclerViewClickListener{
+public class MainActivity extends BaseActivity implements SearchView.OnQueryTextListener, MenuItemCompat.OnActionExpandListener{
 
     private static String LOG_TAG = "MainActivity";
-    private static final int NUMBER_OF_TABS =2;
     private static final int BROWSE_FRAGMENT_INDEX = 1;
 
+    private SlidingUpPanelLayout mSlidingLayout;
+    private DrawerLayout mDrawerLayout;
+    private NavigationView mNavigationView;
+    private PlayerFragment mPlayerFragment;
 
-
-    private ViewPager mViewPager;
-    private ViewPagerAdapter mViewPagerAdapter;
-    private SlidingTabLayout mTabs;
-    private CharSequence mTitles[];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,45 +54,34 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
 
         setContentView(R.layout.activity_main);
 
-        loadUI();
+        loadUIComponents();
+
+        setUpNavDrawer();
+
+        showTopCharts();
 
     }
 
     @Override
-    public void loadUI() {
+    public void loadUIComponents() {
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 
-        // Set tab titles
-        mTitles = new CharSequence[]{getString(R.string.label_your_podcasts),getString(R.string.label_discover)};
+        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);
 
-        // Creating The ViewPagerAdapter and Passing Fragment Manager, Titles fot the Tabs and Number Of Tabs.
-        mViewPagerAdapter =  new ViewPagerAdapter(getSupportFragmentManager(),mTitles,NUMBER_OF_TABS);
+        //set layout slide listener
+        mSlidingLayout = (SlidingUpPanelLayout)findViewById(R.id.sliding_layout);
 
-        // Assigning ViewPager View and setting the adapter
-        mViewPager = (ViewPager) findViewById(R.id.container);
-        mViewPager.setAdapter(mViewPagerAdapter);
+        //mSlidingLayout.addPanelSlideListener(onSlideListener());
 
-        // Assiging the Sliding Tab Layout View
-        mTabs = (SlidingTabLayout) findViewById(R.id.tabs);
+        mPlayerFragment = new PlayerFragment();
 
-        mTabs.setDistributeEvenly(true);
+        // Add audio player to layout
+        showBaseFragment(mPlayerFragment,R.id.fragment_audio_player_container,"FRAGMENT_PLAYER");
 
-        //mTabs.setCustomTabView(R.layout.tab_indicator, android.R.id.text1);
+        // TODO: Check if we were playing a episode hide instead
+        mSlidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
 
-        // Setting Custom Color for the Scroll bar indicator of the Tab View
-        mTabs.setCustomTabColorizer(new SlidingTabLayout.TabColorizer() {
-
-            @Override
-            public int getIndicatorColor(int position) {
-                return getResources().getColor(R.color.tabsScrollColor);
-            }
-
-        });
-
-        // Setting the ViewPager For the SlidingTabsLayout
-        mTabs.setViewPager(mViewPager);
     }
 
     @Override
@@ -138,23 +129,11 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
         super.onNewIntent(intent);
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
-            post(BROWSE_FRAGMENT_INDEX, query);
+            //post(BROWSE_FRAGMENT_INDEX, query);
         } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
             String uri = intent.getDataString();
             Toast.makeText(this, "Suggestion: "+ uri, Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private void post(int position, Object message){
-
-        Fragment f = mViewPagerAdapter.getRegisteredFragment(position);
-
-        if(f == null){
-            return;
-        }
-
-        ((EventSendedListener)f).onEvent(message);
-
     }
 
     @Override
@@ -164,25 +143,127 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
 
     @Override
     public boolean onMenuItemActionCollapse(MenuItem item) {
-        post(BROWSE_FRAGMENT_INDEX, null);
         return true;
     }
 
-    @Override
-    public void onRecyclerViewListClicked(View v, int position) {
 
-        Podcast podcast = (Podcast)v.getTag();
+    private void setUpNavDrawer() {
 
-        Log.d(LOG_TAG, "Podcast Recived -->"+((Podcast)v.getTag()).getTitle());
+        mNavigationView.setCheckedItem(R.id.action_top_charts);
 
-        Intent i = new Intent(getApplicationContext(), PodcastActivity.class);
+        mNavigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(MenuItem menuItem) {
+                menuItem.setChecked(true);
+                switch (menuItem.getItemId()) {
+                    case R.id.action_subcriptions:
+                        showSubcriptions();
+                        break;
+                    case R.id.action_top_charts:
+                        showTopCharts();
+                        break;
+                    case R.id.action_downloads:
+                        showDownloadedEpisodes();
+                        break;
+                    case R.id.action_playlist:
+                        showPlaylist();
+                        break;
+                    case R.id.action_favorites:
+                        showFavorites();
+                        break;
+                    case R.id.action_settings:
+                        showSettingsScreen();
+                        break;
+                    case R.id.action_search:
+                        showSearch();
+                        break;
+                    case R.id.action_invite_friends:
+                        openInvitePage();
+                        break;
+                    case R.id.action_rate_app:
+                        showRatingPlayStore();
+                        break;
+                    default:
 
-        // Pass podcast data
-        i.putExtra("podcast", JsonUtil.getInstance().toJson(podcast));
+                }
+                mDrawerLayout.closeDrawers();
+                return true;
+            }
 
-        startActivity(i);
 
-        overridePendingTransition(R.anim.enter, R.anim.exit);
+        });
+    }
+
+    private void showSubcriptions(){
+        BaseFragment f = new SubscriptionsFragment();
+        showBaseFragment(f, R.id.fragment_container,"FRAGMENT_SUBSCRIPTIONS");
+    }
+
+    private void showTopCharts(){
+        BaseFragment f = new TopChartsFragment();
+        showBaseFragment(f, R.id.fragment_container,"FRAGMENT_TOP_CHARTS");
+    }
+
+    private void showDownloadedEpisodes(){
+
+    }
+
+    private void showPlaylist(){
+
+    }
+
+    private void showFavorites(){
+
+    }
+
+    private void showSettingsScreen(){
+
+    }
+
+    private void showSearch(){
+
+    }
+
+    private void showRatingPlayStore(){
+
+    }
+
+    private void openInvitePage(){
+
+    }
+
+    public void setToolbar(Toolbar toolbar) {
+        setSupportActionBar(toolbar);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDrawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
+    }
+
+    public void showPodcast(Podcast podcast){
+
+        Bundle bundle = new Bundle();
+
+        bundle.putString("podcast", JsonUtil.getInstance().toJson(podcast));
+
+        BaseFragment f = new PodcastFragment();
+
+        f.setArguments(bundle);
+
+        showBaseFragment(f, R.id.fragment_container,"FRAGMENT_PODCAST");
+
+    }
+
+    public void showEpisode(Podcast podcast, Episode episode){
+
+        EpisodePlaylist.getInstance().createMediaMetadata(podcast,episode);
+
+        // Show SlidingLayout
+        mSlidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+
+        mPlayerFragment.onMediaItemSelected(EpisodePlaylist.getInstance().getMediaItems().get(0));
 
     }
 

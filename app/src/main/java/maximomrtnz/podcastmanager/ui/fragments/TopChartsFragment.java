@@ -1,11 +1,14 @@
 package maximomrtnz.podcastmanager.ui.fragments;
 
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,11 +21,12 @@ import java.util.Locale;
 import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.network.ItunesAppleAPI;
+import maximomrtnz.podcastmanager.ui.activities.MainActivity;
 import maximomrtnz.podcastmanager.ui.adapters.PodcastRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.listeners.EventSendedListener;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 
-public class PodcastSourcesFragment extends Fragment implements EventSendedListener {
+public class TopChartsFragment extends BaseFragment implements EventSendedListener, RecyclerViewClickListener {
 
     private static final String LOG_TAG = "PodcastSourcesFragment";
     private static final int LIMIT = 25;
@@ -37,19 +41,13 @@ public class PodcastSourcesFragment extends Fragment implements EventSendedListe
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        View v = inflater.inflate(R.layout.fragment_podcast_sources,container,false);
+        View v = inflater.inflate(R.layout.fragment_top_charts,container,false);
 
         mPodcasts = new ArrayList<>();
 
-        mLayoutManager = new LinearLayoutManager(getActivity());
-        mRecyclerView = (RecyclerView) v.findViewById(R.id.recycler_view);
-        mRecyclerView.setHasFixedSize(true);
-        mRecyclerView.setLayoutManager(mLayoutManager);
+        loadUIComponents(v);
 
-        mAdapter = new PodcastRecyclerViewAdapter(mPodcasts, getContext(), (RecyclerViewClickListener) getActivity());
-        mRecyclerView.setAdapter(mAdapter);
-
-        mProgressBar = (ProgressBar)v.findViewById(R.id.progress_bar);
+        setToolbar(v);
 
         loadPodcastsList();
 
@@ -113,4 +111,26 @@ public class PodcastSourcesFragment extends Fragment implements EventSendedListe
 
     }
 
+    @Override
+    public void loadUIComponents(View view) {
+        mLayoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
+        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+        mAdapter = new PodcastRecyclerViewAdapter(mPodcasts, getContext(), this);
+        mRecyclerView.setAdapter(mAdapter);
+
+        mProgressBar = (ProgressBar)view.findViewById(R.id.progress_bar);
+
+    }
+
+    @Override
+    public void onRecyclerViewListClicked(View v, int position) {
+        Podcast podcast = (Podcast)v.getTag();
+
+        if(mActivity!=null) {
+            mActivity.showPodcast(podcast);
+        }
+    }
 }

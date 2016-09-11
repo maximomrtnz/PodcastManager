@@ -90,6 +90,4 @@
         app:fbb_progressWidthRatio="0.1"
         android:visibility="invisible"/>
 
-
-
 </android.support.design.widget.CoordinatorLayout>

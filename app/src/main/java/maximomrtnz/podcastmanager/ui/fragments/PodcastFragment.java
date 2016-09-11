@@ -1,27 +1,34 @@
-package maximomrtnz.podcastmanager.ui.activities;
+package maximomrtnz.podcastmanager.ui.fragments;
 
-import android.app.LoaderManager;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.Loader;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
+
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Menu;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+
+import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -40,10 +47,12 @@ import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.network.ItunesAppleAPI;
 import maximomrtnz.podcastmanager.services.SynchronizeService;
+import maximomrtnz.podcastmanager.ui.activities.BaseActivity;
 import maximomrtnz.podcastmanager.ui.adapters.EpisodesRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.dialogs.ConfirmDialog;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 import maximomrtnz.podcastmanager.utils.Constants;
+import maximomrtnz.podcastmanager.utils.EpisodePlaylist;
 import maximomrtnz.podcastmanager.utils.JsonUtil;
 import maximomrtnz.podcastmanager.utils.Utils;
 import mbanje.kurt.fabbutton.FabButton;
@@ -52,7 +61,7 @@ import mbanje.kurt.fabbutton.FabButton;
  * Created by maximo on 26/07/16.
  */
 
-public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoaderListener, RecyclerViewClickListener, LoaderManager.LoaderCallbacks<Cursor>{
+public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoaderListener, RecyclerViewClickListener, LoaderManager.LoaderCallbacks<Cursor>{
 
     private static String LOG_TAG = "PodcastActivity";
 
@@ -74,6 +83,8 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
     private ProgressBar mProgressBar;
     private SwipeRefreshLayout mSwipeRefreshLayout;
 
+    private SlidingUpPanelLayout mSlidingLayout;
+
     private BroadcastReceiver mSynchronizeServiceReceiver = new BroadcastReceiver() {
 
         @Override
@@ -81,7 +92,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
             Bundle bundle = intent.getExtras();
 
-            if(bundle.getInt(Constants.SYNCHRONIZE_SERVICE.RESULT)==RESULT_OK){
+            if(bundle.getInt(Constants.SYNCHRONIZE_SERVICE.RESULT)== Activity.RESULT_OK){
                 mSwipeRefreshLayout.setRefreshing(false);
             }
 
@@ -89,18 +100,17 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
     };
 
+    @Nullable
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        super.onCreate(savedInstanceState);
-
-        setContentView(R.layout.activity_podcast);
+        View v = inflater.inflate(R.layout.activity_podcast, container, false);
 
         mEpisodes = new ArrayList<>();
 
-        mFeedLoader = new FeedLoader(getApplicationContext(), this);
+        mFeedLoader = new FeedLoader(getContext(), this);
 
-        mImageLoader = new ImageLoader(getApplicationContext(), new ImageLoader.ImageLoadeListener() {
+        mImageLoader = new ImageLoader(getContext(), new ImageLoader.ImageLoadeListener() {
 
             @Override
             public void onImageLoader(Bitmap bitmap) {
@@ -111,44 +121,37 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
         loadPodcast();
 
-        loadUI();
+        loadUIComponents(v);
+
+        setToolbar(v);
+
+        return v;
 
     }
 
+
     @Override
-    public void loadUI(){
-
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-
-        setSupportActionBar(mToolbar);
-
-        // Enabling Back Button
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
-
-
-        mCollapsingToolbarLayout = (CollapsingToolbarLayout)findViewById(R.id.collapsingToolbarLayout);
-        mCollapsingToolbarLayout.setTitle(mPodcast.getTitle());
+    public void loadUIComponents(View view){
 
         // Get Image View from Layout
-        mImageViewPodcast = (ImageView)findViewById(R.id.image_view_podcast);
+        mImageViewPodcast = (ImageView)view.findViewById(R.id.image_view_podcast);
 
         // Set Image Url
         mImageLoader.displayImage(mPodcast.getImageUrl(),mImageViewPodcast);
 
-        mLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        mLayoutManager = new LinearLayoutManager(getContext());
+        mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mAdapter = new EpisodesRecyclerViewAdapter(mEpisodes, getApplicationContext(), this);
+        mAdapter = new EpisodesRecyclerViewAdapter(mEpisodes, getContext(), this);
 
         mRecyclerView.setAdapter(mAdapter);
 
-        mProgressBar = (ProgressBar)findViewById(R.id.progress_bar);
+        mProgressBar = (ProgressBar)view.findViewById(R.id.progress_bar);
 
         // Get Floating Button from Layout
-        mFloatingActionButton = (FabButton) findViewById(R.id.floating_action_button);
+        mFloatingActionButton = (FabButton) view.findViewById(R.id.floating_action_button);
 
         mFloatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -157,7 +160,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
             }
         });
 
-        mSwipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.swipe_refresh_layout);
+        mSwipeRefreshLayout = (SwipeRefreshLayout)view.findViewById(R.id.swipe_refresh_layout);
 
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -191,11 +194,8 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
     private void loadPodcast(){
 
-        // GetPodcast Information from caller activity
-        Intent intent = getIntent();
-
         // Set podcast's data into Podcast Object
-        mPodcast = JsonUtil.getInstance().fromJson(intent.getStringExtra("podcast"),Podcast.class);
+        mPodcast = JsonUtil.getInstance().fromJson(getArguments().getString("podcast"),Podcast.class);
 
         // If we have and Id, we have to get the episodes from database
         if(mPodcast.getId()!=null){
@@ -228,7 +228,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                         mPodcast.setFeedUrl(String.valueOf(arg));
 
                         // Init loader to check if we have a mPodcast in the DB
-                        getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL, null, PodcastActivity.this);
+                        getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL, null, PodcastFragment.this);
 
                     }
                 }).getUrlFeed(mPodcast.getFeedUrl());
@@ -275,17 +275,12 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
     @Override
     public void onRecyclerViewListClicked(View v, int position) {
+
         Episode episode = (Episode)v.getTag();
 
-        Log.d(LOG_TAG, episode.getTitle());
-
-        Intent i = new Intent(getApplicationContext(), AudioPlayerActivity.class);
-
-        i.putExtra("episode",JsonUtil.getInstance().toJson(episode));
-
-        startActivity(i);
-
-        overridePendingTransition(R.anim.enter, R.anim.exit);
+        if(mActivity!=null){
+            mActivity.showEpisode(mPodcast,episode);
+        }
 
     }
 
@@ -295,8 +290,8 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
         switch (item.getItemId()) {
 
             case android.R.id.home:
-                finish(); // close this activity and return to preview activity (if there is any)
-                overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left);
+                //finish(); // close this activity and return to preview activity (if there is any)
+                //overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left);
                 return true;
 
             case R.id.action_refresh:
@@ -311,11 +306,6 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
     }
 
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left);
-    }
 
     private void onFloatingActionButtonPressed(){
 
@@ -324,7 +314,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
             mFloatingActionButton.showProgress(true);
 
-            new InsertPodcast(this, new InsertPodcast.InsertPodcastListener() {
+            new InsertPodcast(getContext(), new InsertPodcast.InsertPodcastListener() {
 
                 @Override
                 public void onPodcastInserted(List<Uri> podcastUris) {
@@ -344,7 +334,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                         // switch icons
                         loadSubscribedButton();
 
-                        Utils.scheduleTask(PodcastActivity.this, Constants.SYNCHRONIZE_SERVICE.REPEAT_TIME);
+                        Utils.scheduleTask(getContext(), Constants.SYNCHRONIZE_SERVICE.REPEAT_TIME);
 
                     }
 
@@ -362,7 +352,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
                     // Show progress dialog bar
                     mFloatingActionButton.showProgress(true);
 
-                    new DeletePodcast(PodcastActivity.this, new DeletePodcast.DeletePodcastListener() {
+                    new DeletePodcast(getContext(), new DeletePodcast.DeletePodcastListener() {
                         @Override
                         public void onPodcastDeleted(int deletedRows) {
 
@@ -389,7 +379,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
             }, getString(R.string.dialog_title_confirm_deletion), MessageFormat.format(getResources().getString(R.string.dialog_message_confirm_deletion),new Object[]{mPodcast.getTitle()}).toString(), getString(R.string.dialog_ok), getString(R.string.dialog_cancel));
 
             // Show confirm dialog
-            showDialogFragment(dialog);
+            ((BaseActivity)getActivity()).showDialogFragment(dialog);
 
         }
 
@@ -406,7 +396,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
                 // Returns a new CursorLoader
                 return new CursorLoader(
-                        this,   // Parent activity context
+                        getContext(),   // Parent activity context
                         PodcastManagerContentProvider.PODCAST_CONTENT_URI,          // Table to query
                         PodcastManagerContract.Podcast.PROJECTION_ALL,              // Projection to return
                         PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL+"=?",   // Selection clause
@@ -420,7 +410,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
                 // Returns a new CursorLoader
                 return new CursorLoader(
-                        this,   // Parent activity context
+                        getContext(),   // Parent activity context
                         PodcastManagerContentProvider.EPISODE_CONTENT_URI,          // Table to query
                         PodcastManagerContract.Episode.PROJECTION_ALL,              // Projection to return
                         PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID+"=?", // No selection clause
@@ -509,14 +499,6 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
     }
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_podcast_activity, menu);
-        return true;
-    }
-
     private void refreshItems(){
 
         Log.d(LOG_TAG, "REFRESHING ITEMS-->"+mPodcast.getId());
@@ -528,7 +510,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
         if(mPodcast.getId() != null){
 
             //Call synchronizeservice
-            Intent i = new Intent(this, SynchronizeService.class);
+            Intent i = new Intent(getContext(), SynchronizeService.class);
 
             // Pass only the data that we need to avoid hit the 1MB limit
             Podcast podcast = new Podcast();
@@ -538,7 +520,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
 
             i.putExtra("podcast",JsonUtil.getInstance().toJson(podcast));
 
-            startService(i);
+            getActivity().startService(i);
 
         }else{
 
@@ -549,15 +531,15 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
-        unregisterReceiver(mSynchronizeServiceReceiver);
+        getActivity().unregisterReceiver(mSynchronizeServiceReceiver);
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
-        registerReceiver(mSynchronizeServiceReceiver, new IntentFilter(Constants.SYNCHRONIZE_SERVICE.NOTIFICATION));
+        getActivity().registerReceiver(mSynchronizeServiceReceiver, new IntentFilter(Constants.SYNCHRONIZE_SERVICE.NOTIFICATION));
     }
 
     @Override
@@ -571,4 +553,7 @@ public class PodcastActivity extends BaseActivity implements FeedLoader.FeedLoad
         }
 
     }
+
+
+
 }

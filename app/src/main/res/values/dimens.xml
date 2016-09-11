@@ -45,4 +45,9 @@
     <dimen name="podcast_item_list_padding_right">8dp</dimen>
     <dimen name="podcast_item_list_padding_left">0dp</dimen>
 
+    <!--Navdrawer-->
+    <dimen name="z_drawer">16dp</dimen>
+
+
+
 </resources>
