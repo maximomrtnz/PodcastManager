@@ -3,6 +3,7 @@ package maximomrtnz.podcastmanager.cache;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.ImageView;
 import android.os.Handler;
@@ -38,7 +39,6 @@ public class ImageLoader {
     private Map<ImageView, String> imageViews = Collections.synchronizedMap(new WeakHashMap<ImageView, String>());
     private ExecutorService executorService;
     private Handler handler = new Handler();//handler to display images in UI thread
-    private ImageLoadeListener mImageLoadeListener;
 
     public interface ImageLoadeListener {
         void onImageLoader(Bitmap bitmap);
@@ -49,10 +49,17 @@ public class ImageLoader {
         executorService = Executors.newFixedThreadPool(5);
     }
 
-    public ImageLoader(Context context, ImageLoadeListener imageLoadeListener){
-        fileCache = new FileCache(context, Constants.DIRECTORIES.IMAGES);
-        executorService = Executors.newFixedThreadPool(5);
-        mImageLoadeListener = imageLoadeListener;
+    public void loadAsync(String url, ImageLoadeListener imageLoadeListener){
+        if(!TextUtils.isEmpty(url)){
+            Bitmap bitmap = (Bitmap) memoryCache.get(url);
+            if(bitmap!=null) {
+                if (imageLoadeListener != null) {
+                    imageLoadeListener.onImageLoader(bitmap);
+                }
+            }else{
+                queuePhoto(url, imageLoadeListener);
+            }
+        }
     }
 
     public void displayImage(String url, ImageView imageView) {
@@ -68,6 +75,11 @@ public class ImageLoader {
 
     private void queuePhoto(String url, ImageView imageView){
         PhotoToLoad p = new PhotoToLoad(url, imageView);
+        executorService.submit(new PhotosLoader(p));
+    }
+
+    private void queuePhoto(String url, ImageLoadeListener imageLoadeListener){
+        PhotoToLoad p = new PhotoToLoad(url, imageLoadeListener);
         executorService.submit(new PhotosLoader(p));
     }
 
@@ -148,12 +160,20 @@ public class ImageLoader {
 
     //Task for the queue
     private class PhotoToLoad{
-        public String url;
-        public ImageView imageView;
-        public PhotoToLoad(String u, ImageView i){
-            url = u;
-            imageView = i;
+        public String mUrl;
+        public ImageView mImageView;
+        public ImageLoadeListener mImageLoadeListener;
+
+        public PhotoToLoad(String url, ImageView imageView){
+            mUrl = url;
+            mImageView = imageView;
         }
+
+        public PhotoToLoad(String url, ImageLoadeListener imageLoadeListener){
+            mUrl = url;
+            mImageLoadeListener = imageLoadeListener;
+        }
+
     }
 
     class PhotosLoader implements Runnable {
@@ -170,8 +190,8 @@ public class ImageLoader {
                 if(imageViewReused(photoToLoad)) {
                     return;
                 }
-                Bitmap bmp=getBitmap(photoToLoad.url);
-                memoryCache.put(photoToLoad.url, bmp);
+                Bitmap bmp=getBitmap(photoToLoad.mUrl);
+                memoryCache.put(photoToLoad.mUrl, bmp);
                 if(imageViewReused(photoToLoad)) {
                     return;
                 }
@@ -184,8 +204,11 @@ public class ImageLoader {
     }
 
     boolean imageViewReused(PhotoToLoad photoToLoad){
-        String tag=imageViews.get(photoToLoad.imageView);
-        if(tag==null || !tag.equals(photoToLoad.url)) {
+        if(photoToLoad.mImageView==null){
+            return false;
+        }
+        String tag=imageViews.get(photoToLoad.mImageView);
+        if(tag==null || !tag.equals(photoToLoad.mUrl)) {
             return true;
         }
         return false;
@@ -203,10 +226,12 @@ public class ImageLoader {
             }
             if (bitmap != null) {
 
-                photoToLoad.imageView.setImageBitmap(bitmap);
-
-                if(mImageLoadeListener!=null){
-                    mImageLoadeListener.onImageLoader(bitmap);
+                if(photoToLoad.mImageView!=null) {
+                    photoToLoad.mImageView.setImageBitmap(bitmap);
+                }else if(photoToLoad.mImageLoadeListener!=null){
+                    if (photoToLoad.mImageLoadeListener != null) {
+                        photoToLoad.mImageLoadeListener.onImageLoader(bitmap);
+                    }
                 }
 
             } else {

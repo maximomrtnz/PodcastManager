@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
 import android.support.v7.app.NotificationCompat;
 import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
@@ -15,8 +16,10 @@ import android.support.v4.media.session.PlaybackStateCompat;
 
 
 import maximomrtnz.podcastmanager.R;
+import maximomrtnz.podcastmanager.cache.ImageLoader;
 import maximomrtnz.podcastmanager.services.PlayerService;
 import maximomrtnz.podcastmanager.ui.fragments.PlayerFragment;
+import maximomrtnz.podcastmanager.utils.Constants;
 import maximomrtnz.podcastmanager.utils.EpisodePlaylist;
 import maximomrtnz.podcastmanager.utils.NotificationHelper;
 
@@ -31,7 +34,6 @@ import maximomrtnz.podcastmanager.utils.NotificationHelper;
  */
 public class MediaNotificationManager extends BroadcastReceiver{
 
-    private static final int NOTIFICATION_ID = 412;
     private static final int REQUEST_CODE = 100;
 
     private static final String ACTION_PAUSE = "maximomrtnz.podcastmanager.pause";
@@ -132,11 +134,20 @@ public class MediaNotificationManager extends BroadcastReceiver{
                 .setContentIntent(createContentIntent())
                 .setTitle(description.getTitle())
                 .setContentText(description.getSubtitle())
-                .setLargeIcon(EpisodePlaylist.getInstance().getAlbumBitmap(description.getMediaId()))
                 .setOngoing(isPlaying)
                 .setWhen(isPlaying ? System.currentTimeMillis() - state.getPosition() : 0)
                 .setShowWhen(isPlaying)
                 .setUsesChronometer(isPlaying);
+
+        // Load Image Async
+        new ImageLoader(mService).loadAsync(description.getIconUri().toString(), new ImageLoader.ImageLoadeListener() {
+            @Override
+            public void onImageLoader(Bitmap bitmap) {
+                mNotificationHelper.setLargeIcon(bitmap);
+                mNotificationHelper.build();
+                mNotificationHelper.show(Constants.NOTIFICATION_ID.MEDIA_NOTIFICATION_MANAGER);
+            }
+        });
 
         // If skip to next action is enabled
         if ((state.getActions() & PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS) != 0) {
@@ -154,14 +165,14 @@ public class MediaNotificationManager extends BroadcastReceiver{
 
         if (isPlaying && !mStarted) {
             mService.startService(new Intent(mService.getApplicationContext(), PlayerService.class));
-            mService.startForeground(NOTIFICATION_ID, notification);
+            mService.startForeground(Constants.NOTIFICATION_ID.MEDIA_NOTIFICATION_MANAGER, notification);
             mStarted = true;
         } else {
             if (!isPlaying) {
                 mService.stopForeground(false);
                 mStarted = false;
             }
-            mNotificationHelper.show(NOTIFICATION_ID);
+            mNotificationHelper.show(Constants.NOTIFICATION_ID.MEDIA_NOTIFICATION_MANAGER);
         }
     }
 

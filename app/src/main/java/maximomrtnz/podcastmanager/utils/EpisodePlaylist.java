@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
+import android.util.Log;
 
 import java.sql.Time;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import maximomrtnz.podcastmanager.models.pojos.Podcast;
 
 public class EpisodePlaylist {
 
+    private static String LOG_TAG = "EpisodePlaylist";
     private static EpisodePlaylist mInstance = null;
 
     public static EpisodePlaylist getInstance() {
@@ -39,10 +41,6 @@ public class EpisodePlaylist {
         return "root";
     }
 
-
-    public Bitmap getAlbumBitmap(String mediaId) {
-        return BitmapFactory.decodeFile(episodesImages.get(mediaId));
-    }
 
     public String getEpisodeUri(String mediaId){
         return episodesSources.get(mediaId);
@@ -76,8 +74,6 @@ public class EpisodePlaylist {
 
         MediaMetadataCompat metadataWithoutBitmap = episodes.get(mediaId);
 
-        Bitmap albumArt = getAlbumBitmap(mediaId);
-
         // Since MediaMetadata is immutable, we need to create a copy to set the album art
         // We don't set it initially on all items so that they don't take unnecessary memory
         MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder();
@@ -85,16 +81,19 @@ public class EpisodePlaylist {
                                         MediaMetadataCompat.METADATA_KEY_ALBUM,
                                         MediaMetadataCompat.METADATA_KEY_ARTIST,
                                         MediaMetadataCompat.METADATA_KEY_GENRE,
+                                         MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON_URI,
                                         MediaMetadataCompat.METADATA_KEY_TITLE}) {
             builder.putString(key, metadataWithoutBitmap.getString(key));
         }
         builder.putLong(MediaMetadataCompat.METADATA_KEY_DURATION, metadataWithoutBitmap.getLong(MediaMetadataCompat.METADATA_KEY_DURATION));
-        builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt);
 
         return builder.build();
     }
 
     public void createMediaMetadata(Podcast podcast, Episode episode) {
+
+
+        Log.d(LOG_TAG, episode.getImageUrl());
 
         episodes.put(Utils.md5Encode(episode.getEpisodeUrl()),
 
@@ -104,8 +103,8 @@ public class EpisodePlaylist {
                         .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, podcast.getItunesAuthor())
                         .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, DateUtils.timeToSeconds(episode.getItunesDuration()))
                         .putString(MediaMetadataCompat.METADATA_KEY_GENRE, podcast.getItunesSumary())
-                        .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, Constants.DIRECTORIES.ROOT+"/"+Constants.DIRECTORIES.IMAGES+"/"+FileCache.getCacheFileName(podcast.getImageUrl()))
-                        .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON_URI, Constants.DIRECTORIES.ROOT+"/"+Constants.DIRECTORIES.IMAGES+"/"+FileCache.getCacheFileName(episode.getImageUrl()))
+                        .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, podcast.getImageUrl())
+                        .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON_URI, episode.getImageUrl())
                         .putString(MediaMetadataCompat.METADATA_KEY_TITLE, episode.getTitle())
                         .build());
 

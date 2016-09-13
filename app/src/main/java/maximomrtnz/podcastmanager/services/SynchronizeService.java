@@ -2,6 +2,7 @@ package maximomrtnz.podcastmanager.services;
 
 import android.app.Activity;
 import android.app.IntentService;
+import android.app.Notification;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentValues;
@@ -211,13 +212,16 @@ public class SynchronizeService extends IntentService{
                 Log.d(LOG_TAG, "Showing Notification");
 
                 // Show user notifications
-                new NotificationHelper(this)
+                NotificationHelper notificationHelper= new NotificationHelper(this)
                         .setIcon(R.drawable.ic_new)
                         .setIntent(new Intent(this, MainActivity.class))
                         .setAutoCancel(true)
                         .setTitle(getString(R.string.app_name))
-                        .setContentText(MessageFormat.format(getString(R.string.notification_content_text_new_episodes), new String[]{String.valueOf(newEpisodesAddes)}))
-                        .show(0);
+                        .setContentText(MessageFormat.format(getString(R.string.notification_content_text_new_episodes), new String[]{String.valueOf(newEpisodesAddes)}));
+
+                notificationHelper.build();
+
+                notificationHelper.show(Constants.NOTIFICATION_ID.SYNCHRONIZE_SERVICE);
 
             }
 

@@ -79,9 +79,6 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
         // Add audio player to layout
         showBaseFragment(mPlayerFragment,R.id.fragment_audio_player_container,"FRAGMENT_PLAYER");
 
-        // TODO: Check if we were playing a episode hide instead
-        mSlidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
-
     }
 
     @Override
@@ -259,9 +256,6 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
     public void showEpisode(Podcast podcast, Episode episode){
 
         EpisodePlaylist.getInstance().createMediaMetadata(podcast,episode);
-
-        // Show SlidingLayout
-        mSlidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
 
         mPlayerFragment.onMediaItemSelected(EpisodePlaylist.getInstance().getMediaItems().get(0));
 

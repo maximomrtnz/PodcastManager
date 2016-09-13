@@ -6,19 +6,11 @@ package maximomrtnz.podcastmanager.utils;
 
 public class Constants {
 
-    public interface ACTION {
-        static String MAIN_ACTION = "maximomrtnz.action.main";
-        static String INIT_ACTION = "maximomrtnz.action.action.init";
-        static String PREV_ACTION = "maximomrtnz.action.prev";
-        static String PLAY_ACTION = "maximomrtnz.action.play";
-        static String NEXT_ACTION = "maximomrtnz.action.next";
-        static String STARTFOREGROUND_ACTION = "maximomrtnz.action.startforeground";
-        static String STOPFOREGROUND_ACTION = "maximomrtnz.action.stopforeground";
-    }
-
     public interface NOTIFICATION_ID {
         static int FOREGROUND_SERVICE = 101;
         static int DOWNLOAD_SERVICE = 102;
+        static int SYNCHRONIZE_SERVICE = 103;
+        static int MEDIA_NOTIFICATION_MANAGER = 104;
     }
 
     public interface  SYNCHRONIZE_SERVICE{

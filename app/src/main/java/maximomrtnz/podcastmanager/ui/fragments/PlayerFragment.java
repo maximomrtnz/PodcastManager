@@ -213,7 +213,7 @@ public class PlayerFragment extends BaseFragment {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                mActivity.getSupportMediaController().getTransportControls().seekTo(seekBar.getProgress());
+                seekTo(seekBar.getProgress());
                 scheduleSeekbarUpdate();
             }
         });
@@ -272,9 +272,20 @@ public class PlayerFragment extends BaseFragment {
     }
 
     private void updateMetadata(MediaMetadataCompat metadata) {
+
+        if(metadata == null){
+            return;
+        }
+
         mCurrentMetadata = metadata;
-        mEpisodeTitle.setText(metadata == null ? "" : metadata.getDescription().getTitle());
-        mImageViewEpisode.setImageBitmap(metadata == null ? null : EpisodePlaylist.getInstance().getAlbumBitmap(metadata.getDescription().getMediaId()));
+
+        mEpisodeTitle.setText(metadata.getDescription().getTitle());
+
+        Log.d(LOG_TAG,metadata.getDescription().getIconUri().toString());
+
+        // Load Image Async
+        mImageLoader.displayImage(metadata.getDescription().getIconUri().toString(), mImageViewEpisode);
+
     }
 
     @Override
@@ -302,10 +313,8 @@ public class PlayerFragment extends BaseFragment {
     };
 
     private void seekTo(long longPos){
-        final int state = mCurrentState == null ? PlaybackState.STATE_NONE : mCurrentState.getState();
-        if (state == PlaybackState.STATE_PLAYING) {
-            getActivity().getSupportMediaController().getTransportControls().seekTo(longPos);
-        }
+        Log.d(LOG_TAG, longPos+"");
+        mActivity.getSupportMediaController().getTransportControls().seekTo(longPos);
     }
 
     private void scheduleSeekbarUpdate() {

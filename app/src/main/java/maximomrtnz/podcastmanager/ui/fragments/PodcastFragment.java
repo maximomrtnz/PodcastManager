@@ -110,14 +110,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
         mFeedLoader = new FeedLoader(getContext(), this);
 
-        mImageLoader = new ImageLoader(getContext(), new ImageLoader.ImageLoadeListener() {
-
-            @Override
-            public void onImageLoader(Bitmap bitmap) {
-                extractPaletteColors(bitmap);
-            }
-
-        });
+        mImageLoader = new ImageLoader(getContext());
 
         loadPodcast();
 
@@ -196,6 +189,13 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
         // Set podcast's data into Podcast Object
         mPodcast = JsonUtil.getInstance().fromJson(getArguments().getString("podcast"),Podcast.class);
+
+        mImageLoader.loadAsync(mPodcast.getImageUrl(), new ImageLoader.ImageLoadeListener() {
+            @Override
+            public void onImageLoader(Bitmap bitmap) {
+                extractPaletteColors(bitmap);
+            }
+        });
 
         // If we have and Id, we have to get the episodes from database
         if(mPodcast.getId()!=null){
