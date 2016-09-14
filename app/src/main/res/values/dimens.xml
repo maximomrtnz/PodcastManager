@@ -48,6 +48,12 @@
     <!--Navdrawer-->
     <dimen name="z_drawer">16dp</dimen>
 
+    <!-- Player Fragment Mini -->
+    <dimen name="player_mini_episode_art_horizontal_margin">8dp</dimen>
+    <dimen name="player_mini_episode_art_horizontal_margin_bottom">4dp</dimen>
+    <dimen name="player_mini_episode_art_size">64dp</dimen>
+    <dimen name="player_mini_controls_padding">8dp</dimen>
+    <dimen name="player_mini_episode_title_width">200dp</dimen>
 
 
 </resources>

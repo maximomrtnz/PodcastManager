@@ -49,12 +49,17 @@ public class PlayerFragment extends BaseFragment {
 
     private ImageLoader mImageLoader;
     private ImageView mImageViewEpisode;
+    private ImageView mImageViewMiniEpisode;
     private TextView mEpisodeTitle;
     private TextView mTextViewStartDuration;
     private TextView mTextViewEndDuration;
+    private TextView mTextViewMiniEpisodeTitle;
+    private TextView mTextViewMiniPodcastTitle;
     private ImageButton mImageButtonPause;
     private ImageButton mImageButtonSkipNext;
     private ImageButton mImageButtonSkipPreviuos;
+    private ImageButton mImageButtonMiniPlayPause;
+    private ImageButton mImageButtonMiniSkipNext;
     private SeekBar mSeekbar;
 
 
@@ -69,8 +74,6 @@ public class PlayerFragment extends BaseFragment {
     private ScheduledFuture<?> mScheduleFuture;
 
     private final Handler mHandler = new Handler();
-
-    private PlaybackStateCompat mLastPlaybackState;
 
     private final Runnable mUpdateProgressTask = new Runnable() {
         @Override
@@ -169,7 +172,13 @@ public class PlayerFragment extends BaseFragment {
 
         mImageViewEpisode = (ImageView) view.findViewById(R.id.image_view_episode);
 
+        mImageViewMiniEpisode = (ImageView) view.findViewById(R.id.image_view_mini_episode);
+
         mEpisodeTitle = (TextView) view.findViewById(R.id.text_view_episode_title);
+
+        mTextViewMiniEpisodeTitle = (TextView) view.findViewById(R.id.text_view_mini_episode_title);
+
+        mTextViewMiniPodcastTitle = (TextView) view.findViewById(R.id.text_view_mini_podcast_title);
 
         mTextViewEndDuration = (TextView) view.findViewById(R.id.text_view_end_duration);
 
@@ -181,11 +190,24 @@ public class PlayerFragment extends BaseFragment {
 
         mImageButtonSkipPreviuos = (ImageButton)view.findViewById(R.id.image_button_skip_previous);
 
+        mImageButtonMiniPlayPause = (ImageButton)view.findViewById(R.id.image_button_mini_play_pause);
+
+        mImageButtonMiniSkipNext = (ImageButton)view.findViewById(R.id.image_button_mini_skip_next);
+
         mSeekbar = (SeekBar)view.findViewById(R.id.seek_bar_episode_position);
 
         mImageButtonPause.setOnClickListener(mPlaybackButtonListener);
 
+        mImageButtonMiniPlayPause.setOnClickListener(mPlaybackButtonListener);
+
         mImageButtonSkipNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                skipNext();
+            }
+        });
+
+        mImageButtonMiniSkipNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 skipNext();
@@ -250,15 +272,18 @@ public class PlayerFragment extends BaseFragment {
         switch (state.getState()) {
             case PlaybackStateCompat.STATE_PLAYING:
                 mImageButtonPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_circle));
+                mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_white_24dp));
                 scheduleSeekbarUpdate();
                 break;
             case PlaybackStateCompat.STATE_PAUSED:
                 mImageButtonPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_circle_red_60dp));
+                mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_white_24dp));
                 stopSeekbarUpdate();
                 break;
             case PlaybackStateCompat.STATE_NONE:
             case PlaybackStateCompat.STATE_STOPPED:
                 mImageButtonPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_circle_red_60dp));
+                mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_white_24dp));
                 stopSeekbarUpdate();
                 break;
             case PlaybackStateCompat.STATE_BUFFERING:
@@ -281,10 +306,14 @@ public class PlayerFragment extends BaseFragment {
 
         mEpisodeTitle.setText(metadata.getDescription().getTitle());
 
-        Log.d(LOG_TAG,metadata.getDescription().getIconUri().toString());
+        mTextViewMiniEpisodeTitle.setText(metadata.getDescription().getTitle());
+
+        mTextViewMiniPodcastTitle.setText(metadata.getDescription().getSubtitle());
 
         // Load Image Async
         mImageLoader.displayImage(metadata.getDescription().getIconUri().toString(), mImageViewEpisode);
+
+        mImageLoader.displayImage(metadata.getDescription().getIconUri().toString(), mImageViewMiniEpisode);
 
     }
 
@@ -376,5 +405,6 @@ public class PlayerFragment extends BaseFragment {
         MediaControllerCompat.TransportControls controls = mActivity.getSupportMediaController().getTransportControls();
         controls.skipToPrevious();
     }
+
 
 }

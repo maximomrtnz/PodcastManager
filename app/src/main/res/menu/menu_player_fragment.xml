@@ -1,0 +1,17 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:mayApp="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_play_pause"
+        mayApp:icon="@drawable/ic_play_arrow_white_24dp"
+        android:title="Play/Pause"
+        mayApp:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_skip_next"
+        mayApp:icon="@drawable/ic_skip_next_white_24dp"
+        android:title="Skip Next"
+        mayApp:showAsAction="always" />
+
+
+</menu>
