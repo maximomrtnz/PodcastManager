@@ -5,8 +5,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
@@ -36,15 +39,17 @@ import maximomrtnz.podcastmanager.ui.views.SlidingTabLayout;
 import maximomrtnz.podcastmanager.utils.EpisodePlaylist;
 import maximomrtnz.podcastmanager.utils.JsonUtil;
 
-public class MainActivity extends BaseActivity implements SearchView.OnQueryTextListener, MenuItemCompat.OnActionExpandListener{
+public class MainActivity extends BaseActivity implements SearchView.OnQueryTextListener, MenuItemCompat.OnActionExpandListener, PlayerFragment.PlayerFragmentListener{
 
     private static String LOG_TAG = "MainActivity";
-    private static final int BROWSE_FRAGMENT_INDEX = 1;
+    private static String SAVED_PODCAST = "SAVED_PODCAST";
+    private static String SAVED_EPISODE = "SAVED_EPISODE";
 
     private SlidingUpPanelLayout mSlidingLayout;
     private DrawerLayout mDrawerLayout;
     private NavigationView mNavigationView;
     private PlayerFragment mPlayerFragment;
+    private Bundle mSavedInstanceState;
 
 
     @Override
@@ -59,6 +64,9 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
         setUpNavDrawer();
 
         showTopCharts();
+
+        // Save SavedInstanceState to use it when the PlayerFragment will be ready
+        mSavedInstanceState = savedInstanceState;
 
     }
 
@@ -255,10 +263,52 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
 
     public void showEpisode(Podcast podcast, Episode episode){
 
-        EpisodePlaylist.getInstance().createMediaMetadata(podcast,episode);
+        String id = EpisodePlaylist.getInstance().createMediaMetadata(podcast,episode);
 
-        mPlayerFragment.onMediaItemSelected(EpisodePlaylist.getInstance().getMediaItems().get(0));
+        mPlayerFragment.onMediaItemSelected(EpisodePlaylist.getInstance().getMediaItemById(id));
 
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+
+        String currentId = mPlayerFragment.getCurrentId();
+
+        Log.d(LOG_TAG, "CURRENT ID -->"+currentId);
+
+        if(currentId!=null) {
+
+            // Save current episode
+            savedInstanceState.putString(SAVED_EPISODE, JsonUtil.getInstance().toJson(EpisodePlaylist.getInstance().getEpisodeByMediaId(currentId)));
+
+            // Save current podcast
+            savedInstanceState.putString(SAVED_PODCAST, JsonUtil.getInstance().toJson(EpisodePlaylist.getInstance().getPodcastByMediaId(currentId)));
+
+            Log.d(LOG_TAG, "Episode -->"+JsonUtil.getInstance().toJson(EpisodePlaylist.getInstance().getEpisodeByMediaId(currentId)));
+
+            Log.d(LOG_TAG, "Podcast -->"+JsonUtil.getInstance().toJson(EpisodePlaylist.getInstance().getPodcastByMediaId(currentId)));
+
+        }
+
+        super.onSaveInstanceState(savedInstanceState);
+
+    }
+
+    protected void restoreInstanceState(Bundle savedInstanceState) {
+
+        Podcast podcast = JsonUtil.getInstance().fromJson(savedInstanceState.getString(SAVED_PODCAST),Podcast.class);
+
+        Episode episode = JsonUtil.getInstance().fromJson(savedInstanceState.getString(SAVED_EPISODE),Episode.class);
+
+        showEpisode(podcast,episode);
+
+    }
+
+
+    @Override
+    public void onMediaControllerConnected() {
+        if(mSavedInstanceState!=null){
+            restoreInstanceState(mSavedInstanceState);
+        }
+    }
 }

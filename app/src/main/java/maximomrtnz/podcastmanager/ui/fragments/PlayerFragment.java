@@ -2,6 +2,7 @@ package maximomrtnz.podcastmanager.ui.fragments;
 
 import android.content.ComponentName;
 
+import android.content.Context;
 import android.media.session.PlaybackState;
 import android.os.Bundle;
 import android.os.Handler;
@@ -44,6 +45,8 @@ public class PlayerFragment extends BaseFragment {
 
     private static String LOG_TAG = "PlayerFragment";
 
+    private static final String ARG_MEDIA_ID = "media_id";
+
     private static final long PROGRESS_UPDATE_INTERNAL = 1000;
     private static final long PROGRESS_UPDATE_INITIAL_INTERVAL = 100;
 
@@ -61,6 +64,7 @@ public class PlayerFragment extends BaseFragment {
     private ImageButton mImageButtonMiniPlayPause;
     private ImageButton mImageButtonMiniSkipNext;
     private SeekBar mSeekbar;
+    private PlayerFragmentListener mPlayerFragmentListener;
 
 
     private PlaybackStateCompat mCurrentState;
@@ -115,7 +119,13 @@ public class PlayerFragment extends BaseFragment {
                     }
 
                 }
+
+                if(mPlayerFragmentListener!=null){
+                    mPlayerFragmentListener.onMediaControllerConnected();
+                }
+
             }
+
         };
 
     // Receive callbacks from the MediaController. Here we update our state such as which queue
@@ -148,7 +158,7 @@ public class PlayerFragment extends BaseFragment {
 
     public void onMediaItemSelected(MediaBrowserCompat.MediaItem item) {
         if (item.isPlayable()) {
-            mActivity.getSupportMediaController().getTransportControls().playFromMediaId(item.getMediaId(), null);
+            getActivity().getSupportMediaController().getTransportControls().playFromMediaId(item.getMediaId(), null);
         }
     }
 
@@ -225,7 +235,7 @@ public class PlayerFragment extends BaseFragment {
 
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mTextViewStartDuration.setText(DateUtils.formatSeconds(progress));
+                mTextViewStartDuration.setText(DateUtils.formatSeconds(progress/1000));
             }
 
             @Override
@@ -235,7 +245,9 @@ public class PlayerFragment extends BaseFragment {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                seekTo(seekBar.getProgress());
+                //seekTo(seekBar.getProgress());
+                Log.d(LOG_TAG, seekBar.getProgress()+"");
+                getActivity().getSupportMediaController().getTransportControls().seekTo(seekBar.getProgress());
                 scheduleSeekbarUpdate();
             }
         });
@@ -256,12 +268,16 @@ public class PlayerFragment extends BaseFragment {
             mActivity.getSupportMediaController().unregisterCallback(mMediaControllerCallback);
         }
         if (mMediaBrowser != null && mMediaBrowser.isConnected()) {
-            mMediaBrowser.unsubscribe(mCurrentMetadata.getDescription().getMediaId());
+            if(mCurrentMetadata!=null) {
+                mMediaBrowser.unsubscribe(mCurrentMetadata.getDescription().getMediaId());
+            }
             mMediaBrowser.disconnect();
         }
     }
 
     private void updatePlaybackState(PlaybackStateCompat state) {
+
+        Log.d(LOG_TAG, "UPDATE PLAYBACK STATE");
 
         if(state==null){
             return;
@@ -341,9 +357,10 @@ public class PlayerFragment extends BaseFragment {
         }
     };
 
-    private void seekTo(long longPos){
-        Log.d(LOG_TAG, longPos+"");
-        mActivity.getSupportMediaController().getTransportControls().seekTo(longPos);
+    public void setMediaId(String mediaId) {
+        Bundle args = new Bundle(1);
+        args.putString(PlayerFragment.ARG_MEDIA_ID, mediaId);
+        setArguments(args);
     }
 
     private void scheduleSeekbarUpdate() {
@@ -367,17 +384,23 @@ public class PlayerFragment extends BaseFragment {
     }
 
     private void updateProgress() {
+
         if (mCurrentState == null) {
             return;
         }
+
         long currentPosition = mCurrentState.getPosition();
+
+        Log.d(LOG_TAG,currentPosition+"");
 
         if (mCurrentState.getState() != PlaybackStateCompat.STATE_PAUSED) {
             long timeDelta = SystemClock.elapsedRealtime() - mCurrentState.getLastPositionUpdateTime();
             currentPosition += (int) timeDelta * mCurrentState.getPlaybackSpeed();
         }
 
-        mSeekbar.setProgress((int) currentPosition/1000);
+        Log.d(LOG_TAG,currentPosition+"");
+
+        mSeekbar.setProgress((int) currentPosition);
     }
 
     private void updateDuration(MediaMetadataCompat metadata) {
@@ -386,7 +409,7 @@ public class PlayerFragment extends BaseFragment {
         }
         int duration = (int) metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
         mSeekbar.setMax(duration);
-        mTextViewEndDuration.setText(DateUtils.formatSeconds(duration));
+        mTextViewEndDuration.setText(DateUtils.formatSeconds(duration/1000));
     }
 
     @Override
@@ -397,14 +420,31 @@ public class PlayerFragment extends BaseFragment {
     }
 
     public void skipNext(){
-        MediaControllerCompat.TransportControls controls = mActivity.getSupportMediaController().getTransportControls();
+        MediaControllerCompat.TransportControls controls = getActivity().getSupportMediaController().getTransportControls();
         controls.skipToNext();
     }
 
     public void skipPrevious(){
-        MediaControllerCompat.TransportControls controls = mActivity.getSupportMediaController().getTransportControls();
+        MediaControllerCompat.TransportControls controls = getActivity().getSupportMediaController().getTransportControls();
         controls.skipToPrevious();
     }
 
+    public String getCurrentId(){
+        if(mCurrentMetadata!=null){
+            return mCurrentMetadata.getDescription().getMediaId();
+        }
+        return null;
+    }
 
+    public interface PlayerFragmentListener{
+        void onMediaControllerConnected();
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if(context instanceof PlayerFragmentListener){
+            mPlayerFragmentListener = (PlayerFragmentListener)context;
+        }
+    }
 }

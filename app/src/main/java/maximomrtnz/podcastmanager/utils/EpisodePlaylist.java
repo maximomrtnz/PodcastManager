@@ -36,11 +36,20 @@ public class EpisodePlaylist {
     private TreeMap<String, MediaMetadataCompat> episodes = new TreeMap<>();
     private HashMap<String, String> episodesImages = new HashMap<>();
     private HashMap<String, String> episodesSources = new HashMap<>();
+    private HashMap<String, Podcast> podcastsByMediaId = new HashMap<>();
+    private HashMap<String, Episode> episodesByMediaId = new HashMap<>();
 
     public String getRoot() {
         return "root";
     }
 
+    public Episode getEpisodeByMediaId(String mediaId){
+        return episodesByMediaId.get(mediaId);
+    }
+
+    public Podcast getPodcastByMediaId(String mediaId){
+        return podcastsByMediaId.get(mediaId);
+    }
 
     public String getEpisodeUri(String mediaId){
         return episodesSources.get(mediaId);
@@ -52,6 +61,17 @@ public class EpisodePlaylist {
             result.add(new MediaBrowserCompat.MediaItem(metadata.getDescription(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE));
         }
         return result;
+    }
+
+    public MediaBrowserCompat.MediaItem getMediaItemById(String id){
+        MediaBrowserCompat.MediaItem item = null;
+        for (MediaMetadataCompat metadata: episodes.values()) {
+            if(metadata.getDescription().getMediaId().equals(id)){
+                item = new MediaBrowserCompat.MediaItem(metadata.getDescription(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE);
+                break;
+            }
+        }
+        return item;
     }
 
     public String getPreviousEpisode(String currentMediaId) {
@@ -90,27 +110,32 @@ public class EpisodePlaylist {
         return builder.build();
     }
 
-    public void createMediaMetadata(Podcast podcast, Episode episode) {
+    public String createMediaMetadata(Podcast podcast, Episode episode) {
 
-
-        Log.d(LOG_TAG, episode.getImageUrl());
+        String mediaId = Utils.md5Encode(episode.getEpisodeUrl());
 
         episodes.put(Utils.md5Encode(episode.getEpisodeUrl()),
 
                 new MediaMetadataCompat.Builder()
-                        .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, Utils.md5Encode(episode.getEpisodeUrl()))
+                        .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, mediaId)
                         .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, podcast.getTitle())
                         .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, podcast.getItunesAuthor())
-                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, DateUtils.timeToSeconds(episode.getItunesDuration()))
+                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, DateUtils.timeToSeconds(episode.getItunesDuration())*1000)
                         .putString(MediaMetadataCompat.METADATA_KEY_GENRE, podcast.getItunesSumary())
                         .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, podcast.getImageUrl())
                         .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON_URI, episode.getImageUrl())
                         .putString(MediaMetadataCompat.METADATA_KEY_TITLE, episode.getTitle())
                         .build());
 
-        episodesImages.put(Utils.md5Encode(episode.getEpisodeUrl()),Constants.DIRECTORIES.ROOT+"/"+Constants.DIRECTORIES.IMAGES+"/"+FileCache.getCacheFileName(episode.getImageUrl()));
+        episodesImages.put(mediaId,Constants.DIRECTORIES.ROOT+"/"+Constants.DIRECTORIES.IMAGES+"/"+FileCache.getCacheFileName(episode.getImageUrl()));
 
-        episodesSources.put(Utils.md5Encode(episode.getEpisodeUrl()),episode.getEpisodeUrl());
+        episodesSources.put(mediaId,episode.getEpisodeUrl());
+
+        podcastsByMediaId.put(mediaId, podcast);
+
+        episodesByMediaId.put(mediaId, episode);
+
+        return mediaId;
 
     }
 

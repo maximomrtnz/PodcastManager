@@ -43,5 +43,4 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     public abstract void loadUIComponents();
 
-
 }
