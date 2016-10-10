@@ -74,6 +74,9 @@ public class PodcastManagerContract {
         public static final String COLUMN_NAME_EPISODE_URL = "episode_url";
         public static final String COLUMN_NAME_FLAG_PLAYED = "flag_played";
         public static final String COLUMN_NAME_DOWNLOAD_MANAGER_ID = "download_manager_id";
+        public static final String COLUMN_NAME_DURATION_REMAINDER = "duration_remainder";
+        public static final String COLUMN_NAME_FLAG_ON_PLAY_QUEUE = "flag_on_play_queue";
+        public static final String COLUMN_NAME_ON_PLAY_QUEUE_TIMESTAMP = "on_play_queue_timestamp";
 
         /**
          * Content Provider
@@ -86,6 +89,8 @@ public class PodcastManagerContract {
         public static final String WHERE_EPISODE_URL = COLUMN_NAME_EPISODE_URL + " =?";
 
         public static final String SORT_ORDER = COLUMN_NAME_PUB_DATE+" DESC";
+
+        public static final String SORT_ORDER_ON_PLAY_QUEUE_TIMESTAMP_DESC = COLUMN_NAME_ON_PLAY_QUEUE_TIMESTAMP+" DESC";
 
         public static final String[] PROJECTION_ALL = {
                 _ID,
@@ -102,11 +107,13 @@ public class PodcastManagerContract {
                 COLUMN_NAME_LINK,
                 COLUMN_NAME_EPISODE_URL,
                 COLUMN_NAME_FLAG_PLAYED,
-                COLUMN_NAME_DOWNLOAD_MANAGER_ID
+                COLUMN_NAME_DOWNLOAD_MANAGER_ID,
+                COLUMN_NAME_DURATION_REMAINDER,
+                COLUMN_NAME_ON_PLAY_QUEUE_TIMESTAMP,
+                COLUMN_NAME_FLAG_ON_PLAY_QUEUE
         };
 
     }
-
 
 
 }

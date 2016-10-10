@@ -76,6 +76,18 @@ public class EpisodeConverter implements Converter<Episode> {
             contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_DOWNLOAD_MANAGER_ID, episode.getDownloadId());
         }
 
+        if(episode.getOnPlayQueue()!=null){
+            contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_FLAG_ON_PLAY_QUEUE, episode.getOnPlayQueue());
+        }
+
+        if(episode.getOnPlayQueueTimeStamp()!=null){
+            contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ON_PLAY_QUEUE_TIMESTAMP, DateUtils.formatDateAsLong(episode.getOnPlayQueueTimeStamp()));
+        }
+
+        if(episode.getRemainderDuration()!=null){
+            contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_DURATION_REMAINDER, episode.getRemainderDuration());
+        }
+
         return contentValues;
 
     }
@@ -99,13 +111,19 @@ public class EpisodeConverter implements Converter<Episode> {
         episode.setItunesSubtitle(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUBTITLE)));
         episode.setGuid(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_GUID)));
         episode.setEpisodeUrl(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL)));
+        episode.setOnPlayQueueTimeStamp(DateUtils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_ON_PLAY_QUEUE_TIMESTAMP))));
+        episode.setRemainderDuration(cursor.getInt(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_DURATION_REMAINDER)));
 
         // Set Custom Fields
         int isPlayed = cursor.getInt(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_FLAG_PLAYED));
 
+        int isOnPlayQueue = cursor.getInt(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_FLAG_ON_PLAY_QUEUE));
+
         episode.setPlayed((isPlayed==1)?true:false);
 
         episode.setDownloadId(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_DOWNLOAD_MANAGER_ID)));
+
+        episode.setOnPlayQueue((isOnPlayQueue==1)?true:false);
 
         return episode;
 

@@ -34,6 +34,9 @@ public class Episode {
     private String episodeUrl;
     private Boolean isPlayed;
     private Boolean isDirty;
+    private Boolean isOnPlayQueue;
+    private Calendar onPlayQueueTimeStamp;
+    private Integer remainderDuration;
 
     public String getTitle() {
         return title;
@@ -82,7 +85,6 @@ public class Episode {
     public void setPubDate(Calendar pubDate) {
         this.pubDate = pubDate;
     }
-
 
     public String getGuid() {
         return guid;
@@ -162,5 +164,29 @@ public class Episode {
 
     public void setDownloadId(Long downloadId) {
         this.downloadId = downloadId;
+    }
+
+    public Boolean getOnPlayQueue() {
+        return isOnPlayQueue;
+    }
+
+    public void setOnPlayQueue(Boolean onPlayQueue) {
+        isOnPlayQueue = onPlayQueue;
+    }
+
+    public Calendar getOnPlayQueueTimeStamp() {
+        return onPlayQueueTimeStamp;
+    }
+
+    public void setOnPlayQueueTimeStamp(Calendar onPlayQueueTimeStamp) {
+        this.onPlayQueueTimeStamp = onPlayQueueTimeStamp;
+    }
+
+    public Integer getRemainderDuration() {
+        return remainderDuration;
+    }
+
+    public void setRemainderDuration(Integer remainderDuration) {
+        this.remainderDuration = remainderDuration;
     }
 }

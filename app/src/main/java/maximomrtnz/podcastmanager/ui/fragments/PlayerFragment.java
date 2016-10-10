@@ -1,19 +1,9 @@
 package maximomrtnz.podcastmanager.ui.fragments;
 
-import android.content.ComponentName;
-
-import android.content.Context;
-import android.media.session.PlaybackState;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.RemoteException;
-import android.os.SystemClock;
 import android.support.annotation.Nullable;
-import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.MediaControllerCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
-
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,428 +13,94 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
 import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.cache.ImageLoader;
-
+import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.services.PlayerService;
+import maximomrtnz.podcastmanager.utils.JsonUtil;
 
-import maximomrtnz.podcastmanager.utils.DateUtils;
-import maximomrtnz.podcastmanager.utils.EpisodePlaylist;
 
 /**
  * Created by maximo on 14/08/16.
  */
 
-public class PlayerFragment extends BaseFragment {
+public class PlayerFragment extends BaseFragment implements View.OnClickListener{
 
     private static String LOG_TAG = "PlayerFragment";
-
-    private static final String ARG_MEDIA_ID = "media_id";
 
     private static final long PROGRESS_UPDATE_INTERNAL = 1000;
     private static final long PROGRESS_UPDATE_INITIAL_INTERVAL = 100;
 
     private ImageLoader mImageLoader;
-    private ImageView mImageViewEpisode;
     private ImageView mImageViewMiniEpisode;
-    private TextView mEpisodeTitle;
+    private TextView mTitle;
     private TextView mTextViewStartDuration;
     private TextView mTextViewEndDuration;
-    private TextView mTextViewMiniEpisodeTitle;
-    private TextView mTextViewMiniPodcastTitle;
     private ImageButton mImageButtonPause;
     private ImageButton mImageButtonSkipNext;
     private ImageButton mImageButtonSkipPreviuos;
     private ImageButton mImageButtonMiniPlayPause;
     private ImageButton mImageButtonMiniSkipNext;
+    private ImageButton mImageButtonStop;
     private SeekBar mSeekbar;
-    private PlayerFragmentListener mPlayerFragmentListener;
-
-
-    private PlaybackStateCompat mCurrentState;
-
-    private MediaBrowserCompat mMediaBrowser;
-
-    private MediaMetadataCompat mCurrentMetadata;
-
-    private final ScheduledExecutorService mExecutorService = Executors.newSingleThreadScheduledExecutor();
-
-    private ScheduledFuture<?> mScheduleFuture;
-
-    private final Handler mHandler = new Handler();
-
-    private final Runnable mUpdateProgressTask = new Runnable() {
-        @Override
-        public void run() {
-            updateProgress();
-        }
-    };
-
-
-    private final MediaBrowserCompat.ConnectionCallback mConnectionCallback = new MediaBrowserCompat.ConnectionCallback() {
-            @Override
-            public void onConnected() {
-
-                mMediaBrowser.subscribe(mMediaBrowser.getRoot(), mSubscriptionCallback);
-
-                MediaControllerCompat mediaController = null;
-
-                try {
-                    mediaController = new MediaControllerCompat(getActivity(), mMediaBrowser.getSessionToken());
-                }catch (RemoteException e){
-                    e.printStackTrace();
-                    Log.e(LOG_TAG, e.getMessage());
-                }
-
-                if(mediaController!=null) {
-
-                    mActivity.setSupportMediaController(mediaController);
-
-                    PlaybackStateCompat state = mediaController.getPlaybackState();
-                    MediaMetadataCompat metadata = mediaController.getMetadata();
-
-                    updatePlaybackState(state);
-                    updateMetadata(metadata);
-                    mediaController.registerCallback(mMediaControllerCallback);
-                    updateDuration(metadata);
-
-                    if (state != null && (state.getState() == PlaybackStateCompat.STATE_PLAYING || state.getState() == PlaybackStateCompat.STATE_BUFFERING)) {
-                        scheduleSeekbarUpdate();
-                    }
-
-                }
-
-                if(mPlayerFragmentListener!=null){
-                    mPlayerFragmentListener.onMediaControllerConnected();
-                }
-
-            }
-
-        };
-
-    // Receive callbacks from the MediaController. Here we update our state such as which queue
-    // is being shown, the current title and description and the PlaybackState.
-    private final MediaControllerCompat.Callback mMediaControllerCallback = new MediaControllerCompat.Callback() {
-        @Override
-        public void onMetadataChanged(MediaMetadataCompat metadata) {
-            updateMetadata(metadata);
-            updateDuration(metadata);
-        }
-
-        @Override
-        public void onPlaybackStateChanged(PlaybackStateCompat state) {
-            updatePlaybackState(state);
-        }
-
-        @Override
-        public void onSessionDestroyed() {
-            updatePlaybackState(null);
-        }
-    };
-
-    private final MediaBrowserCompat.SubscriptionCallback mSubscriptionCallback =
-            new MediaBrowserCompat.SubscriptionCallback() {
-                @Override
-                public void onChildrenLoaded(String parentId, List<MediaBrowserCompat.MediaItem> children) {
-
-                }
-            };
-
-    public void onMediaItemSelected(MediaBrowserCompat.MediaItem item) {
-        if (item.isPlayable()) {
-            getActivity().getSupportMediaController().getTransportControls().playFromMediaId(item.getMediaId(), null);
-        }
-    }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View v =inflater.inflate(R.layout.fragment_player,container,false);
 
-        View view = inflater.inflate(R.layout.fragment_player, container, false);
+        loadUIComponents(v);
 
-        mImageLoader = new ImageLoader(getContext());
-
-        loadUIComponents(view);
-
-        return view;
-
+        return v;
     }
 
+    @Override
+    public void onClick(View target) {
+
+        // Send the correct intent to the MusicService, according to the button that was clicked
+        if (target == mImageButtonPause) {
+            doAction(PlayerService.ACTION_PLAY);
+        }else if (target == mImageButtonPause) {
+            doAction(PlayerService.ACTION_PAUSE);
+        }else if (target == mImageButtonSkipNext) {
+            doAction(PlayerService.ACTION_SKIP);
+        }else if (target == mImageButtonSkipPreviuos) {
+            doAction(PlayerService.ACTION_REWIND);
+        }else if (target == mImageButtonStop) {
+            doAction(PlayerService.ACTION_STOP);
+        }
+
+    }
 
     @Override
     public void loadUIComponents(View view) {
 
-        mImageViewEpisode = (ImageView) view.findViewById(R.id.image_view_episode);
+        mImageButtonPause = (ImageButton) view.findViewById(R.id.image_button_pause);
+        mImageButtonSkipPreviuos = (ImageButton) view.findViewById(R.id.image_button_skip_previous);
+        mImageButtonSkipNext = (ImageButton) view.findViewById(R.id.image_button_skip_next);
 
-        mImageViewMiniEpisode = (ImageView) view.findViewById(R.id.image_view_mini_episode);
-
-        mEpisodeTitle = (TextView) view.findViewById(R.id.text_view_episode_title);
-
-        mTextViewMiniEpisodeTitle = (TextView) view.findViewById(R.id.text_view_mini_episode_title);
-
-        mTextViewMiniPodcastTitle = (TextView) view.findViewById(R.id.text_view_mini_podcast_title);
-
-        mTextViewEndDuration = (TextView) view.findViewById(R.id.text_view_end_duration);
-
-        mTextViewStartDuration = (TextView) view.findViewById(R.id.text_view_start_duration);
-
-        mImageButtonPause = (ImageButton)view.findViewById(R.id.image_button_pause);
-
-        mImageButtonSkipNext = (ImageButton)view.findViewById(R.id.image_button_skip_next);
-
-        mImageButtonSkipPreviuos = (ImageButton)view.findViewById(R.id.image_button_skip_previous);
-
-        mImageButtonMiniPlayPause = (ImageButton)view.findViewById(R.id.image_button_mini_play_pause);
-
-        mImageButtonMiniSkipNext = (ImageButton)view.findViewById(R.id.image_button_mini_skip_next);
-
-        mSeekbar = (SeekBar)view.findViewById(R.id.seek_bar_episode_position);
-
-        mImageButtonPause.setOnClickListener(mPlaybackButtonListener);
-
-        mImageButtonMiniPlayPause.setOnClickListener(mPlaybackButtonListener);
-
-        mImageButtonSkipNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                skipNext();
-            }
-        });
-
-        mImageButtonMiniSkipNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                skipNext();
-            }
-        });
-
-        mImageButtonSkipPreviuos.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                skipPrevious();
-            }
-        });
-
-        mSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mTextViewStartDuration.setText(DateUtils.formatSeconds(progress/1000));
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                stopSeekbarUpdate();
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                //seekTo(seekBar.getProgress());
-                Log.d(LOG_TAG, seekBar.getProgress()+"");
-                getActivity().getSupportMediaController().getTransportControls().seekTo(seekBar.getProgress());
-                scheduleSeekbarUpdate();
-            }
-        });
+        mImageButtonPause.setOnClickListener(this);
+        mImageButtonSkipNext.setOnClickListener(this);
+        mImageButtonSkipPreviuos.setOnClickListener(this);
 
     }
 
+    public void play(Episode episode){
+        // Send an intent with the episode to play. This is expected by
+        // PlayerService.
+        Intent i = new Intent(getContext(),PlayerService.class);
+        i.setAction(PlayerService.ACTION_URL);
+        i.putExtra("Episode", JsonUtil.getInstance().toJson(episode));
 
-    @Override
-    public void onPause() {
-        super.onPause();
+        Log.d(LOG_TAG,JsonUtil.getInstance().toJson(episode));
+
+        getActivity().startService(i);
     }
 
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (mActivity.getSupportMediaController() != null) {
-            mActivity.getSupportMediaController().unregisterCallback(mMediaControllerCallback);
-        }
-        if (mMediaBrowser != null && mMediaBrowser.isConnected()) {
-            if(mCurrentMetadata!=null) {
-                mMediaBrowser.unsubscribe(mCurrentMetadata.getDescription().getMediaId());
-            }
-            mMediaBrowser.disconnect();
-        }
+    public void doAction(String action){
+        Intent i = new Intent(getContext(),PlayerService.class);
+        i.setAction(action);
+        getActivity().startService(i);
     }
 
-    private void updatePlaybackState(PlaybackStateCompat state) {
-
-        Log.d(LOG_TAG, "UPDATE PLAYBACK STATE");
-
-        if(state==null){
-            return;
-        }
-
-        mCurrentState = state;
-
-        switch (state.getState()) {
-            case PlaybackStateCompat.STATE_PLAYING:
-                mImageButtonPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_circle));
-                mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_white_24dp));
-                scheduleSeekbarUpdate();
-                break;
-            case PlaybackStateCompat.STATE_PAUSED:
-                mImageButtonPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_circle_red_60dp));
-                mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_white_24dp));
-                stopSeekbarUpdate();
-                break;
-            case PlaybackStateCompat.STATE_NONE:
-            case PlaybackStateCompat.STATE_STOPPED:
-                mImageButtonPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_circle_red_60dp));
-                mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_white_24dp));
-                stopSeekbarUpdate();
-                break;
-            case PlaybackStateCompat.STATE_BUFFERING:
-                stopSeekbarUpdate();
-                break;
-            default:
-                Log.d(LOG_TAG, "Unhandled state "+state.getState());
-        }
-
-
-    }
-
-    private void updateMetadata(MediaMetadataCompat metadata) {
-
-        if(metadata == null){
-            return;
-        }
-
-        mCurrentMetadata = metadata;
-
-        mEpisodeTitle.setText(metadata.getDescription().getTitle());
-
-        mTextViewMiniEpisodeTitle.setText(metadata.getDescription().getTitle());
-
-        mTextViewMiniPodcastTitle.setText(metadata.getDescription().getSubtitle());
-
-        // Load Image Async
-        mImageLoader.displayImage(metadata.getDescription().getIconUri().toString(), mImageViewEpisode);
-
-        mImageLoader.displayImage(metadata.getDescription().getIconUri().toString(), mImageViewMiniEpisode);
-
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        mMediaBrowser = new MediaBrowserCompat(getActivity(), new ComponentName(getActivity(), PlayerService.class), mConnectionCallback, null);
-        mMediaBrowser.connect();
-    }
-
-
-    private final View.OnClickListener mPlaybackButtonListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            final int state = mCurrentState == null ? PlaybackState.STATE_NONE : mCurrentState.getState();
-            if (state == PlaybackState.STATE_PAUSED || state == PlaybackState.STATE_STOPPED || state == PlaybackState.STATE_NONE) {
-                if (mCurrentMetadata == null) {
-                    mCurrentMetadata = EpisodePlaylist.getInstance().getMetadata(EpisodePlaylist.getInstance().getMediaItems().get(0).getMediaId());
-                    updateMetadata(mCurrentMetadata);
-                }
-                getActivity().getSupportMediaController().getTransportControls().playFromMediaId(mCurrentMetadata.getDescription().getMediaId(), null);
-            } else {
-                getActivity().getSupportMediaController().getTransportControls().pause();
-            }
-        }
-    };
-
-    public void setMediaId(String mediaId) {
-        Bundle args = new Bundle(1);
-        args.putString(PlayerFragment.ARG_MEDIA_ID, mediaId);
-        setArguments(args);
-    }
-
-    private void scheduleSeekbarUpdate() {
-        stopSeekbarUpdate();
-        if (!mExecutorService.isShutdown()) {
-            mScheduleFuture = mExecutorService.scheduleAtFixedRate(
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            mHandler.post(mUpdateProgressTask);
-                        }
-                    }, PROGRESS_UPDATE_INITIAL_INTERVAL,
-                    PROGRESS_UPDATE_INTERNAL, TimeUnit.MILLISECONDS);
-        }
-    }
-
-    private void stopSeekbarUpdate() {
-        if (mScheduleFuture != null) {
-            mScheduleFuture.cancel(false);
-        }
-    }
-
-    private void updateProgress() {
-
-        if (mCurrentState == null) {
-            return;
-        }
-
-        long currentPosition = mCurrentState.getPosition();
-
-        Log.d(LOG_TAG,currentPosition+"");
-
-        if (mCurrentState.getState() != PlaybackStateCompat.STATE_PAUSED) {
-            long timeDelta = SystemClock.elapsedRealtime() - mCurrentState.getLastPositionUpdateTime();
-            currentPosition += (int) timeDelta * mCurrentState.getPlaybackSpeed();
-        }
-
-        Log.d(LOG_TAG,currentPosition+"");
-
-        mSeekbar.setProgress((int) currentPosition);
-    }
-
-    private void updateDuration(MediaMetadataCompat metadata) {
-        if (metadata == null) {
-            return;
-        }
-        int duration = (int) metadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
-        mSeekbar.setMax(duration);
-        mTextViewEndDuration.setText(DateUtils.formatSeconds(duration/1000));
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        stopSeekbarUpdate();
-        mExecutorService.shutdown();
-    }
-
-    public void skipNext(){
-        MediaControllerCompat.TransportControls controls = getActivity().getSupportMediaController().getTransportControls();
-        controls.skipToNext();
-    }
-
-    public void skipPrevious(){
-        MediaControllerCompat.TransportControls controls = getActivity().getSupportMediaController().getTransportControls();
-        controls.skipToPrevious();
-    }
-
-    public String getCurrentId(){
-        if(mCurrentMetadata!=null){
-            return mCurrentMetadata.getDescription().getMediaId();
-        }
-        return null;
-    }
-
-    public interface PlayerFragmentListener{
-        void onMediaControllerConnected();
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if(context instanceof PlayerFragmentListener){
-            mPlayerFragmentListener = (PlayerFragmentListener)context;
-        }
-    }
 }

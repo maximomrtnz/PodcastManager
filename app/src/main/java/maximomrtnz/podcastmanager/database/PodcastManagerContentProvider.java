@@ -46,6 +46,8 @@ public class PodcastManagerContentProvider extends ContentProvider {
     private static final int PODCAST_ID = 1;
     private static final int EPISODE_DIR = 2;
     private static final int EPISODE_ID = 3;
+    private static final int ITEM_DIR = 4;
+    private static final int ITEM_ID = 5;
 
 
     static {
@@ -57,6 +59,7 @@ public class PodcastManagerContentProvider extends ContentProvider {
 
         URI_MATCHER.addURI(AUTHORITY, PodcastManagerContract.Episode.CONTENT_PATH, EPISODE_DIR);
         URI_MATCHER.addURI(AUTHORITY, PodcastManagerContract.Episode.CONTENT_PATH + "/#", EPISODE_ID);
+
 
     }
 
@@ -116,6 +119,12 @@ public class PodcastManagerContentProvider extends ContentProvider {
                 return PodcastManagerContract.Episode.CONTENT_TYPE;
             case EPISODE_ID:
                 return PodcastManagerContract.Episode.CONTENT_ITEM_TYPE;
+
+            case ITEM_DIR:
+                return PodcastManagerContract.Episode.CONTENT_TYPE;
+            case ITEM_ID:
+                return PodcastManagerContract.Episode.CONTENT_ITEM_TYPE;
+
 
             default:
                 throw new IllegalArgumentException("Unsupported URI: " + uri);

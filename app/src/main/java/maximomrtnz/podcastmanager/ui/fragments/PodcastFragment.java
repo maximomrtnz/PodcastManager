@@ -52,7 +52,6 @@ import maximomrtnz.podcastmanager.ui.adapters.EpisodesRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.dialogs.ConfirmDialog;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 import maximomrtnz.podcastmanager.utils.Constants;
-import maximomrtnz.podcastmanager.utils.EpisodePlaylist;
 import maximomrtnz.podcastmanager.utils.JsonUtil;
 import maximomrtnz.podcastmanager.utils.Utils;
 import mbanje.kurt.fabbutton.FabButton;
@@ -279,7 +278,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
         Episode episode = (Episode)v.getTag();
 
         if(mActivity!=null){
-            mActivity.showEpisode(mPodcast,episode);
+            mActivity.playEpisode(episode);
         }
 
     }

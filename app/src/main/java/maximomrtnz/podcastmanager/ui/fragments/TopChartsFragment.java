@@ -59,7 +59,7 @@ public class TopChartsFragment extends BaseFragment implements EventSendedListen
         mProgressBar.setVisibility(View.VISIBLE);
 
         // Get devise location, to get podcast acording for user location
-        String lang = Locale.getDefault().getLanguage();
+        String lang = Locale.getDefault().getCountry();
 
         // Get Podcast from Itunes API
         new ItunesAppleAPI(new ItunesAppleAPI.ItunesAppleAPIListener() {

@@ -46,15 +46,6 @@
             android:name=".services.SynchronizeService"
             android:exported="false" />
 
-        <service
-            android:name=".services.PlayerService"
-            android:enabled="true"
-            android:exported="true" >
-            <intent-filter>
-                <action android:name="android.media.browse.MediaBrowserService" />
-            </intent-filter>
-        </service>
-
 
         <!-- Broadcast Receivers -->
         <receiver android:name=".broadcastreceivers.BootReceiver">
@@ -62,9 +53,33 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
         <receiver
             android:name=".broadcastreceivers.AlarmReceiver"
             android:process=":remote"></receiver>
+
+        <service android:exported="false" android:name=".services.PlayerService">
+            <intent-filter>
+                <action android:name="maximomrtnz.podcastmanager.action.TOGGLE_PLAYBACK" />
+                <action android:name="maximomrtnz.podcastmanager.action.PLAY" />
+                <action android:name="maximomrtnz.podcastmanager.action.PAUSE" />
+                <action android:name="maximomrtnz.podcastmanager.action.SKIP" />
+                <action android:name="maximomrtnz.podcastmanager.action.action.REWIND" />
+                <action android:name="maximomrtnz.podcastmanager.action.action.STOP" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="maximomrtnz.podcastmanager.action.URL" />
+            </intent-filter>
+        </service>
+
+        <receiver android:name=".broadcastreceivers.MusicIntentReceiver">
+            <intent-filter>
+                <action android:name="android.media.AUDIO_BECOMING_NOISY" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

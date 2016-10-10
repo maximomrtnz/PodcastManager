@@ -58,7 +58,10 @@ interface DatabaseSchema {
                     PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE + INTEGER_TYPE + COMMA_SEP +
                     PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Episode.COLUMN_NAME_FLAG_PLAYED + INTEGER_TYPE + DEFAULT + "0" + COMMA_SEP +
+                    PodcastManagerContract.Episode.COLUMN_NAME_FLAG_ON_PLAY_QUEUE + INTEGER_TYPE + DEFAULT + "0" + COMMA_SEP +
                     PodcastManagerContract.Episode.COLUMN_NAME_DOWNLOAD_MANAGER_ID + INTEGER_TYPE + COMMA_SEP +
+                    PodcastManagerContract.Episode.COLUMN_NAME_ON_PLAY_QUEUE_TIMESTAMP + INTEGER_TYPE + COMMA_SEP +
+                    PodcastManagerContract.Episode.COLUMN_NAME_DURATION_REMAINDER + INTEGER_TYPE + COMMA_SEP +
                     UNIQUE +"("+PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL+")" + COMMA_SEP +
                     FOREIGN_KEY + " ("+PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID+") "+REFERENCES+" "+PodcastManagerContract.Podcast.TABLE_NAME+"("+PodcastManagerContract.Podcast._ID+") "+ ON_DELETE_CASCADE +
                     " )";

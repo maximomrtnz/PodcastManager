@@ -24,10 +24,10 @@
             android:title="@string/action_drawer_downloads"/>
 
         <item
-            android:id="@+id/action_playlist"
+            android:id="@+id/action_play_queue"
             android:orderInCategory="4"
             android:icon="@drawable/ic_playlist_black_24dp"
-            android:title="@string/action_drawer_playlist"
+            android:title="@string/action_drawer_play_queue"
             app:showAsAction="never" />
 
         <item

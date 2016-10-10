@@ -143,4 +143,13 @@ public class NotificationHelper {
         return this;
     }
 
+    public void cancel(int id){
+        mNotificationManager.cancel(id);
+    }
+
+    public NotificationHelper setColor(int color){
+        mBuilder.setColor(color);
+        return this;
+    }
+
 }
