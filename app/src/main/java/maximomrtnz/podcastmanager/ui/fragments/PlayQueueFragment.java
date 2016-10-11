@@ -1,14 +1,11 @@
 package maximomrtnz.podcastmanager.ui.fragments;
 
 import android.app.LoaderManager;
-import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -17,50 +14,60 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import maximomrtnz.podcastmanager.R;
+import maximomrtnz.podcastmanager.cache.FeedLoader;
+import maximomrtnz.podcastmanager.cache.ImageLoader;
 import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
+import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
-import maximomrtnz.podcastmanager.ui.activities.MainActivity;
+import maximomrtnz.podcastmanager.ui.adapters.EpisodesRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.adapters.PodcastRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
-import maximomrtnz.podcastmanager.utils.JsonUtil;
 
 /**
- * Created by maximo on 17/06/16.
+ * Created by maximo on 10/10/16.
  */
 
-public class SubscriptionsFragment extends BaseFragment implements LoaderManager.LoaderCallbacks<Cursor>, RecyclerViewClickListener{
+public class PlayQueueFragment extends BaseFragment implements LoaderManager.LoaderCallbacks<Cursor>, RecyclerViewClickListener {
 
     // Identifies a particular Loader being used in this component
-    private static final int PODCAST_SUBSCRIBED_LOADER = 0;
+    private static final int PLAY_QUEUE_LOADER = 0;
 
+    private List<Episode> mEpisodes;
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private LinearLayoutManager mLayoutManager;
     private ProgressBar mProgressBar;
+    private Toolbar mToolbar;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        View v =inflater.inflate(R.layout.fragment_subscriptions,container,false);
+        View v = inflater.inflate(R.layout.fragment_playqueue, container, false);
+
+        mEpisodes = new ArrayList<>();
 
         loadUIComponents(v);
 
         setToolbar(v);
 
-        loadPodcastsList();
+        loadPlayQueue();
 
         return v;
+
     }
 
-    private void loadPodcastsList() {
+    private void loadPlayQueue() {
 
         mProgressBar.setVisibility(View.VISIBLE);
 
         // Load Podcast Subscribed
-        getActivity().getLoaderManager().initLoader(PODCAST_SUBSCRIBED_LOADER, null, this);
+        getActivity().getLoaderManager().initLoader(PLAY_QUEUE_LOADER, null, this);
 
     }
 
@@ -76,19 +83,19 @@ public class SubscriptionsFragment extends BaseFragment implements LoaderManager
 
         switch (loaderID) {
 
-            case PODCAST_SUBSCRIBED_LOADER:
+            case PLAY_QUEUE_LOADER:
 
                 // Set columns to retrieve
-                String[] projection = PodcastManagerContract.Podcast.PROJECTION_ALL;
+                String[] projection = PodcastManagerContract.Episode.PROJECTION_ALL;
 
                 // Returns a new CursorLoader
                 return new CursorLoader(
                         getActivity(),   // Parent activity context
-                        PodcastManagerContentProvider.PODCAST_CONTENT_URI, // Table to query
+                        PodcastManagerContentProvider.EPISODE_CONTENT_URI, // Table to query
                         projection,      // Projection to return
-                        PodcastManagerContract.Podcast.COLUMN_NAME_FLAG_SUBSCRIBED+"=?",
+                        PodcastManagerContract.Episode.COLUMN_NAME_FLAG_ON_PLAY_QUEUE+"=?",
                         new String[]{"1"},            // No selection arguments
-                        null
+                        PodcastManagerContract.Episode.SORT_ORDER_ON_PLAY_QUEUE_TIMESTAMP_DESC
                 );
 
             default:
@@ -105,7 +112,7 @@ public class SubscriptionsFragment extends BaseFragment implements LoaderManager
      */
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        ((PodcastRecyclerViewAdapter)mAdapter).setCursor(data);
+        ((EpisodesRecyclerViewAdapter)mAdapter).setCursor(data);
         mProgressBar.setVisibility(View.GONE);
     }
 
@@ -126,7 +133,7 @@ public class SubscriptionsFragment extends BaseFragment implements LoaderManager
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mAdapter = new PodcastRecyclerViewAdapter(getContext(), this);
+        mAdapter = new EpisodesRecyclerViewAdapter(getContext(), this);
 
         mRecyclerView.setAdapter(mAdapter);
 
@@ -137,12 +144,9 @@ public class SubscriptionsFragment extends BaseFragment implements LoaderManager
     @Override
     public void onRecyclerViewListClicked(View v, int position) {
 
-        Podcast podcast = (Podcast)v.getTag();
-
-        if(mActivity!=null) {
-            mActivity.showPodcast(podcast);
-        }
+        Episode episode = (Episode) v.getTag();
 
     }
+
 
 }

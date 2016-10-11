@@ -3,6 +3,7 @@ package maximomrtnz.podcastmanager.database;
 import android.content.ContentProviderOperation;
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.util.Log;
 
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.utils.DateUtils;
@@ -12,6 +13,8 @@ import maximomrtnz.podcastmanager.utils.DateUtils;
  */
 
 public class PodcastConverter implements Converter<Podcast> {
+
+    private String LOG_TAG = "PodcastConverter";
 
     @Override
     public ContentProviderOperation toDeleteOperation(Podcast podcast) {
@@ -60,6 +63,12 @@ public class PodcastConverter implements Converter<Podcast> {
         contentValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL, podcast.getFeedUrl());
         contentValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL, podcast.getImageUrl());
 
+        if(podcast.getSubscribed()!=null){
+            contentValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_FLAG_SUBSCRIBED, podcast.getImageUrl());
+        }
+
+
+
         return contentValues;
 
     }
@@ -81,6 +90,12 @@ public class PodcastConverter implements Converter<Podcast> {
         podcast.setLastBuildDate(DateUtils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE))));
         podcast.setPubDate(DateUtils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE))));
         podcast.setLink(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LINK)));
+
+        int isSubscribed = cursor.getInt(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_FLAG_SUBSCRIBED));
+
+        podcast.setSubscribed((isSubscribed==1)?true:false);
+
+        Log.d(LOG_TAG,podcast.getId()+"");
 
         return podcast;
 

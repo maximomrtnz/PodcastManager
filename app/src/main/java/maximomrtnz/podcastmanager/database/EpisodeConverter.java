@@ -55,13 +55,13 @@ public class EpisodeConverter implements Converter<Episode> {
             contentValues.put(PodcastManagerContract.Episode._ID, episode.getId());
         }
 
+        contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID, episode.getPodcastId());
         contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_TITLE, episode.getTitle());
         contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_DESCRIPTION, episode.getDescription());
         contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_AUTHOR, episode.getItunesAuthor());
         contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_PUB_DATE, DateUtils.formatDateAsLong(episode.getPubDate()));
         contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_LINK, episode.getLink());
         contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_IMAGE_URL, episode.getImageUrl());
-        contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_PODCAST_ID, episode.getPodcastId());
         contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_GUID, episode.getGuid());
         contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_DURATION, episode.getItunesDuration());
         contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_ITUNES_SUBTITLE, episode.getItunesSubtitle());

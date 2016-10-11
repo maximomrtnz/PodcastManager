@@ -23,6 +23,7 @@ import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.ui.fragments.BaseFragment;
+import maximomrtnz.podcastmanager.ui.fragments.PlayQueueFragment;
 import maximomrtnz.podcastmanager.ui.fragments.PlayerFragment;
 import maximomrtnz.podcastmanager.ui.fragments.PodcastFragment;
 import maximomrtnz.podcastmanager.ui.fragments.SubscriptionsFragment;
@@ -161,7 +162,7 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
                         showDownloadedEpisodes();
                         break;
                     case R.id.action_play_queue:
-                        showPlaylist();
+                        showPlayQueue();
                         break;
                     case R.id.action_favorites:
                         showFavorites();
@@ -203,8 +204,9 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
 
     }
 
-    private void showPlaylist(){
-
+    private void showPlayQueue(){
+        BaseFragment f = new PlayQueueFragment();
+        showBaseFragment(f, R.id.fragment_container,"FRAGMENT_PLAY_QUEUE");
     }
 
     private void showFavorites(){
@@ -251,9 +253,8 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
 
     }
 
-    public void playEpisode(Episode episode){
-        Log.d(LOG_TAG,JsonUtil.getInstance().toJson(episode));
-        mPlayerFragment.play(episode);
+    public void playEpisode(Podcast podcast, Episode episode){
+        mPlayerFragment.play(podcast,episode);
     }
 
     @Override

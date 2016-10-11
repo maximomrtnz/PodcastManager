@@ -38,6 +38,7 @@ interface DatabaseSchema {
                     PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE + INTEGER_TYPE + COMMA_SEP +
                     PodcastManagerContract.Podcast.COLUMN_NAME_LINK + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL + TEXT_TYPE + COMMA_SEP +
+                    PodcastManagerContract.Podcast.COLUMN_NAME_FLAG_SUBSCRIBED + INTEGER_TYPE + DEFAULT + "0" + COMMA_SEP +
                     UNIQUE +"("+PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL+")" +
                     " )";
 

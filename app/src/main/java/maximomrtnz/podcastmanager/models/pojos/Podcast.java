@@ -30,6 +30,7 @@ public class Podcast {
         private List<Episode> episodes;
         private String feedUrl;
         private String imageUrl;
+        private Boolean isSubscribed;
 
         public String getTitle() {
             return title;
@@ -135,5 +136,11 @@ public class Podcast {
             this.imageUrl = imageUrl;
         }
 
+    public Boolean getSubscribed() {
+        return isSubscribed;
+    }
 
+    public void setSubscribed(Boolean subscribed) {
+        isSubscribed = subscribed;
+    }
 }

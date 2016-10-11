@@ -13,7 +13,8 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:name=".PodcastManager">
 
         <!-- Main Activity -->
         <activity
@@ -63,12 +64,10 @@
                 <action android:name="maximomrtnz.podcastmanager.action.TOGGLE_PLAYBACK" />
                 <action android:name="maximomrtnz.podcastmanager.action.PLAY" />
                 <action android:name="maximomrtnz.podcastmanager.action.PAUSE" />
-                <action android:name="maximomrtnz.podcastmanager.action.SKIP" />
-                <action android:name="maximomrtnz.podcastmanager.action.action.REWIND" />
+                <action android:name="maximomrtnz.podcastmanager.action.SKIP_NEXT" />
+                <action android:name="maximomrtnz.podcastmanager.action.action.SKIP_PREVIUOS" />
                 <action android:name="maximomrtnz.podcastmanager.action.action.STOP" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="maximomrtnz.podcastmanager.action.URL" />
+                <action android:name="maximomrtnz.podcastmanager.action.ADD_TO_PLAY_QUEUE" />
             </intent-filter>
         </service>
 

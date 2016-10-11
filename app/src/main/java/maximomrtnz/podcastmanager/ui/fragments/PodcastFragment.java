@@ -250,7 +250,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
         Log.d(LOG_TAG,"Podcast Loaded -->"+podcast.getEpisodes().size());
 
         // Update Podcast Information
-        mPodcast = podcast;
+        //mPodcast = podcast;
 
         // Load Episodes List
         mEpisodes.clear();
@@ -275,10 +275,12 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
     @Override
     public void onRecyclerViewListClicked(View v, int position) {
 
+        Log.d(LOG_TAG,mPodcast.getId()+"");
+
         Episode episode = (Episode)v.getTag();
 
         if(mActivity!=null){
-            mActivity.playEpisode(episode);
+            mActivity.playEpisode(mPodcast,episode);
         }
 
     }
@@ -440,8 +442,14 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
                     // Get cursor and load podcast
                     mPodcast = new PodcastConverter().loadFrom(cursor);
 
+                    // Check if we are subscribed
+                    if(mPodcast.getSubscribed()){
                         // Load Podcast Episodes from Database
-                    getLoaderManager().initLoader(EPISODES_LOADER, null, this);
+                        getLoaderManager().initLoader(EPISODES_LOADER, null, this);
+                    }else{
+                        // Let's download from XML Feed
+                        mFeedLoader.loadFeed(mPodcast.getFeedUrl(),false);
+                    }
 
                 }else{ // We don't have a record so we are no subscribed to the current podcast
 

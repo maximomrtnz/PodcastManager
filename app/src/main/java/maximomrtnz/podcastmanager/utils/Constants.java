@@ -19,6 +19,18 @@ public class Constants {
         static final String RESULT = "result";
     }
 
+    public interface PLAYER_SERVICE{
+        static final String FILTER = "maximomrtnz.podcastmanager.communication.REQUEST_PROCESSED";
+        static final String COMMAND = "COMMAND";
+        static final String DATA = "DATA";
+        static final int EPISODE_CHANGE = 1;
+        static final int STATE_PLAYING = 2;
+        static final int STATE_PAUSED = 3;
+        static final int STATE_PREPARING = 4;
+        static final int STATE_STOPPED = 5;
+        static final int STATE_RETRIVING = 6;
+    }
+
     public interface DIRECTORIES{
         static final String ROOT = "PodcastManager";
         static final String IMAGES = "Images";

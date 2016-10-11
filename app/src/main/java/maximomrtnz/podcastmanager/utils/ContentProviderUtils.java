@@ -28,4 +28,14 @@ public class ContentProviderUtils {
         return false;
     }
 
+    public static Long getIdFromUri(Uri uri){
+        String regex = "\\d+";
+
+        if(uri.getLastPathSegment().matches(regex)){
+            return Long.valueOf(uri.getLastPathSegment());
+        }
+
+        return 0L;
+    }
+
 }
