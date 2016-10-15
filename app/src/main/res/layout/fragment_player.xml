@@ -45,14 +45,7 @@
                     android:layout_width="@dimen/player_mini_episode_title_width"
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="?android:attr/textColorPrimary" />
-                <TextView
-                    android:id="@+id/text_view_mini_podcast_title"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:layout_width="@dimen/player_mini_episode_title_width"
-                    android:layout_height="wrap_content"
-                    android:textAppearance="?android:attr/textAppearance"/>
+                    android:textColor="@color/white" />
             </LinearLayout>
 
             <ImageButton
@@ -117,7 +110,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_horizontal"
-                    android:orientation="horizontal" >
+                    android:orientation="horizontal"
+                    android:id="@+id/player_buttons">
 
                     <ImageButton
                         android:id="@+id/image_button_skip_previous"
@@ -131,14 +125,16 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content">
 
-                        <ImageButton
-                            android:id="@+id/image_button_pause"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="14dp"
-                            android:onClick="pause"
-                            android:src="@drawable/ic_play_circle_red_60dp"
-                            android:background="@null" />
+                        <android.support.design.widget.FloatingActionButton
+                            android:id="@+id/fab_pause"
+                            android:layout_width="60dp"
+                            android:layout_height="60dp"
+                            android:clickable="true"
+                            android:src="@drawable/ic_play_arrow_white_36dp"
+                            app:layout_anchor="@id/player_buttons"
+                            app:backgroundTint="@color/colorPrimary"
+                            android:layout_marginLeft="16dp"
+                            android:layout_marginBottom="16dp"/>
 
                     </LinearLayout>
 

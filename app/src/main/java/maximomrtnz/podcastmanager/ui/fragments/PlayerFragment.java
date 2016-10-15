@@ -8,10 +8,12 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.drawable.AnimationDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -55,7 +57,7 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
     private TextView mTitle;
     private TextView mTextViewStartDuration;
     private TextView mTextViewEndDuration;
-    private ImageButton mImageButtonPause;
+    private FloatingActionButton mFABPause;
     private ImageButton mImageButtonSkipNext;
     private ImageButton mImageButtonSkipPreviuos;
     private ImageButton mImageButtonMiniPlayPause;
@@ -72,7 +74,16 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
     };
 
     private void handleMessage(Intent msg){
+
+        if(!isAdded()) {
+            return;
+        }
+
         Bundle data = msg.getExtras();
+
+        AnimationDrawable animation;
+        AnimationDrawable animationMini;
+
         switch (data.getInt(Constants.PLAYER_SERVICE.COMMAND, 0)){
 
             case Constants.PLAYER_SERVICE.EPISODE_CHANGE:
@@ -96,23 +107,33 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
 
                 break;
             case Constants.PLAYER_SERVICE.STATE_PLAYING:
-                mImageButtonPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_circle));
+                mFABPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_white_36dp));
                 mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_white_24dp));
                 break;
             case Constants.PLAYER_SERVICE.STATE_PAUSED:
-                mImageButtonPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_circle_red_60dp));
+                mFABPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_white_36dp));
                 mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_white_24dp));
                 break;
             case Constants.PLAYER_SERVICE.STATE_STOPPED:
-                mImageButtonPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_circle_red_60dp));
+                mFABPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_white_36dp));
                 mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_white_24dp));
                 break;
             case Constants.PLAYER_SERVICE.STATE_PREPARING:
-
+                animation = (AnimationDrawable)getResources().getDrawable(R.drawable.ic_spinner_white_24dp);
+                animationMini = (AnimationDrawable)getResources().getDrawable(R.drawable.ic_spinner_white_24dp);
+                mFABPause.setImageDrawable(animation);
+                mImageButtonMiniPlayPause.setImageDrawable(animationMini);
+                animation.start();
+                animationMini.start();
                 break;
 
             case Constants.PLAYER_SERVICE.STATE_RETRIVING:
-
+                animation = (AnimationDrawable)getResources().getDrawable(R.drawable.ic_spinner_white_24dp);
+                animationMini = (AnimationDrawable)getResources().getDrawable(R.drawable.ic_spinner_white_24dp);
+                mFABPause.setImageDrawable(animation);
+                mImageButtonMiniPlayPause.setImageDrawable(animationMini);
+                animation.start();
+                animationMini.start();
                 break;
             default:
                 break;
@@ -132,7 +153,7 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
     public void onClick(View target) {
 
         // Send the correct intent to the MusicService, according to the button that was clicked
-        if (target == mImageButtonPause || target == mImageButtonMiniPlayPause) {
+        if (target == mFABPause || target == mImageButtonMiniPlayPause) {
             doAction(PlayerService.ACTION_TOGGLE_PLAYBACK);
         }else if (target == mImageButtonSkipNext || target == mImageButtonMiniSkipNext) {
             doAction(PlayerService.ACTION_SKIP_NEXT);
@@ -147,7 +168,7 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
     @Override
     public void loadUIComponents(View view) {
 
-        mImageButtonPause = (ImageButton) view.findViewById(R.id.image_button_pause);
+        mFABPause = (FloatingActionButton) view.findViewById(R.id.fab_pause);
         mImageButtonMiniPlayPause = (ImageButton)view.findViewById(R.id.image_button_mini_play_pause);
         mImageButtonSkipPreviuos = (ImageButton) view.findViewById(R.id.image_button_skip_previous);
         mImageButtonSkipNext = (ImageButton) view.findViewById(R.id.image_button_skip_next);
@@ -156,7 +177,7 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
         mTitle = (TextView)view.findViewById(R.id.text_view_mini_episode_title);
         mImageViewMiniEpisode = (ImageView)view.findViewById(R.id.image_view_mini_episode);
 
-        mImageButtonPause.setOnClickListener(this);
+        mFABPause.setOnClickListener(this);
         mImageButtonSkipNext.setOnClickListener(this);
         mImageButtonSkipPreviuos.setOnClickListener(this);
         mImageButtonMiniPlayPause.setOnClickListener(this);

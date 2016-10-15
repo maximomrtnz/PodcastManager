@@ -486,12 +486,11 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
             configAndStartMediaPlayer();
     }
     public void onLostAudioFocus(boolean canDuck) {
-        Toast.makeText(getApplicationContext(), "lost audio focus." + (canDuck ? "can duck" :
-                "no duck"), Toast.LENGTH_SHORT).show();
         mAudioFocus = canDuck ? AudioFocus.NoFocusCanDuck : AudioFocus.NoFocusNoDuck;
         // start/restart/pause media player with new focus settings
-        if (mPlayer != null && mPlayer.isPlaying())
+        if (mPlayer != null && mPlayer.isPlaying()) {
             configAndStartMediaPlayer();
+        }
     }
 
     @Override
