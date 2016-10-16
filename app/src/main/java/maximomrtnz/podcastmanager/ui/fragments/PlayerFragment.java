@@ -11,6 +11,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.AnimationDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -24,7 +25,14 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.cache.ImageLoader;
@@ -62,9 +70,22 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
     private ImageButton mImageButtonSkipPreviuos;
     private ImageButton mImageButtonMiniPlayPause;
     private ImageButton mImageButtonMiniSkipNext;
-    private ImageButton mImageButtonStop;
     private SeekBar mSeekbar;
+    private PlayerService mService;
+    boolean mBound = false;
 
+    private final Runnable mUpdateProgressTask = new Runnable() {
+        @Override
+        public void run() {
+            updateProgress();
+        }
+    };
+
+    private final ScheduledExecutorService mExecutorService = Executors.newSingleThreadScheduledExecutor();
+
+    private ScheduledFuture<?> mScheduleFuture;
+
+    private final Handler mHandler = new Handler();
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
@@ -107,18 +128,22 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
 
                 break;
             case Constants.PLAYER_SERVICE.STATE_PLAYING:
+                scheduleSeekbarUpdate();
                 mFABPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_white_36dp));
                 mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_white_24dp));
                 break;
             case Constants.PLAYER_SERVICE.STATE_PAUSED:
+                stopSeekbarUpdate();
                 mFABPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_white_36dp));
                 mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_white_24dp));
                 break;
             case Constants.PLAYER_SERVICE.STATE_STOPPED:
                 mFABPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_white_36dp));
                 mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_play_arrow_white_24dp));
+                stopSeekbarUpdate();
                 break;
             case Constants.PLAYER_SERVICE.STATE_PREPARING:
+                stopSeekbarUpdate();
                 animation = (AnimationDrawable)getResources().getDrawable(R.drawable.ic_spinner_white_24dp);
                 animationMini = (AnimationDrawable)getResources().getDrawable(R.drawable.ic_spinner_white_24dp);
                 mFABPause.setImageDrawable(animation);
@@ -159,8 +184,6 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
             doAction(PlayerService.ACTION_SKIP_NEXT);
         }else if (target == mImageButtonSkipPreviuos) {
             doAction(PlayerService.ACTION_SKIP_PREVIOUS);
-        }else if (target == mImageButtonStop) {
-            doAction(PlayerService.ACTION_STOP);
         }
 
     }
@@ -173,9 +196,11 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
         mImageButtonSkipPreviuos = (ImageButton) view.findViewById(R.id.image_button_skip_previous);
         mImageButtonSkipNext = (ImageButton) view.findViewById(R.id.image_button_skip_next);
         mImageButtonMiniSkipNext = (ImageButton) view.findViewById(R.id.image_button_mini_skip_next);
-
         mTitle = (TextView)view.findViewById(R.id.text_view_mini_episode_title);
         mImageViewMiniEpisode = (ImageView)view.findViewById(R.id.image_view_mini_episode);
+        mTextViewEndDuration = (TextView)view.findViewById(R.id.text_view_end_duration);
+        mTextViewStartDuration = (TextView)view.findViewById(R.id.text_view_start_duration);
+        mSeekbar = (SeekBar)view.findViewById(R.id.seek_bar_episode_position);
 
         mFABPause.setOnClickListener(this);
         mImageButtonSkipNext.setOnClickListener(this);
@@ -185,16 +210,51 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
 
         mImageLoader = new ImageLoader(getActivity());
 
+        mSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mTextViewStartDuration.setText(DateUtils.formatSeconds(progress/1000));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                stopSeekbarUpdate();
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                if(mBound) {
+                    mService.seekTo(seekBar.getProgress());
+                }
+                scheduleSeekbarUpdate();
+            }
+        });
+
     }
 
     private void updateInformation(Episode episode){
+
         mTitle.setText(episode.getTitle());
+
+        mTextViewEndDuration.setText(episode.getItunesDuration());
+
+        mSeekbar.setMax(DateUtils.timeToSeconds(episode.getItunesDuration()).intValue()*1000);
+
+        if(episode.getRemainderDuration()!=null){
+            mTextViewStartDuration.setText(DateUtils.formatSeconds(episode.getRemainderDuration()));
+            mSeekbar.setProgress(episode.getRemainderDuration());
+        }else{
+            mTextViewStartDuration.setText(DateUtils.formatSeconds(0));
+            mSeekbar.setProgress(0);
+        }
+
         mImageLoader.loadAsync(episode.getImageUrl(), new ImageLoader.ImageLoadeListener() {
             @Override
             public void onImageLoader(Bitmap bitmap) {
                 mImageViewMiniEpisode.setImageBitmap(bitmap);
             }
         });
+
     }
 
     public void play(Podcast podcast, Episode episode){
@@ -215,5 +275,76 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
         getActivity().startService(i);
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Bind to LocalService
+        Intent intent = new Intent(getActivity(), PlayerService.class);
+        getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        // Unbind from the service
+        if (mBound) {
+            getActivity().unbindService(mConnection);
+            mBound = false;
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopSeekbarUpdate();
+        mExecutorService.shutdown();
+    }
+
+    /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            PlayerService.LocalBinder binder = (PlayerService.LocalBinder) service;
+            mService = binder.getService();
+            mBound = true;
+            updateProgress();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
+
+    private void updateProgress() {
+        if(mBound) {
+            int currentPosition = mService.getCurrentPosition();
+            mSeekbar.setProgress(currentPosition);
+            Log.d(LOG_TAG,"CURRENT POSTION"+currentPosition);
+        }
+    }
+
+    private void stopSeekbarUpdate() {
+        if (mScheduleFuture != null) {
+            mScheduleFuture.cancel(false);
+        }
+    }
+
+    private void scheduleSeekbarUpdate() {
+        stopSeekbarUpdate();
+        if (!mExecutorService.isShutdown()) {
+            mScheduleFuture = mExecutorService.scheduleAtFixedRate(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            mHandler.post(mUpdateProgressTask);
+                        }
+                    }, PROGRESS_UPDATE_INITIAL_INTERVAL,
+                    PROGRESS_UPDATE_INTERNAL, TimeUnit.MILLISECONDS);
+        }
+    }
 
 }

@@ -35,17 +35,21 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.RemoteViews;
 import android.widget.Toast;
 import java.io.IOException;
 
 import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.broadcastreceivers.MusicIntentReceiver;
+import maximomrtnz.podcastmanager.broadcastreceivers.NotificationBroadcast;
+import maximomrtnz.podcastmanager.cache.ImageLoader;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.ui.activities.MainActivity;
 import maximomrtnz.podcastmanager.utils.AudioFocusHelper;
 import maximomrtnz.podcastmanager.utils.Constants;
 import maximomrtnz.podcastmanager.utils.JsonUtil;
 import maximomrtnz.podcastmanager.utils.MusicFocusable;
+import maximomrtnz.podcastmanager.utils.NotificationHelper;
 import maximomrtnz.podcastmanager.utils.PlayQueue;
 import maximomrtnz.podcastmanager.ui.fragments.PlayerFragment;
 
@@ -81,6 +85,12 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
     // If not available, this will be null. Always check for null before using!
     AudioFocusHelper mAudioFocusHelper = null;
 
+    Episode mCurrentEpisode;
+
+    ImageLoader mImageLoader = new ImageLoader(this);
+
+    // Binder given to clients
+    private final IBinder mBinder = new LocalBinder();
 
     // indicates the state our service:
     enum State {
@@ -132,8 +142,8 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
     // APIs
     ComponentName mMediaButtonReceiverComponent;
     AudioManager mAudioManager;
-    NotificationManager mNotificationManager;
-    Notification.Builder mNotificationBuilder = null;
+    NotificationHelper mNotificationHelper;
+
 
     /**
      * Makes sure the media player exists and has been reset. This will create the media player
@@ -163,7 +173,9 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
 
         // Create the Wifi lock (this does not acquire the lock, this just creates it)
         mWifiLock = ((WifiManager) getSystemService(Context.WIFI_SERVICE)).createWifiLock(WifiManager.WIFI_MODE_FULL, "mylock");
-        mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        mNotificationHelper = new NotificationHelper(this);
+
         mAudioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
 
         // Create the retriever and start an asynchronous task that will prepare it.
@@ -234,7 +246,7 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
             // If we're paused, just continue playback and restore the 'foreground service' state.
             mState = State.Playing;
             sendStateChangeMessage(mState);
-            setUpAsForeground(mSongTitle + " (playing)");
+            setUpAsForeground();
             configAndStartMediaPlayer();
         }
 
@@ -377,6 +389,8 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
 
         mState = State.Stopped;
 
+        mCurrentEpisode = episode;
+
         relaxResources(false); // release everything except MediaPlayer
 
         try {
@@ -399,7 +413,7 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
 
             sendStateChangeMessage(mState);
 
-            setUpAsForeground(mSongTitle + " (loading)");
+            setUpAsForeground();
 
             // starts preparing the media player in the background. When it's done, it will call
             // our OnPreparedListener (that is, the onPrepared() method on this class, since we set
@@ -436,15 +450,13 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
         // The media player is done preparing. That means we can start playing!
         mState = State.Playing;
         sendStateChangeMessage(mState);
-        updateNotification(mSongTitle + " (playing)");
+        updateNotification();
         configAndStartMediaPlayer();
     }
 
     /** Updates the notification. */
-    void updateNotification(String text) {
-        PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
-        mNotificationBuilder.setContentText(text).setContentIntent(pi);
-        mNotificationManager.notify(NOTIFICATION_ID, mNotificationBuilder.build());
+    void updateNotification() {
+        mNotificationHelper.show(NOTIFICATION_ID);
     }
 
     /**
@@ -452,18 +464,41 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
      * something the user is actively aware of (such as playing music), and must appear to the
      * user as a notification. That's why we create the notification here.
      */
-    void setUpAsForeground(String text) {
+    void setUpAsForeground() {
+
         PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
-        // Build the notification object.
-        mNotificationBuilder = new Notification.Builder(getApplicationContext())
-                .setSmallIcon(R.drawable.ic_play)
-                .setTicker(text)
-                .setWhen(System.currentTimeMillis())
-                .setContentTitle("RandomMusicPlayer")
-                .setContentText(text)
+
+        final RemoteViews remoteView = new RemoteViews(this.getPackageName(), R.layout.player_service_notification);
+
+        remoteView.setTextViewText(R.id.text_view_episode_title,mCurrentEpisode.getTitle());
+
+        mImageLoader.loadAsync(mCurrentEpisode.getImageUrl(), new ImageLoader.ImageLoadeListener() {
+            @Override
+            public void onImageLoader(Bitmap bitmap) {
+                remoteView.setImageViewBitmap(R.id.image_view_episode,bitmap);
+            }
+        });
+
+        Intent intent = new Intent(NotificationBroadcast.ACTION_PLAY_PAUSE);
+        PendingIntent pendingIntent = PendingIntent.getService(this.getApplicationContext(),100, intent,PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteView.setOnClickPendingIntent(R.id.button_pause,pendingIntent);
+
+        intent = new Intent(NotificationBroadcast.ACTION_SKIP_NEXT);
+        pendingIntent = PendingIntent.getService(this.getApplicationContext(),101, intent,PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteView.setOnClickPendingIntent(R.id.button_next,pendingIntent);
+
+        intent = new Intent(NotificationBroadcast.ACTION_SKIP_PREVIOUS);
+        pendingIntent = PendingIntent.getService(this.getApplicationContext(),102, intent,PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteView.setOnClickPendingIntent(R.id.button_previuos,pendingIntent);
+
+        mNotificationHelper
+                .setContentView(remoteView)
+                .setIcon(R.drawable.ic_play)
                 .setContentIntent(pi)
                 .setOngoing(true);
-        startForeground(NOTIFICATION_ID, mNotificationBuilder.build());
+
+        startForeground(NOTIFICATION_ID, mNotificationHelper.build());
+
     }
     /**
      * Called when there's an error playing media. When this happens, the media player goes to
@@ -503,7 +538,7 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
     }
     @Override
     public IBinder onBind(Intent arg0) {
-        return null;
+        return mBinder;
     }
 
     @Override
@@ -541,6 +576,30 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
             intent.putExtra(Constants.PLAYER_SERVICE.COMMAND, Constants.PLAYER_SERVICE.STATE_RETRIVING);
         }
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+    /**
+     * Class used for the client Binder.  Because we know this service always
+     * runs in the same process as its clients, we don't need to deal with IPC.
+     */
+    public class LocalBinder extends Binder {
+        public PlayerService getService() {
+            // Return this instance of LocalService so clients can call public methods
+            return PlayerService.this;
+        }
+    }
+
+    public int getCurrentPosition() {
+        if (mPlayer != null) {
+            return mPlayer.getCurrentPosition();
+        }
+        return 0;
+    }
+
+    public void seekTo(int position){
+        if(mPlayer!=null) {
+            mPlayer.seekTo(position);
+        }
     }
 
 }

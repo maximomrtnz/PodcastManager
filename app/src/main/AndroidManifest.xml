@@ -80,6 +80,14 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name=".broadcastreceivers.NotificationBroadcast" >
+            <intent-filter>
+                <action android:name="maximomrtnz.podcastmanager.action.NOTIFICATION.PLAY_PAUSE" />
+                <action android:name="maximomrtnz.podcastmanager.action.NOTIFICATION.SKIP_NEXT" />
+                <action android:name="maximomrtnz.podcastmanager.action.NOTIFICATION.action.SKIP_PREVIUOS" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
