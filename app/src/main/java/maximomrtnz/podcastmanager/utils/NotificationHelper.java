@@ -152,4 +152,9 @@ public class NotificationHelper {
         return this;
     }
 
+    public NotificationHelper setDeleteIntent (PendingIntent intent){
+        mBuilder.setDeleteIntent(intent);
+        return this;
+    }
+
 }

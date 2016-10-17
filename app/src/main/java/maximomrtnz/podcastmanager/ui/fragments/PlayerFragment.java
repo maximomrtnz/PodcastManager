@@ -280,7 +280,7 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
         super.onStart();
         // Bind to LocalService
         Intent intent = new Intent(getActivity(), PlayerService.class);
-        getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        getActivity().bindService(intent, mConnection, 0);
     }
 
     @Override

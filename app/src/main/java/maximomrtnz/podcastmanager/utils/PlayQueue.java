@@ -101,11 +101,19 @@ public class PlayQueue {
     }
 
     public boolean hasNext(){
-        return mCursor.moveToNext();
+        boolean hasNext = mCursor.moveToNext();
+        if (mCursor.isAfterLast()){
+            hasNext = mCursor.moveToFirst();
+        }
+        return hasNext;
     }
 
     public boolean hasPreviuos(){
-        return mCursor.moveToPrevious();
+        boolean hasPreviuos = mCursor.moveToPrevious();
+        if (mCursor.isBeforeFirst()){
+            hasPreviuos = mCursor.moveToLast();
+        }
+        return hasPreviuos;
     }
 
     public Episode getNext(){

@@ -3,6 +3,7 @@ package maximomrtnz.podcastmanager.broadcastreceivers;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import maximomrtnz.podcastmanager.services.PlayerService;
 
@@ -12,6 +13,7 @@ import maximomrtnz.podcastmanager.services.PlayerService;
 
 public class NotificationBroadcast extends BroadcastReceiver {
 
+    public static final String LOG_TAG = "NotificationBroadcast";
     public static final String ACTION_PLAY_PAUSE = "maximomrtnz.podcastmanager.action.NOTIFICATION.PLAY_PAUSE";
     public static final String ACTION_SKIP_NEXT = "maximomrtnz.podcastmanager.action.NOTIFICATION.SKIP_NEXT";
     public static final String ACTION_SKIP_PREVIOUS = "maximomrtnz.podcastmanager.action.NOTIFICATION.SKIP_PREVIUOS";
@@ -20,6 +22,8 @@ public class NotificationBroadcast extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
 
         String action = intent.getAction();
+
+        Log.d(LOG_TAG,action);
 
         if(action.equalsIgnoreCase(ACTION_PLAY_PAUSE)){
             doAction(context,PlayerService.ACTION_TOGGLE_PLAYBACK);

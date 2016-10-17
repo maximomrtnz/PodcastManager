@@ -358,7 +358,11 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
 
         Episode playingItem = PlayQueue.getInstance().getPrevious();
 
+        Log.d(TAG,"Previuos Song");
+
         if(playingItem!=null) {
+
+            Log.d(TAG,playingItem.getTitle());
 
             mState = State.Stopped;
 
@@ -459,11 +463,7 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
         mNotificationHelper.show(NOTIFICATION_ID);
     }
 
-    /**
-     * Configures service as a foreground service. A foreground service is a service that's doing
-     * something the user is actively aware of (such as playing music), and must appear to the
-     * user as a notification. That's why we create the notification here.
-     */
+
     void setUpAsForeground() {
 
         PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0, new Intent(getApplicationContext(), MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
@@ -479,17 +479,17 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
             }
         });
 
-        Intent intent = new Intent(NotificationBroadcast.ACTION_PLAY_PAUSE);
-        PendingIntent pendingIntent = PendingIntent.getService(this.getApplicationContext(),100, intent,PendingIntent.FLAG_UPDATE_CURRENT);
-        remoteView.setOnClickPendingIntent(R.id.button_pause,pendingIntent);
+        Intent intentPause = new Intent(NotificationBroadcast.ACTION_PLAY_PAUSE);
+        PendingIntent pendingIntentPause = PendingIntent.getBroadcast(this,0, intentPause,PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteView.setOnClickPendingIntent(R.id.button_pause,pendingIntentPause);
 
-        intent = new Intent(NotificationBroadcast.ACTION_SKIP_NEXT);
-        pendingIntent = PendingIntent.getService(this.getApplicationContext(),101, intent,PendingIntent.FLAG_UPDATE_CURRENT);
-        remoteView.setOnClickPendingIntent(R.id.button_next,pendingIntent);
+        Intent intentSkipNext = new Intent(NotificationBroadcast.ACTION_SKIP_NEXT);
+        PendingIntent pendingIntentSkipNext = PendingIntent.getBroadcast(this,0, intentSkipNext,PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteView.setOnClickPendingIntent(R.id.button_next,pendingIntentSkipNext);
 
-        intent = new Intent(NotificationBroadcast.ACTION_SKIP_PREVIOUS);
-        pendingIntent = PendingIntent.getService(this.getApplicationContext(),102, intent,PendingIntent.FLAG_UPDATE_CURRENT);
-        remoteView.setOnClickPendingIntent(R.id.button_previuos,pendingIntent);
+        Intent intentSkipPreviuos = new Intent(NotificationBroadcast.ACTION_SKIP_PREVIOUS);
+        PendingIntent pendingIntentSkipPreviuos = PendingIntent.getBroadcast(this,0, intentSkipPreviuos,PendingIntent.FLAG_UPDATE_CURRENT);
+        remoteView.setOnClickPendingIntent(R.id.button_previuos,pendingIntentSkipPreviuos);
 
         mNotificationHelper
                 .setContentView(remoteView)
@@ -497,7 +497,11 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
                 .setContentIntent(pi)
                 .setOngoing(true);
 
-        startForeground(NOTIFICATION_ID, mNotificationHelper.build());
+        Notification notification = mNotificationHelper.build();
+
+        notification.flags = Notification.FLAG_ONGOING_EVENT;
+
+        startForeground(NOTIFICATION_ID, notification);
 
     }
     /**
