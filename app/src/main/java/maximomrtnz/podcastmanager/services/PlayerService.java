@@ -319,14 +319,6 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
         }
     }
 
-    /**
-     * Reconfigures MediaPlayer according to audio focus settings and starts/restarts it. This
-     * method starts/restarts the MediaPlayer respecting the current audio focus state. So if
-     * we have focus, it will play normally; if we don't have focus, it will either leave the
-     * MediaPlayer paused or set it to a low volume, depending on what is allowed by the
-     * current focus settings. This method assumes mPlayer != null, so if you are calling it,
-     * you have to do so from a context where you are sure this is the case.
-     */
     void configAndStartMediaPlayer() {
         if (mAudioFocus == AudioFocus.NoFocusNoDuck) {
             // If we don't have audio focus and can't duck, we have to pause, even if mState
@@ -445,8 +437,12 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
 
     /** Called when media player is done playing current song. */
     public void onCompletion(MediaPlayer player) {
-        // The media player finished playing the current song, so we go ahead and start the next.
+
+        // Remove finished song from the Play Queue
+        PlayQueue.getInstance().remove(mCurrentEpisode);
+
         playNextSong();
+
     }
 
     /** Called when media player is done preparing. */

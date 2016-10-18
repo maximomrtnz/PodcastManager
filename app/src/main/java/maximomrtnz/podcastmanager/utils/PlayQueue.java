@@ -9,6 +9,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.ListIterator;
 
 import maximomrtnz.podcastmanager.database.EpisodeConverter;
 import maximomrtnz.podcastmanager.database.PodcastConverter;
@@ -17,7 +18,7 @@ import maximomrtnz.podcastmanager.database.PodcastManagerContract;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 
-public class PlayQueue {
+public class PlayQueue{
 
     private static PlayQueue mInstance = null;
 
@@ -38,6 +39,9 @@ public class PlayQueue {
     private Context mContext;
     private List<PlayQueueListener> mPlayQueueListeners = new ArrayList<>();
     private Cursor mCursor;
+    private ListIterator<Episode> mEpisodes;
+    private boolean nextWasCalled = false;
+    private boolean previousWasCalled = false;
 
     public void addListener(PlayQueueListener playQueueListener){
         mPlayQueueListeners.add(playQueueListener);
@@ -51,9 +55,23 @@ public class PlayQueue {
         new LoaderTask().execute();
     }
 
-    public boolean add(Podcast podcast, Episode episode){
+    public void remove(Episode episode){
 
-        Log.d(LOG_TAG,podcast.getId()+"");
+        mEpisodes.remove();
+
+        // Remove episode from the play queue
+        episode.setOnPlayQueue(false);
+        episode.setPlayed(true);
+
+        // Insert/Update into Database
+        mContext.getContentResolver().insert(
+                PodcastManagerContentProvider.EPISODE_CONTENT_URI,
+                new EpisodeConverter().loadToContentValue(episode)
+        );
+
+    }
+
+    public boolean add(Podcast podcast, Episode episode){
 
         // If Podcast is not saved, save it
         if(podcast.getId()==null){
@@ -100,34 +118,53 @@ public class PlayQueue {
 
     }
 
-    public boolean hasNext(){
-        boolean hasNext = mCursor.moveToNext();
-        if (mCursor.isAfterLast()){
-            hasNext = mCursor.moveToFirst();
-        }
-        return hasNext;
-    }
+    public Episode getNext() {
 
-    public boolean hasPreviuos(){
-        boolean hasPreviuos = mCursor.moveToPrevious();
-        if (mCursor.isBeforeFirst()){
-            hasPreviuos = mCursor.moveToLast();
-        }
-        return hasPreviuos;
-    }
+        Episode toReturn = null;
 
-    public Episode getNext(){
-        if(hasNext()){
-            return new EpisodeConverter().loadFrom(mCursor);
+        nextWasCalled = true;
+
+        if (previousWasCalled) {
+            previousWasCalled = false;
+            if (mEpisodes.hasNext()) {
+                mEpisodes.next();
+            }
         }
-        return null;
+
+        if (mEpisodes.hasNext()) {
+            toReturn = mEpisodes.next();
+        }else{
+            while (mEpisodes.hasPrevious()){
+                toReturn = mEpisodes.previous();
+            }
+        }
+
+        return toReturn;
     }
 
     public Episode getPrevious(){
-        if(hasPreviuos()){
-            return new EpisodeConverter().loadFrom(mCursor);
+
+        Episode toReturn = null;
+
+        if (nextWasCalled) {
+            if(mEpisodes.hasPrevious()){
+                mEpisodes.previous();
+            }
+            nextWasCalled = false;
         }
-        return null;
+
+        previousWasCalled = true;
+
+        if(mEpisodes.hasPrevious()){
+            toReturn = mEpisodes.previous();
+        }else{
+            while(mEpisodes.hasNext()){
+                toReturn = mEpisodes.next();
+            }
+        }
+
+        return toReturn;
+
     }
 
     public class LoaderTask extends AsyncTask<Void, Void, Cursor> {
@@ -147,6 +184,15 @@ public class PlayQueue {
         protected void onPostExecute(Cursor cursor) {
             super.onPostExecute(cursor);
             mCursor = cursor;
+
+            List<Episode> episodes = new ArrayList<>();
+
+            while (mCursor.moveToNext()) {
+                episodes.add(new EpisodeConverter().loadFrom(mCursor));
+            }
+
+            mEpisodes = episodes.listIterator();
+
             for(PlayQueueListener pl : mPlayQueueListeners){
                 pl.onPlayQueueChange();
             }

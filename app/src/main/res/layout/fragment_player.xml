@@ -17,10 +17,6 @@
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:paddingTop="@dimen/player_mini_controls_padding"
-            android:paddingLeft="@dimen/player_mini_controls_padding"
-            android:paddingRight="@dimen/player_mini_controls_padding"
-            android:paddingBottom="@dimen/player_mini_episode_art_horizontal_margin_bottom"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary">
 
@@ -32,20 +28,28 @@
                 android:layout_marginRight="@dimen/player_mini_episode_art_horizontal_margin"/>
 
             <LinearLayout
+                android:layout_toRightOf="@+id/image_view_mini_episode"
                 android:id="@+id/content"
-                android:layout_width="wrap_content"
+                android:layout_width="@dimen/player_mini_episode_title_width"
                 android:layout_height="match_parent"
-                android:orientation="vertical"
+                android:orientation="horizontal"
                 android:layout_centerVertical="true"
-                android:layout_toRightOf="@+id/image_view_mini_episode">
+                android:paddingTop="@dimen/player_mini_controls_padding"
+                android:paddingLeft="@dimen/player_mini_controls_padding"
+                android:paddingRight="@dimen/player_mini_controls_padding"
+                android:paddingBottom="@dimen/player_mini_episode_art_horizontal_margin_bottom"
+                android:scaleType="centerCrop">
+
                 <TextView
                     android:id="@+id/text_view_mini_episode_title"
-                    android:ellipsize="end"
+                    android:ellipsize="marquee"
                     android:maxLines="1"
-                    android:layout_width="@dimen/player_mini_episode_title_width"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textAppearance="?android:attr/textAppearanceMedium"
-                    android:textColor="@color/white" />
+                    android:textColor="@color/white"
+                    android:focusableInTouchMode="true"
+                    android:marqueeRepeatLimit="marquee_forever" />
             </LinearLayout>
 
             <ImageButton

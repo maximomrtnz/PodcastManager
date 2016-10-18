@@ -131,6 +131,7 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
                 scheduleSeekbarUpdate();
                 mFABPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_white_36dp));
                 mImageButtonMiniPlayPause.setImageDrawable(getResources().getDrawable(R.drawable.ic_pause_white_24dp));
+                mTitle.setSelected(true);
                 break;
             case Constants.PLAYER_SERVICE.STATE_PAUSED:
                 stopSeekbarUpdate();
