@@ -31,12 +31,6 @@
             app:showAsAction="never" />
 
         <item
-            android:id="@+id/action_favorites"
-            android:orderInCategory="5"
-            android:icon="@drawable/ic_favorite_black_24dp"
-            android:title="@string/action_drawer_favorites"
-            app:showAsAction="never" />
-        <item
             android:id="@+id/action_search"
             android:orderInCategory="6"
             android:icon="@drawable/ic_search_black_24dp"
@@ -48,12 +42,7 @@
             android:icon="@drawable/ic_star_black_24dp"
             android:title="@string/action_drawer_rate_this_app"
             app:showAsAction="never" />
-        <item
-            android:id="@+id/action_invite_friends"
-            android:orderInCategory="8"
-            android:icon="@drawable/ic_people_black_24dp"
-            android:title="@string/action_drawer_invite_friends"
-            app:showAsAction="never"/>
+
         <item
             android:id="@+id/action_settings"
             android:orderInCategory="9"

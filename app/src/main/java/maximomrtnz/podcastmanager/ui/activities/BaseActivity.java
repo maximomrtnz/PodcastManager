@@ -43,4 +43,20 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     public abstract void loadUIComponents();
 
+    public void showBaseFragment(BaseFragment fragment){
+        FragmentManager fm = getSupportFragmentManager();
+        fm.beginTransaction()
+                //.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out)
+                .show(fragment)
+                .commit();
+    }
+
+    public void hideBaseFragment(BaseFragment fragment){
+        FragmentManager fm = getSupportFragmentManager();
+        fm.beginTransaction()
+                //.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out)
+                .hide(fragment)
+                .commit();
+    }
+
 }

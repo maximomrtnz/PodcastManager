@@ -1,21 +1,15 @@
 package maximomrtnz.podcastmanager.ui.activities;
 
-import android.app.SearchManager;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
@@ -26,15 +20,14 @@ import maximomrtnz.podcastmanager.ui.fragments.BaseFragment;
 import maximomrtnz.podcastmanager.ui.fragments.PlayQueueFragment;
 import maximomrtnz.podcastmanager.ui.fragments.PlayerFragment;
 import maximomrtnz.podcastmanager.ui.fragments.PodcastFragment;
+import maximomrtnz.podcastmanager.ui.fragments.SearchFragment;
 import maximomrtnz.podcastmanager.ui.fragments.SubscriptionsFragment;
 import maximomrtnz.podcastmanager.ui.fragments.TopChartsFragment;
 import maximomrtnz.podcastmanager.utils.JsonUtil;
 
-public class MainActivity extends BaseActivity implements SearchView.OnQueryTextListener, MenuItemCompat.OnActionExpandListener{
+public class MainActivity extends BaseActivity implements MenuItemCompat.OnActionExpandListener{
 
     private static String LOG_TAG = "MainActivity";
-    private static String SAVED_PODCAST = "SAVED_PODCAST";
-    private static String SAVED_EPISODE = "SAVED_EPISODE";
 
     private SlidingUpPanelLayout mSlidingLayout;
     private DrawerLayout mDrawerLayout;
@@ -71,31 +64,13 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
         //set layout slide listener
         mSlidingLayout = (SlidingUpPanelLayout)findViewById(R.id.sliding_layout);
 
-        //mSlidingLayout.addPanelSlideListener(onSlideListener());
+        hidePlayerFragment();
 
         mPlayerFragment = new PlayerFragment();
 
         // Add audio player to layout
         showBaseFragment(mPlayerFragment,R.id.fragment_audio_player_container,"FRAGMENT_PLAYER");
 
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-
-        // Create search view for search PodCast
-        MenuItem searchItem = menu.findItem(R.id.action_search);
-        SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
-        searchView.setOnQueryTextListener(this);
-        MenuItemCompat.setOnActionExpandListener(searchItem,this);
-
-        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-        searchView.setSearchableInfo(searchManager.getSearchableInfo(new ComponentName(this, MainActivity.class)));
-        searchView.setIconifiedByDefault(false);
-
-        return true;
     }
 
     @Override
@@ -106,31 +81,6 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public boolean onQueryTextSubmit(String query) {
-        // User pressed the search button
-        Log.d(LOG_TAG, "onQueryTextSubmit-->"+query);
-        return false;
-    }
-
-    @Override
-    public boolean onQueryTextChange(String newText) {
-        // User changed the text
-        Log.d(LOG_TAG, "onQueryTextChange-->"+newText);
-        return false;
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-            String query = intent.getStringExtra(SearchManager.QUERY);
-            //post(BROWSE_FRAGMENT_INDEX, query);
-        } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
-            String uri = intent.getDataString();
-            Toast.makeText(this, "Suggestion: "+ uri, Toast.LENGTH_SHORT).show();
-        }
-    }
 
     @Override
     public boolean onMenuItemActionExpand(MenuItem item) {
@@ -164,17 +114,11 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
                     case R.id.action_play_queue:
                         showPlayQueue();
                         break;
-                    case R.id.action_favorites:
-                        showFavorites();
-                        break;
                     case R.id.action_settings:
                         showSettingsScreen();
                         break;
                     case R.id.action_search:
                         showSearch();
-                        break;
-                    case R.id.action_invite_friends:
-                        openInvitePage();
                         break;
                     case R.id.action_rate_app:
                         showRatingPlayStore();
@@ -209,23 +153,16 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
         showBaseFragment(f, R.id.fragment_container,"FRAGMENT_PLAY_QUEUE");
     }
 
-    private void showFavorites(){
-
-    }
-
     private void showSettingsScreen(){
 
     }
 
     private void showSearch(){
-
+        BaseFragment f = new SearchFragment();
+        showBaseFragment(f, R.id.fragment_container,"FRAGMENT_SEARCH");
     }
 
     private void showRatingPlayStore(){
-
-    }
-
-    private void openInvitePage(){
 
     }
 
@@ -262,6 +199,30 @@ public class MainActivity extends BaseActivity implements SearchView.OnQueryText
 
         super.onSaveInstanceState(savedInstanceState);
 
+    }
+
+    public void hidePlayerFragment(){
+        Log.d(LOG_TAG,"HIDE PLAYER FRAGMENT");
+        if(mSlidingLayout!=null) {
+            mSlidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.HIDDEN);
+        }
+    }
+
+    public void showPlayerFragment(){
+        Log.d(LOG_TAG,"SHOW PLAYER FRAGMENT");
+        if(mSlidingLayout!=null) {
+            if (mSlidingLayout.getPanelState() == SlidingUpPanelLayout.PanelState.HIDDEN) {
+                mSlidingLayout.setPanelState(SlidingUpPanelLayout.PanelState.COLLAPSED);
+            }
+        }
+    }
+
+    // Menu icons are inflated just as they were with actionbar
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
     }
 
 }

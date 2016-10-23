@@ -1,6 +1,7 @@
 package maximomrtnz.podcastmanager.utils;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -38,10 +39,8 @@ public class PlayQueue{
     private final String LOG_TAG = "PlayQueue";
     private Context mContext;
     private List<PlayQueueListener> mPlayQueueListeners = new ArrayList<>();
-    private Cursor mCursor;
-    private ListIterator<Episode> mEpisodes;
-    private boolean nextWasCalled = false;
-    private boolean previousWasCalled = false;
+    private List<Episode> mEpisodes = new ArrayList<>();
+    private Integer mIndex = -1;
 
     public void addListener(PlayQueueListener playQueueListener){
         mPlayQueueListeners.add(playQueueListener);
@@ -55,19 +54,36 @@ public class PlayQueue{
         new LoaderTask().execute();
     }
 
+    public Episode getByUrl(String url){
+
+        for(Integer i = 0; i < mEpisodes.size(); i++){
+
+            if(mEpisodes.get(i).getEpisodeUrl().equals(url)){
+                mIndex = i;
+                return mEpisodes.get(i);
+            }
+
+        }
+
+        return null;
+
+    }
+
     public void remove(Episode episode){
 
-        mEpisodes.remove();
+        if(mEpisodes.remove(episode)) {
 
-        // Remove episode from the play queue
-        episode.setOnPlayQueue(false);
-        episode.setPlayed(true);
+            // Remove episode from the play queue
+            episode.setOnPlayQueue(false);
+            episode.setPlayed(true);
 
-        // Insert/Update into Database
-        mContext.getContentResolver().insert(
-                PodcastManagerContentProvider.EPISODE_CONTENT_URI,
-                new EpisodeConverter().loadToContentValue(episode)
-        );
+            // Insert/Update into Database
+            mContext.getContentResolver().insert(
+                    PodcastManagerContentProvider.EPISODE_CONTENT_URI,
+                    new EpisodeConverter().loadToContentValue(episode)
+            );
+
+        }
 
     }
 
@@ -82,11 +98,7 @@ public class PlayQueue{
                     new PodcastConverter().loadToContentValue(podcast)
             );
 
-            Log.d(LOG_TAG,newPodcastUri+"");
-
             Long id = ContentProviderUtils.getIdFromUri(newPodcastUri);
-
-            Log.d(LOG_TAG,id+"");
 
             if(id==0){
                 return false;
@@ -114,57 +126,60 @@ public class PlayQueue{
                 new EpisodeConverter().loadToContentValue(episode)
         );
 
+        // Add to list
+        int index = contains(episode);
+
+        if(index!=-1){
+            mEpisodes.remove(index);
+        }
+
+        mEpisodes.add(0,episode);
+
+        mIndex = -1;
+
         return true;
 
     }
 
     public Episode getNext() {
 
-        Episode toReturn = null;
+        mIndex++;
 
-        nextWasCalled = true;
-
-        if (previousWasCalled) {
-            previousWasCalled = false;
-            if (mEpisodes.hasNext()) {
-                mEpisodes.next();
-            }
+        if(mEpisodes.isEmpty()){
+            return null;
         }
 
-        if (mEpisodes.hasNext()) {
-            toReturn = mEpisodes.next();
-        }else{
-            while (mEpisodes.hasPrevious()){
-                toReturn = mEpisodes.previous();
-            }
+        if(mEpisodes.size()<=mIndex){
+            mIndex = 0;
         }
 
-        return toReturn;
+        return mEpisodes.get(mIndex);
+
     }
 
     public Episode getPrevious(){
 
-        Episode toReturn = null;
+        mIndex--;
 
-        if (nextWasCalled) {
-            if(mEpisodes.hasPrevious()){
-                mEpisodes.previous();
-            }
-            nextWasCalled = false;
+        if(mEpisodes.isEmpty()){
+            return null;
         }
 
-        previousWasCalled = true;
-
-        if(mEpisodes.hasPrevious()){
-            toReturn = mEpisodes.previous();
-        }else{
-            while(mEpisodes.hasNext()){
-                toReturn = mEpisodes.next();
-            }
+        if(mIndex<0){
+            mIndex = mEpisodes.size()-1;
         }
 
-        return toReturn;
+        return mEpisodes.get(mIndex);
 
+    }
+
+    private Integer contains(Episode episode){
+        for(Integer i= 0; i < mEpisodes.size(); i++){
+            if(mEpisodes.get(i).getEpisodeUrl().equals(episode.getEpisodeUrl())){
+                return i;
+            }
+        }
+        return -1;
     }
 
     public class LoaderTask extends AsyncTask<Void, Void, Cursor> {
@@ -183,19 +198,19 @@ public class PlayQueue{
         @Override
         protected void onPostExecute(Cursor cursor) {
             super.onPostExecute(cursor);
-            mCursor = cursor;
 
-            List<Episode> episodes = new ArrayList<>();
+            mEpisodes.clear();
 
-            while (mCursor.moveToNext()) {
-                episodes.add(new EpisodeConverter().loadFrom(mCursor));
+            mIndex = -1;
+
+            while (cursor.moveToNext()) {
+                mEpisodes.add(new EpisodeConverter().loadFrom(cursor));
             }
-
-            mEpisodes = episodes.listIterator();
 
             for(PlayQueueListener pl : mPlayQueueListeners){
                 pl.onPlayQueueChange();
             }
+
         }
     }
 

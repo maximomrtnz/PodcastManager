@@ -16,7 +16,6 @@ package maximomrtnz.podcastmanager.services;
  * limitations under the License.
  */
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ComponentName;
@@ -36,7 +35,6 @@ import android.os.PowerManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 import java.io.IOException;
 
 import maximomrtnz.podcastmanager.R;
@@ -47,11 +45,11 @@ import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.ui.activities.MainActivity;
 import maximomrtnz.podcastmanager.utils.AudioFocusHelper;
 import maximomrtnz.podcastmanager.utils.Constants;
-import maximomrtnz.podcastmanager.utils.JsonUtil;
 import maximomrtnz.podcastmanager.utils.MusicFocusable;
 import maximomrtnz.podcastmanager.utils.NotificationHelper;
 import maximomrtnz.podcastmanager.utils.PlayQueue;
 import maximomrtnz.podcastmanager.ui.fragments.PlayerFragment;
+import maximomrtnz.podcastmanager.utils.SharedPrefsUtils;
 
 /**
  * Service that handles media playback. This is the Service through which we perform all the media
@@ -76,16 +74,21 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
     public static final String ACTION_SKIP_NEXT = "maximomrtnz.podcastmanager.action.SKIP_NEXT";
     public static final String ACTION_SKIP_PREVIOUS = "maximomrtnz.podcastmanager.action.SKIP_PREVIUOS";
     public static final String ACTION_ADD_TO_PLAY_QUEUE = "maximomrtnz.podcastmanager.action.ADD_TO_PLAY_QUEUE";
+
     // The volume we set the media player to when we lose audio focus, but are allowed to reduce
     // the volume instead of stopping playback.
     public static final float DUCK_VOLUME = 0.1f;
+
     // our media player
     MediaPlayer mPlayer = null;
+
     // our AudioFocusHelper object, if it's available (it's available on SDK level >= 8)
     // If not available, this will be null. Always check for null before using!
     AudioFocusHelper mAudioFocusHelper = null;
 
     Episode mCurrentEpisode;
+
+    Boolean mPlayFromPrefferences = false;
 
     ImageLoader mImageLoader = new ImageLoader(this);
 
@@ -93,50 +96,50 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
     private final IBinder mBinder = new LocalBinder();
 
     // indicates the state our service:
-    enum State {
+    public enum State {
         Retrieving, // the MediaRetriever is retrieving music
         Stopped,    // media player is stopped and not prepared to play
         Preparing,  // media player is preparing...
         Playing,    // playback active (media player ready!). (but the media player may actually be
-        // paused in this state if we don't have audio focus. But we stay in this state
-        // so that we know we have to resume playback once we get focus back)
+                    // paused in this state if we don't have audio focus. But we stay in this state
+                    // so that we know we have to resume playback once we get focus back)
         Paused      // playback paused (media player ready!)
     };
 
     State mState = State.Retrieving;
+
     // if in Retrieving mode, this flag indicates whether we should start playing immediately
     // when we are ready or not.
     boolean mStartPlayingAfterRetrieve = false;
-    // if mStartPlayingAfterRetrieve is true, this variable indicates the URL that we should
-    // start playing when we are ready. If null, we should play a random song from the device
-    Episode mWhatToPlayAfterRetrieve = null;
+
     enum PauseReason {
         UserRequest,  // paused by user request
         FocusLoss,    // paused because of audio focus loss
     };
+
     // why did we pause? (only relevant if mState == State.Paused)
     PauseReason mPauseReason = PauseReason.UserRequest;
+
     // do we have audio focus?
     enum AudioFocus {
         NoFocusNoDuck,    // we don't have audio focus, and can't duck
         NoFocusCanDuck,   // we don't have focus, but can play at a low volume ("ducking")
         Focused           // we have full audio focus
     }
+
     AudioFocus mAudioFocus = AudioFocus.NoFocusNoDuck;
-    // title of the song we are currently playing
-    String mSongTitle = "";
+
     // whether the song we are playing is streaming from the network
     boolean mIsStreaming = false;
+
     // Wifi lock that we hold when streaming files from the internet, in order to prevent the
     // device from shutting off the Wifi radio
     WifiLock mWifiLock;
+
     // The ID we use for the notification (the onscreen alert that appears at the notification
     // area at the top of the screen as an icon -- and as text as well if the user expands the
     // notification area).
     final int NOTIFICATION_ID = 1;
-
-    // Dummy album art we will pass to the remote control (if the APIs are available).
-    Bitmap mDummyAlbumArt;
 
     // The component name of MusicIntentReceiver, for use with media button and remote control
     // APIs
@@ -163,12 +166,17 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
             mPlayer.setOnPreparedListener(this);
             mPlayer.setOnCompletionListener(this);
             mPlayer.setOnErrorListener(this);
-        }
-        else
+        } else {
             mPlayer.reset();
+
+        }
     }
+
     @Override
     public void onCreate() {
+
+        mState = State.Retrieving;
+
         Log.i(TAG, "debug: Creating service");
 
         // Create the Wifi lock (this does not acquire the lock, this just creates it)
@@ -220,6 +228,7 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
         return START_NOT_STICKY; // Means we started the service, but don't want it to
         // restart in case it's killed.
     }
+
     void processTogglePlaybackRequest() {
         if (mState == State.Paused || mState == State.Stopped) {
             processPlayRequest();
@@ -228,11 +237,9 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
         }
     }
 
+
     void processPlayRequest() {
         if (mState == State.Retrieving) {
-            // If we are still retrieving media, just set the flag to start playing when we're
-            // ready
-            mWhatToPlayAfterRetrieve = null; // play a random song
             mStartPlayingAfterRetrieve = true;
             return;
         }
@@ -251,6 +258,7 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
         }
 
     }
+
     void processPauseRequest() {
         if (mState == State.Retrieving) {
             // If we are still retrieving media, clear the flag that indicates we should start
@@ -268,18 +276,21 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
         }
 
     }
+
     void processSkipPreviuosRequest() {
         if (mState == State.Playing || mState == State.Paused) {
             tryToGetAudioFocus();
             playPreviuosSong();
         }
     }
+
     void processSkipNextRequest() {
         if (mState == State.Playing || mState == State.Paused) {
             tryToGetAudioFocus();
             playNextSong();
         }
     }
+
     void processStopRequest() {
         processStopRequest(false);
     }
@@ -287,6 +298,7 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
     void processStopRequest(boolean force) {
         if (mState == State.Playing || mState == State.Paused || force) {
             mState = State.Stopped;
+            sendStateChangeMessage(mState);
             // let go of all resources...
             relaxResources(true);
             giveUpAudioFocus();
@@ -294,6 +306,7 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
             stopSelf();
         }
     }
+
     /**
      * Releases resources used by the service for playback. This includes the "foreground service"
      * status and notification, the wake locks and possibly the MediaPlayer.
@@ -337,7 +350,9 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
     }
 
     void processAddRequest() {
-        PlayQueue.getInstance().loadQueue();
+
+        playNextSong();
+
     }
 
     void tryToGetAudioFocus() {
@@ -350,18 +365,7 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
 
         Episode playingItem = PlayQueue.getInstance().getPrevious();
 
-        Log.d(TAG,"Previuos Song");
-
-        if(playingItem!=null) {
-
-            Log.d(TAG,playingItem.getTitle());
-
-            mState = State.Stopped;
-
-            relaxResources(false); // release everything except MediaPlayer
-
-            onEpisodeChange(playingItem);
-        }
+        onEpisodeChange(playingItem);
 
     }
 
@@ -375,9 +379,7 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
 
         Episode playingItem = PlayQueue.getInstance().getNext();
 
-        if(playingItem!=null) {
-            onEpisodeChange(playingItem);
-        }
+        onEpisodeChange(playingItem);
 
     }
 
@@ -387,23 +389,23 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
 
         mCurrentEpisode = episode;
 
+        sendEpisodeChangeMessage(episode);
+
         relaxResources(false); // release everything except MediaPlayer
 
         try {
-
-            mIsStreaming = episode.getEpisodeUrl().startsWith("http:") || episode.getEpisodeUrl().startsWith("https:");
 
             if (episode == null) {
                 processStopRequest(true); // stop everything!
                 return;
             }
 
+            mIsStreaming = episode.getEpisodeUrl().startsWith("http:") || episode.getEpisodeUrl().startsWith("https:");
+
             // set the source of the media player a a content URI
             createMediaPlayerIfNeeded();
             mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mPlayer.setDataSource(episode.getEpisodeUrl());
-
-            mSongTitle = episode.getTitle();
 
             mState = State.Preparing;
 
@@ -426,8 +428,6 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
             }else if (mWifiLock.isHeld()){
                 mWifiLock.release();
             }
-
-            sendEpisodeChangeMessage(episode);
 
         }catch (IOException ex) {
             Log.e("MusicService", "IOException playing next song: " + ex.getMessage());
@@ -505,7 +505,6 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
      * the Error state. We warn the user about the error and reset the media player.
      */
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        Toast.makeText(getApplicationContext(), "Media player error! Resetting.", Toast.LENGTH_SHORT).show();
         Log.e(TAG, "Error: what=" + String.valueOf(what) + ", extra=" + String.valueOf(extra));
         mState = State.Stopped;
         sendStateChangeMessage(mState);
@@ -513,13 +512,15 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
         giveUpAudioFocus();
         return true; // true indicates we handled the error
     }
+
     public void onGainedAudioFocus() {
-        Toast.makeText(getApplicationContext(), "gained audio focus.", Toast.LENGTH_SHORT).show();
         mAudioFocus = AudioFocus.Focused;
         // restart media player with new focus settings
-        if (mState == State.Playing)
+        if (mState == State.Playing) {
             configAndStartMediaPlayer();
+        }
     }
+
     public void onLostAudioFocus(boolean canDuck) {
         mAudioFocus = canDuck ? AudioFocus.NoFocusCanDuck : AudioFocus.NoFocusNoDuck;
         // start/restart/pause media player with new focus settings
@@ -530,12 +531,15 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
 
     @Override
     public void onDestroy() {
+
         // Service is being killed, so make sure we release our resources
         mState = State.Stopped;
         sendStateChangeMessage(mState);
         relaxResources(true);
         giveUpAudioFocus();
+
     }
+
     @Override
     public IBinder onBind(Intent arg0) {
         return mBinder;
@@ -558,7 +562,9 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
     private void sendEpisodeChangeMessage(Episode episode) {
         Intent intent = new Intent(Constants.PLAYER_SERVICE.FILTER);
         intent.putExtra(Constants.PLAYER_SERVICE.COMMAND, Constants.PLAYER_SERVICE.EPISODE_CHANGE);
-        intent.putExtra(Constants.PLAYER_SERVICE.DATA, episode.getId());
+        if(episode!=null) {
+            intent.putExtra(Constants.PLAYER_SERVICE.DATA, episode.getEpisodeUrl());
+        }
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
@@ -584,7 +590,6 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
      */
     public class LocalBinder extends Binder {
         public PlayerService getService() {
-            // Return this instance of LocalService so clients can call public methods
             return PlayerService.this;
         }
     }

@@ -16,6 +16,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.content.SharedPreferencesCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,11 +44,14 @@ import maximomrtnz.podcastmanager.database.PodcastManagerContract;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.services.PlayerService;
+import maximomrtnz.podcastmanager.ui.activities.BaseActivity;
+import maximomrtnz.podcastmanager.ui.activities.MainActivity;
 import maximomrtnz.podcastmanager.utils.Constants;
 import maximomrtnz.podcastmanager.utils.ContentProviderUtils;
 import maximomrtnz.podcastmanager.utils.DateUtils;
 import maximomrtnz.podcastmanager.utils.JsonUtil;
 import maximomrtnz.podcastmanager.utils.PlayQueue;
+import maximomrtnz.podcastmanager.utils.SharedPrefsUtils;
 
 
 /**
@@ -109,19 +113,16 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
 
             case Constants.PLAYER_SERVICE.EPISODE_CHANGE:
 
-                Long episodeId = data.getLong(Constants.PLAYER_SERVICE.DATA, 0L);
+                String episodeUrl = data.getString(Constants.PLAYER_SERVICE.DATA,null);
 
-                if(episodeId!=0){
+                if(episodeUrl!=null){
 
-                    Cursor cursor = getActivity().getContentResolver().query(
-                            PodcastManagerContentProvider.EPISODE_CONTENT_URI,
-                            PodcastManagerContract.Episode.PROJECTION_ALL,
-                            PodcastManagerContract.Episode._ID+"=?",
-                            new String[]{String.valueOf(episodeId)},
-                            null);
+                    updateInformation(episodeUrl);
 
-                    if(cursor.moveToFirst()){
-                        updateInformation(new EpisodeConverter().loadFrom(cursor));
+                }else{ // Empty PlayQueue so we have to hide PlayerFragment
+
+                    if (getActivity() instanceof MainActivity) {
+                        ((MainActivity) getActivity()).hidePlayerFragment();
                     }
 
                 }
@@ -233,28 +234,46 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
 
     }
 
-    private void updateInformation(Episode episode){
+    private void updateInformation(String episodeUrl){
 
-        mTitle.setText(episode.getTitle());
+        Cursor cursor = getActivity().getContentResolver().query(
+                PodcastManagerContentProvider.EPISODE_CONTENT_URI,
+                PodcastManagerContract.Episode.PROJECTION_ALL,
+                PodcastManagerContract.Episode.COLUMN_NAME_EPISODE_URL+"=?",
+                new String[]{String.valueOf(episodeUrl)},
+                null);
 
-        mTextViewEndDuration.setText(episode.getItunesDuration());
+        if(cursor.moveToFirst()) {
 
-        mSeekbar.setMax(DateUtils.timeToSeconds(episode.getItunesDuration()).intValue()*1000);
+            Episode episode = new EpisodeConverter().loadFrom(cursor);
 
-        if(episode.getRemainderDuration()!=null){
-            mTextViewStartDuration.setText(DateUtils.formatSeconds(episode.getRemainderDuration()));
-            mSeekbar.setProgress(episode.getRemainderDuration());
-        }else{
-            mTextViewStartDuration.setText(DateUtils.formatSeconds(0));
-            mSeekbar.setProgress(0);
-        }
-
-        mImageLoader.loadAsync(episode.getImageUrl(), new ImageLoader.ImageLoadeListener() {
-            @Override
-            public void onImageLoader(Bitmap bitmap) {
-                mImageViewMiniEpisode.setImageBitmap(bitmap);
+            if (getActivity() instanceof MainActivity) {
+                ((MainActivity) getActivity()).showPlayerFragment();
             }
-        });
+
+
+            mTitle.setText(episode.getTitle());
+
+            mTextViewEndDuration.setText(episode.getItunesDuration());
+
+            mSeekbar.setMax(DateUtils.timeToSeconds(episode.getItunesDuration()).intValue() * 1000);
+
+            if (episode.getRemainderDuration() != null) {
+                mTextViewStartDuration.setText(DateUtils.formatSeconds(episode.getRemainderDuration()));
+                mSeekbar.setProgress(episode.getRemainderDuration());
+            } else {
+                mTextViewStartDuration.setText(DateUtils.formatSeconds(0));
+                mSeekbar.setProgress(0);
+            }
+
+            mImageLoader.loadAsync(episode.getImageUrl(), new ImageLoader.ImageLoadeListener() {
+                @Override
+                public void onImageLoader(Bitmap bitmap) {
+                    mImageViewMiniEpisode.setImageBitmap(bitmap);
+                }
+            });
+
+        }
 
     }
 
@@ -305,13 +324,14 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
     private ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
+        public void onServiceConnected(ComponentName className, IBinder service) {
+
+            // We've bound to PlayerService, cast the IBinder and get LocalService instance
             PlayerService.LocalBinder binder = (PlayerService.LocalBinder) service;
             mService = binder.getService();
             mBound = true;
             updateProgress();
+
         }
 
         @Override

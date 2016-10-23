@@ -1,5 +1,6 @@
 package maximomrtnz.podcastmanager.ui.fragments;
 
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -35,8 +36,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import maximomrtnz.podcastmanager.R;
-import maximomrtnz.podcastmanager.asynktasks.DeletePodcast;
-import maximomrtnz.podcastmanager.asynktasks.InsertPodcast;
 import maximomrtnz.podcastmanager.cache.FeedLoader;
 import maximomrtnz.podcastmanager.cache.ImageLoader;
 import maximomrtnz.podcastmanager.database.EpisodeConverter;
@@ -52,9 +51,8 @@ import maximomrtnz.podcastmanager.ui.adapters.EpisodesRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.dialogs.ConfirmDialog;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 import maximomrtnz.podcastmanager.utils.Constants;
+import maximomrtnz.podcastmanager.utils.ContentProviderUtils;
 import maximomrtnz.podcastmanager.utils.JsonUtil;
-import maximomrtnz.podcastmanager.utils.Utils;
-import mbanje.kurt.fabbutton.FabButton;
 
 /**
  * Created by maximo on 26/07/16.
@@ -78,7 +76,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
     private RecyclerView mRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private LinearLayoutManager mLayoutManager;
-    private FabButton mFloatingActionButton;
+    private FloatingActionButton mFloatingActionButton;
     private ProgressBar mProgressBar;
     private SwipeRefreshLayout mSwipeRefreshLayout;
 
@@ -143,7 +141,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
         mProgressBar = (ProgressBar)view.findViewById(R.id.progress_bar);
 
         // Get Floating Button from Layout
-        mFloatingActionButton = (FabButton) view.findViewById(R.id.floating_action_button);
+        mFloatingActionButton = (FloatingActionButton) view.findViewById(R.id.floating_action_button);
 
         mFloatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -169,15 +167,15 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
         // Set visibility
         mFloatingActionButton.setVisibility(View.VISIBLE);
 
-        if(mPodcast.getId()==null) {
+        if(mPodcast.getSubscribed()) {
 
             // Set icons
-            mFloatingActionButton.setIcon(R.drawable.ic_fab_add, R.drawable.ic_fab_complete);
+            mFloatingActionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fab_add));
 
         }else{
 
             // Set icons
-            mFloatingActionButton.setIcon(R.drawable.ic_fab_complete,R.drawable.ic_fab_add);
+            mFloatingActionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fab_check));
 
         }
 
@@ -313,34 +311,21 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
         // Check if we have to subscribe or if we have to unsuscribe
         if(mPodcast.getId() == null){ // Subscribe
 
-            mFloatingActionButton.showProgress(true);
+            mPodcast.setSubscribed(true);
 
-            new InsertPodcast(getContext(), new InsertPodcast.InsertPodcastListener() {
+            // Insert/Update into Database
+            Uri newPodcastUri = getContext().getContentResolver().insert(
+                    PodcastManagerContentProvider.PODCAST_CONTENT_URI,
+                    new PodcastConverter().loadToContentValue(mPodcast)
+            );
 
-                @Override
-                public void onPodcastInserted(List<Uri> podcastUris) {
+            Long id = ContentProviderUtils.getIdFromUri(newPodcastUri);
 
-                    if(!podcastUris.isEmpty()) {
+            if(id!=0){
+                mPodcast.setId(id);
+            }
 
-                        Uri podcastUri = podcastUris.get(0);
-
-                        Log.d(LOG_TAG, "New Podcast Subscription -->" + podcastUri.toString());
-
-                        // Set Podcast Id
-                        mPodcast.setId(Long.valueOf(podcastUri.getLastPathSegment()));
-
-                        mFloatingActionButton.showProgress(false);
-                        mFloatingActionButton.onProgressCompleted();
-
-                        // switch icons
-                        loadSubscribedButton();
-
-                        Utils.scheduleTask(getContext(), Constants.SYNCHRONIZE_SERVICE.REPEAT_TIME);
-
-                    }
-
-                }
-            }).execute(mPodcast);
+            mFloatingActionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fab_check));
 
         }else{ // Unsuscribe
 
@@ -350,27 +335,16 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
                 @Override
                 public void onConfirm() {
 
-                    // Show progress dialog bar
-                    mFloatingActionButton.showProgress(true);
+                    mPodcast.setSubscribed(false);
 
-                    new DeletePodcast(getContext(), new DeletePodcast.DeletePodcastListener() {
-                        @Override
-                        public void onPodcastDeleted(int deletedRows) {
+                    // Insert/Update into Database
+                    Uri newPodcastUri = getContext().getContentResolver().insert(
+                            PodcastManagerContentProvider.PODCAST_CONTENT_URI,
+                            new PodcastConverter().loadToContentValue(mPodcast)
+                    );
 
-                            Log.d(LOG_TAG,"Delete Rows -->"+deletedRows);
+                    mFloatingActionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fab_add));
 
-                            // Delete id
-                            mPodcast.setId(null);
-
-                            // Set FAB Button to finish
-                            mFloatingActionButton.showProgress(false);
-                            mFloatingActionButton.onProgressCompleted();
-
-                            // switch icons
-                            loadSubscribedButton();
-
-                        }
-                    }).execute(mPodcast);
                 }
 
                 @Override

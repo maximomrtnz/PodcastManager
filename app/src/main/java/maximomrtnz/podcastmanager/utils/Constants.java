@@ -29,6 +29,8 @@ public class Constants {
         static final int STATE_PREPARING = 4;
         static final int STATE_STOPPED = 5;
         static final int STATE_RETRIVING = 6;
+        static final String PREFERENCE_LAST_EPISODE_PLAYED_URL = "LAST_EPISODE_PLAYED_URL";
+        static final String PREFERENCE_LAST_EPISODE_PLAYED_DURATION = "LAST_EPISODE_PLAYED_DURATION";
     }
 
     public interface DIRECTORIES{

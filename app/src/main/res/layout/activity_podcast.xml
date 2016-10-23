@@ -68,7 +68,7 @@
         android:gravity="center"
         android:layout_gravity="center"/>
 
-    <view
+    <android.support.design.widget.FloatingActionButton
         class="mbanje.kurt.fabbutton.FabButton"
         android:id="@+id/floating_action_button"
         android:layout_width="@dimen/fab_button_size"
@@ -78,16 +78,6 @@
         android:src="@drawable/ic_fab_add"
         android:color="@color/colorPrimary"
         app:layout_anchor="@+id/appbar"
-        app:layout_anchorGravity="bottom|right|end"
-        app:fbb_endBitmap="@drawable/ic_fab_check"
-        app:fbb_showEndBitmap="true"
-        app:fbb_progressColor="?attr/colorAccent"
-        app:fbb_hideProgressOnComplete="true"
-        android:max="100"
-        app:fbb_showShadow="true"
-        app:fbb_autoStart="true"
-        android:indeterminate="true"
-        app:fbb_progressWidthRatio="0.1"
-        android:visibility="invisible"/>
+        app:layout_anchorGravity="bottom|right|end"/>
 
 </android.support.design.widget.CoordinatorLayout>
