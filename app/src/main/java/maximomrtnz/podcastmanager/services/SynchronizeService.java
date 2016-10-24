@@ -144,7 +144,7 @@ public class SynchronizeService extends IntentService{
             }
 
             for(Episode currentEpisode : currentPodcastFeed.getEpisodes()){
-                if(oldEpisodeUrls.contains(currentEpisode.getEpisodeUrl())){
+                if(!oldEpisodeUrls.contains(currentEpisode.getEpisodeUrl())){
                     newEpisodes++;
                 }
             }
