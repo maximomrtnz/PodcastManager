@@ -26,6 +26,9 @@ public class PodcastManagerContract {
         public static final String COLUMN_NAME_ITUNES_AUTHOR = "itunes_author";
         public static final String COLUMN_NAME_COPYRIGHT = "copyright";
         public static final String COLUMN_NAME_FLAG_SUBSCRIBED = "flag_subscribed";
+        public static final String COLUMN_NAME_EPISODES_COUNT = "episodes_count";
+        public static final String COLUMN_NAME_NEW_EPISODES_ADDED = "new_episodes_added";
+        public static final String COLUMN_NAME_LAST_MODIFIED_DATE = "last_modified_date";
 
         /**
          * Content Provider
@@ -51,7 +54,10 @@ public class PodcastManagerContract {
                                                         COLUMN_NAME_PUB_DATE,
                                                         COLUMN_NAME_TITLE,
                                                         COLUMN_NAME_LINK,
-                                                        COLUMN_NAME_FLAG_SUBSCRIBED
+                                                        COLUMN_NAME_FLAG_SUBSCRIBED,
+                                                        COLUMN_NAME_EPISODES_COUNT,
+                                                        COLUMN_NAME_LAST_MODIFIED_DATE,
+                                                        COLUMN_NAME_NEW_EPISODES_ADDED
                                                     };
     }
 

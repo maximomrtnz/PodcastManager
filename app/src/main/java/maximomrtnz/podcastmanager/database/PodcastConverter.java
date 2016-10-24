@@ -64,10 +64,20 @@ public class PodcastConverter implements Converter<Podcast> {
         contentValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL, podcast.getImageUrl());
 
         if(podcast.getSubscribed()!=null){
-            contentValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_FLAG_SUBSCRIBED, podcast.getImageUrl());
+            contentValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_FLAG_SUBSCRIBED, podcast.getSubscribed());
         }
 
+        if(podcast.getLastModifiedDate()!=null){
+            contentValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_LAST_MODIFIED_DATE, DateUtils.formatDateAsLong(podcast.getLastModifiedDate()));
+        }
 
+        if(podcast.getEpisodesCount()!=null){
+            contentValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_EPISODES_COUNT, podcast.getEpisodesCount());
+        }
+
+        if(podcast.getNewEpisodesAdded()!=null){
+            contentValues.put(PodcastManagerContract.Podcast.COLUMN_NAME_NEW_EPISODES_ADDED, podcast.getNewEpisodesAdded());
+        }
 
         return contentValues;
 
@@ -90,12 +100,13 @@ public class PodcastConverter implements Converter<Podcast> {
         podcast.setLastBuildDate(DateUtils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE))));
         podcast.setPubDate(DateUtils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE))));
         podcast.setLink(cursor.getString(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LINK)));
+        podcast.setLastModifiedDate(DateUtils.getCalendarFromFormattedLong(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_LAST_MODIFIED_DATE))));
+        podcast.setEpisodesCount(cursor.getInt(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_EPISODES_COUNT)));
+        podcast.setNewEpisodesAdded(cursor.getInt(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_NEW_EPISODES_ADDED)));
 
         int isSubscribed = cursor.getInt(cursor.getColumnIndex(PodcastManagerContract.Podcast.COLUMN_NAME_FLAG_SUBSCRIBED));
 
         podcast.setSubscribed((isSubscribed==1)?true:false);
-
-        Log.d(LOG_TAG,podcast.getId()+"");
 
         return podcast;
 

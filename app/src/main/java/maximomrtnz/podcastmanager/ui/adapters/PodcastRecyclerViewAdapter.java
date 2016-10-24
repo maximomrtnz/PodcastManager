@@ -81,6 +81,22 @@ public class PodcastRecyclerViewAdapter extends RecyclerView.Adapter<PodcastRecy
 
         mImageLoader.displayImage(podcast.getImageUrl(),podcastViewHolder.mPodcastImage);
 
+        if(podcast.getEpisodesCount()!=null){
+            Log.d(LOG_TAG,podcast.getEpisodesCount()+"");
+            podcastViewHolder.mPodcastEpisodeCounter.setVisibility(View.VISIBLE);
+            podcastViewHolder.mPodcastEpisodeCounter.setText(String.valueOf(podcast.getEpisodesCount()));
+        }else{
+            podcastViewHolder.mPodcastEpisodeCounter.setVisibility(View.GONE);
+        }
+
+        podcastViewHolder.mPodcastNewEpisodeCounter.setVisibility(View.GONE);
+
+        if(podcast.getNewEpisodesAdded()!=null) {
+            if (podcast.getNewEpisodesAdded() > 0) {
+                podcastViewHolder.mPodcastNewEpisodeCounter.setVisibility(View.VISIBLE);
+                podcastViewHolder.mPodcastNewEpisodeCounter.setText(String.valueOf(podcast.getNewEpisodesAdded()));
+            }
+        }
     }
 
     @Override
@@ -94,6 +110,8 @@ public class PodcastRecyclerViewAdapter extends RecyclerView.Adapter<PodcastRecy
         TextView mPodcastTitle;
         TextView mPodcastAuthor;
         ImageView mPodcastImage;
+        TextView mPodcastEpisodeCounter;
+        TextView mPodcastNewEpisodeCounter;
 
         PodcastViewHolder(View itemView) {
             super(itemView);
@@ -101,6 +119,8 @@ public class PodcastRecyclerViewAdapter extends RecyclerView.Adapter<PodcastRecy
             mPodcastTitle = (TextView)itemView.findViewById(R.id.podcast_title);
             mPodcastAuthor = (TextView)itemView.findViewById(R.id.podcast_author);
             mPodcastImage = (ImageView)itemView.findViewById(R.id.podcast_image);
+            mPodcastEpisodeCounter = (TextView)itemView.findViewById(R.id.text_view_episode_counter);
+            mPodcastNewEpisodeCounter = (TextView)itemView.findViewById(R.id.text_view_episode_new_counter);
         }
 
     }

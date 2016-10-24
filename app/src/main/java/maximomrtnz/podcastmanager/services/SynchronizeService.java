@@ -15,7 +15,9 @@ import android.util.Log;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.cache.FeedLoader;
@@ -52,17 +54,12 @@ public class SynchronizeService extends IntentService{
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        Log.d(LOG_TAG, "Running SynchronizeService");
-
         Converter podcastConverter = new PodcastConverter();
 
-        Converter episodeConverter = new EpisodeConverter();
+        Integer episodesAdded = 0;
 
         // Podcast List
         List<Podcast> podcasts = new ArrayList<>();
-
-        // Episodes List to Upsert
-        ArrayList<ContentProviderOperation> episodesToUpsert = new ArrayList<>();
 
         // Podcast List to Upsert
         ArrayList<ContentProviderOperation> podcastsToUpsert = new ArrayList<>();
@@ -80,8 +77,8 @@ public class SynchronizeService extends IntentService{
                 cursor = getContentResolver().query(
                         PodcastManagerContentProvider.PODCAST_CONTENT_URI,          // Table to query
                         PodcastManagerContract.Podcast.PROJECTION_ALL,              // Projection to return
-                        null,                                                       // Selection clause
-                        null,                                                       // Selection arguments
+                        PodcastManagerContract.Podcast.COLUMN_NAME_FLAG_SUBSCRIBED+"=?",
+                        new String[]{"1"},            // No selection arguments
                         null                                                        // Default sort order
                 );
 
@@ -134,30 +131,35 @@ public class SynchronizeService extends IntentService{
         // Then we need to get the feed's url saved on each podcast and download and parse its episodes
         for(Podcast podcast : podcasts){
 
-            Podcast tempPodcast = mFeedLoader.getFeed(podcast.getFeedUrl(),true);
+            Podcast oldPodcastFeed = mFeedLoader.getFeed(podcast.getFeedUrl(),false);
 
-            if(tempPodcast.getPubDate() == null && tempPodcast.getLastBuildDate()==null){
-                // Get Pub date from last episode
-                if(!tempPodcast.getEpisodes().isEmpty()){
-                    // Set the last podcast pubdate as the podcast pub date
-                    tempPodcast.setPubDate(tempPodcast.getEpisodes().get(0).getPubDate());
+            Podcast currentPodcastFeed = mFeedLoader.getFeed(podcast.getFeedUrl(),true);
+
+            Set<String> oldEpisodeUrls = new HashSet<>();
+
+            int newEpisodes = 0;
+
+            for(Episode oldEpisode : oldPodcastFeed.getEpisodes()){
+                oldEpisodeUrls.add(oldEpisode.getEpisodeUrl());
+            }
+
+            for(Episode currentEpisode : currentPodcastFeed.getEpisodes()){
+                if(oldEpisodeUrls.contains(currentEpisode.getEpisodeUrl())){
+                    newEpisodes++;
                 }
             }
 
-            if(!DateUtils.areEquals(tempPodcast.getPubDate(),podcast.getPubDate()) || !DateUtils.areEquals(tempPodcast.getLastBuildDate(),podcast.getLastBuildDate())) {
+            if(newEpisodes>0) {
 
-                podcastsToUpsert.add(podcastConverter.toInsertOperation(tempPodcast));
+                podcast.setEpisodesCount(currentPodcastFeed.getEpisodes().size());
+                podcast.setNewEpisodesAdded(newEpisodes);
+                podcast.setLastModifiedDate(Calendar.getInstance());
 
-                for(Episode episode : tempPodcast.getEpisodes()) {
+                podcastsToUpsert.add(new PodcastConverter().toInsertOperation(podcast));
 
-                    if(episode.getEpisodeUrl()!=null){
-                        episode.setPodcastId(podcast.getId());
-                        episodesToUpsert.add(episodeConverter.toInsertOperation(episode));
-                    }
+                episodesAdded += newEpisodes;
 
-                }
             }
-
         }
 
         // If we have podcast to upsert
@@ -177,47 +179,17 @@ public class SynchronizeService extends IntentService{
             Log.e(LOG_TAG, e.getMessage());
         }
 
-
-        //If we have episodes to upsert
-        if(episodesToUpsert.isEmpty()) {
-            publishResults(Activity.RESULT_OK);
-            return;
-        }
-
-        results = null;
-
-        try {
-            results = getContentResolver().applyBatch(PodcastManagerContentProvider.AUTHORITY, episodesToUpsert);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-            Log.e(LOG_TAG, e.getMessage());
-        } catch (OperationApplicationException e) {
-            e.printStackTrace();
-            Log.e(LOG_TAG, e.getMessage());
-        }
-
         if(results!=null){
 
-            // Check results, and count the number of new episodes added
-            int newEpisodesAddes = 0;
-
-            for(ContentProviderResult result : results){
-                if(ContentProviderUtils.isEpisodeInsert(result.uri)){
-                    newEpisodesAddes++;
-                }
-            }
-
-            if(newEpisodesAddes>0) {
-
-                Log.d(LOG_TAG, "Showing Notification");
+            if(episodesAdded>0) {
 
                 // Show user notifications
-                NotificationHelper notificationHelper= new NotificationHelper(this)
+                NotificationHelper notificationHelper = new NotificationHelper(this)
                         .setIcon(R.drawable.ic_new)
                         .setIntent(new Intent(this, MainActivity.class))
                         .setAutoCancel(true)
                         .setTitle(getString(R.string.app_name))
-                        .setContentText(MessageFormat.format(getString(R.string.notification_content_text_new_episodes), new String[]{String.valueOf(newEpisodesAddes)}));
+                        .setContentText(MessageFormat.format(getString(R.string.notification_content_text_new_episodes), new String[]{String.valueOf(episodesAdded)}));
 
                 notificationHelper.build();
 

@@ -23,6 +23,9 @@ public class Podcast {
         private String link;
         private Calendar pubDate;
         private Calendar lastBuildDate;
+        private Calendar lastModifiedDate;
+        private Integer episodesCount;
+        private Integer newEpisodesAdded;
         private String language;
         private String itunesSumary;
         private String itunesAuthor;
@@ -136,11 +139,35 @@ public class Podcast {
             this.imageUrl = imageUrl;
         }
 
-    public Boolean getSubscribed() {
+        public Boolean getSubscribed() {
         return isSubscribed;
     }
 
-    public void setSubscribed(Boolean subscribed) {
+        public void setSubscribed(Boolean subscribed) {
         isSubscribed = subscribed;
     }
+
+        public Calendar getLastModifiedDate() {
+            return lastModifiedDate;
+        }
+
+        public void setLastModifiedDate(Calendar lastModifiedDate) {
+            this.lastModifiedDate = lastModifiedDate;
+        }
+
+        public Integer getNewEpisodesAdded() {
+            return newEpisodesAdded;
+        }
+
+        public void setNewEpisodesAdded(Integer newEpisodesAdded) {
+            this.newEpisodesAdded = newEpisodesAdded;
+        }
+
+        public Integer getEpisodesCount() {
+            return episodesCount;
+        }
+
+        public void setEpisodesCount(Integer episodesCount) {
+            this.episodesCount = episodesCount;
+        }
 }

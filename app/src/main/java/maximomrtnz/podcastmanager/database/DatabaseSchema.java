@@ -36,9 +36,12 @@ interface DatabaseSchema {
                     PodcastManagerContract.Podcast.COLUMN_NAME_LAST_BUILD_DATE + INTEGER_TYPE + COMMA_SEP +
                     PodcastManagerContract.Podcast.COLUMN_NAME_TITLE + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Podcast.COLUMN_NAME_PUB_DATE + INTEGER_TYPE + COMMA_SEP +
+                    PodcastManagerContract.Podcast.COLUMN_NAME_LAST_MODIFIED_DATE + INTEGER_TYPE + COMMA_SEP +
                     PodcastManagerContract.Podcast.COLUMN_NAME_LINK + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Podcast.COLUMN_NAME_IMAGE_URL + TEXT_TYPE + COMMA_SEP +
                     PodcastManagerContract.Podcast.COLUMN_NAME_FLAG_SUBSCRIBED + INTEGER_TYPE + DEFAULT + "0" + COMMA_SEP +
+                    PodcastManagerContract.Podcast.COLUMN_NAME_EPISODES_COUNT + INTEGER_TYPE + DEFAULT + "0" + COMMA_SEP +
+                    PodcastManagerContract.Podcast.COLUMN_NAME_NEW_EPISODES_ADDED + INTEGER_TYPE + DEFAULT + "0" + COMMA_SEP +
                     UNIQUE +"("+PodcastManagerContract.Podcast.COLUMN_NAME_FEED_URL+")" +
                     " )";
 

@@ -18,22 +18,26 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
 
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
-import com.sothree.slidinguppanel.SlidingUpPanelLayout;
-
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.cache.FeedLoader;
@@ -60,7 +64,7 @@ import maximomrtnz.podcastmanager.utils.JsonUtil;
 
 public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoaderListener, RecyclerViewClickListener, LoaderManager.LoaderCallbacks<Cursor>{
 
-    private static String LOG_TAG = "PodcastActivity";
+    private static String LOG_TAG = "PodcastFragment";
 
     // Identifies a particular Loader being used in this component
     private static final int PODCAST_LOADER_BY_FEED_URL = 0;
@@ -79,8 +83,8 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
     private FloatingActionButton mFloatingActionButton;
     private ProgressBar mProgressBar;
     private SwipeRefreshLayout mSwipeRefreshLayout;
+    private Map<String,Episode> mEpisodesByUrl = new HashMap<>();
 
-    private SlidingUpPanelLayout mSlidingLayout;
 
     private BroadcastReceiver mSynchronizeServiceReceiver = new BroadcastReceiver() {
 
@@ -101,7 +105,9 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        View v = inflater.inflate(R.layout.activity_podcast, container, false);
+        setHasOptionsMenu(true);
+
+        View v = inflater.inflate(R.layout.fragment_podcast, container, false);
 
         mEpisodes = new ArrayList<>();
 
@@ -109,11 +115,12 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
         mImageLoader = new ImageLoader(getContext());
 
-        loadPodcast();
 
         loadUIComponents(v);
 
         setToolbar(v);
+
+        loadPodcast();
 
         return v;
 
@@ -125,9 +132,6 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
         // Get Image View from Layout
         mImageViewPodcast = (ImageView)view.findViewById(R.id.image_view_podcast);
-
-        // Set Image Url
-        mImageLoader.displayImage(mPodcast.getImageUrl(),mImageViewPodcast);
 
         mLayoutManager = new LinearLayoutManager(getContext());
         mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
@@ -162,20 +166,19 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
     }
 
-    private void loadSubscribedButton(){
+    private void loadSubscribedButton() {
 
         // Set visibility
         mFloatingActionButton.setVisibility(View.VISIBLE);
 
-        if(mPodcast.getSubscribed()) {
+        // Set icons
+        mFloatingActionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fab_add));
 
-            // Set icons
-            mFloatingActionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fab_add));
+        if(mPodcast.getSubscribed()!=null) {
 
-        }else{
-
-            // Set icons
-            mFloatingActionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fab_check));
+            if(mPodcast.getSubscribed()) {
+                mFloatingActionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fab_check));
+            }
 
         }
 
@@ -184,8 +187,22 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
     private void loadPodcast(){
 
+        // Init Proggress Bar
+        if(mProgressBar.getVisibility()==View.GONE) {
+            mProgressBar.setVisibility(View.VISIBLE);
+        }
+
         // Set podcast's data into Podcast Object
         mPodcast = JsonUtil.getInstance().fromJson(getArguments().getString("podcast"),Podcast.class);
+
+        Log.d(LOG_TAG, getArguments().getString("podcast"));
+
+        if(isAdded()) {
+            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(mPodcast.getTitle());
+        }
+
+        // Set Image Url
+        mImageLoader.displayImage(mPodcast.getImageUrl(),mImageViewPodcast);
 
         mImageLoader.loadAsync(mPodcast.getImageUrl(), new ImageLoader.ImageLoadeListener() {
             @Override
@@ -197,45 +214,37 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
         // If we have and Id, we have to get the episodes from database
         if(mPodcast.getId()!=null){
 
-            Log.d(LOG_TAG, "Load Button");
-
-            Log.d(LOG_TAG,"Subscribed Podcast");
-
             // Init loader to check if we have a mPodcast in the DB
             getLoaderManager().initLoader(EPISODES_LOADER,null,this);
 
-        }else { // We have to check if the Podcast are in the DB from the feed url
+        }
 
-            // We have to check if the selected podcast has an feed url from itunes
-            if (mPodcast.getFeedUrl().indexOf("itunes") != -1) { // From TopPodcast
+        // We have to check if the selected podcast has an feed url from itunes
+        if (mPodcast.getFeedUrl().indexOf("itunes") != -1) { // From TopPodcast
 
-                // Call ItunesAPI to get feed URL for downloading Podcast Episodies
-                new ItunesAppleAPI(new ItunesAppleAPI.ItunesAppleAPIListener() {
-                    @Override
-                    public void onError(Exception e) {
+            // Call ItunesAPI to get feed URL for downloading Podcast Episodies
+            new ItunesAppleAPI(new ItunesAppleAPI.ItunesAppleAPIListener() {
+                @Override
+                public void onError(Exception e) {
 
-                    }
+                }
 
-                    @Override
-                    public void onSuccess(Object arg) {
+                @Override
+                public void onSuccess(Object arg) {
 
-                        Log.d(LOG_TAG, "URL Feed -->" + String.valueOf(arg));
+                    // Set feed url
+                    mPodcast.setFeedUrl(String.valueOf(arg));
 
-                        // Set feed url
-                        mPodcast.setFeedUrl(String.valueOf(arg));
+                    // Init loader to check if we have a mPodcast in the DB
+                    getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL, null, PodcastFragment.this);
 
-                        // Init loader to check if we have a mPodcast in the DB
-                        getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL, null, PodcastFragment.this);
+                }
+            }).getUrlFeed(mPodcast.getFeedUrl());
 
-                    }
-                }).getUrlFeed(mPodcast.getFeedUrl());
+        } else { // From Search or Subscriptions
 
-            } else { // From Search or Subscriptions
-
-                // Init loader to check if we have a mPodcast in the DB
-                getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL, null, this);
-
-            }
+            // Init loader to check if we have a mPodcast in the DB
+            getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL, null, this);
 
         }
 
@@ -245,13 +254,25 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
     @Override
     public void onFeedLoader(Podcast podcast) {
 
-        Log.d(LOG_TAG,"Podcast Loaded -->"+podcast.getEpisodes().size());
-
-        // Update Podcast Information
-        //mPodcast = podcast;
-
         // Load Episodes List
         mEpisodes.clear();
+
+        for(Episode episode : podcast.getEpisodes()){
+
+            if(mEpisodesByUrl.containsKey(episode.getEpisodeUrl())){
+
+                // Get Episode From DB
+                Episode episodeFromDB = mEpisodesByUrl.get(episode.getEpisodeUrl());
+
+                // Set stored Data From stored Episode
+                episode.setPlayed(episodeFromDB.getPlayed());
+
+            }
+
+        }
+
+        Log.d(LOG_TAG, podcast.getEpisodes().size()+"");
+
         mEpisodes.addAll(podcast.getEpisodes());
         mAdapter.notifyDataSetChanged();
 
@@ -272,8 +293,6 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
     @Override
     public void onRecyclerViewListClicked(View v, int position) {
-
-        Log.d(LOG_TAG,mPodcast.getId()+"");
 
         Episode episode = (Episode)v.getTag();
 
@@ -308,26 +327,12 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
     private void onFloatingActionButtonPressed(){
 
+        if(mPodcast.getSubscribed()==null){
+            mPodcast.setSubscribed(false);
+        }
+
         // Check if we have to subscribe or if we have to unsuscribe
-        if(mPodcast.getId() == null){ // Subscribe
-
-            mPodcast.setSubscribed(true);
-
-            // Insert/Update into Database
-            Uri newPodcastUri = getContext().getContentResolver().insert(
-                    PodcastManagerContentProvider.PODCAST_CONTENT_URI,
-                    new PodcastConverter().loadToContentValue(mPodcast)
-            );
-
-            Long id = ContentProviderUtils.getIdFromUri(newPodcastUri);
-
-            if(id!=0){
-                mPodcast.setId(id);
-            }
-
-            mFloatingActionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fab_check));
-
-        }else{ // Unsuscribe
+        if(mPodcast.getSubscribed()==true){ // Unsubscribe
 
             ConfirmDialog dialog = new ConfirmDialog ();
 
@@ -338,7 +343,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
                     mPodcast.setSubscribed(false);
 
                     // Insert/Update into Database
-                    Uri newPodcastUri = getContext().getContentResolver().insert(
+                    getContext().getContentResolver().insert(
                             PodcastManagerContentProvider.PODCAST_CONTENT_URI,
                             new PodcastConverter().loadToContentValue(mPodcast)
                     );
@@ -355,6 +360,27 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
             // Show confirm dialog
             ((BaseActivity)getActivity()).showDialogFragment(dialog);
+
+        }else{ // Subscribe
+
+            mPodcast.setSubscribed(true);
+
+            // Insert/Update into Database
+            Uri newPodcastUri = getContext().getContentResolver().insert(
+                    PodcastManagerContentProvider.PODCAST_CONTENT_URI,
+                    new PodcastConverter().loadToContentValue(mPodcast)
+            );
+
+            Long id = ContentProviderUtils.getIdFromUri(newPodcastUri);
+
+            if(id!=0){
+                mPodcast.setId(id);
+            }
+
+            mPodcast.setEpisodesCount(mEpisodes.size());
+            mPodcast.setLastModifiedDate(Calendar.getInstance());
+
+            mFloatingActionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fab_check));
 
         }
 
@@ -408,34 +434,24 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
             case PODCAST_LOADER_BY_FEED_URL:
 
-                Log.d(LOG_TAG, "Load Podcast by Feed Url");
-
                 // if we have a row
                 if(cursor.moveToFirst()){
 
                     // Get cursor and load podcast
                     mPodcast = new PodcastConverter().loadFrom(cursor);
 
-                    // Check if we are subscribed
-                    if(mPodcast.getSubscribed()){
-                        // Load Podcast Episodes from Database
-                        getLoaderManager().initLoader(EPISODES_LOADER, null, this);
-                    }else{
-                        // Let's download from XML Feed
-                        mFeedLoader.loadFeed(mPodcast.getFeedUrl(),false);
-                    }
+                    // Load Podcast Episodes from Database
+                    getLoaderManager().initLoader(EPISODES_LOADER, null, this);
 
-                }else{ // We don't have a record so we are no subscribed to the current podcast
-
-                    Log.d(LOG_TAG, "Load from Feed");
+                }else {
 
                     // Let's download from XML Feed
-                    mFeedLoader.loadFeed(mPodcast.getFeedUrl(),false);
+                    mFeedLoader.loadFeed(mPodcast.getFeedUrl(), false);
 
                 }
 
                 // Unsuscribe
-                getLoaderManager().destroyLoader(PODCAST_LOADER_BY_FEED_URL);
+                //getLoaderManager().destroyLoader(PODCAST_LOADER_BY_FEED_URL);
 
                 break;
 
@@ -443,27 +459,17 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
                if(cursor!=null && cursor.getCount()>0) {
 
-                    Log.d(LOG_TAG, "Load from DB");
+                   mEpisodesByUrl.clear();
 
-                    // Load episodes
-                    mEpisodes.clear();
-
-                    while (cursor.moveToNext()) {
-                        Episode episode = new EpisodeConverter().loadFrom(cursor);
-                        mEpisodes.add(episode);
-                    }
-
-                    mPodcast.setEpisodes(mEpisodes);
-
-                    mAdapter.notifyDataSetChanged();
-
-                    // Load button subscribe/unsubscribe
-                    loadSubscribedButton();
-
-                    // hide progressbar reciclerview
-                    mProgressBar.setVisibility(View.GONE);
+                   while (cursor.moveToNext()) {
+                       Episode episode = new EpisodeConverter().loadFrom(cursor);
+                       mEpisodesByUrl.put(episode.getEpisodeUrl(),episode);
+                   }
 
                 }
+
+                // Let's download from XML Feed
+                mFeedLoader.loadFeed(mPodcast.getFeedUrl(), false);
 
                 break;
 
@@ -481,8 +487,6 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
     }
 
     private void refreshItems(){
-
-        Log.d(LOG_TAG, "REFRESHING ITEMS-->"+mPodcast.getId());
 
         if(!mSwipeRefreshLayout.isRefreshing()){
             mSwipeRefreshLayout.setRefreshing(true);
@@ -532,6 +536,17 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
             mCollapsingToolbarLayout.setStatusBarScrimColor(color);
             mCollapsingToolbarLayout.setContentScrimColor(color);
         }
+
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
+        super.onCreateOptionsMenu(menu, inflater);
+
+        menu.clear();
+
+        inflater.inflate(R.menu.menu_podcast_fragment, menu);
 
     }
 

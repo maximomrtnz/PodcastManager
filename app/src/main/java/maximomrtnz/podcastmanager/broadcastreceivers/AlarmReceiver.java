@@ -19,8 +19,6 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        Log.d(LOG_TAG, "Launch SynchronizeService");
-
         // Start synchronize services to keep podcasts up to date
         Intent i = new Intent(context, SynchronizeService.class);
         context.startService(i);

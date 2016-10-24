@@ -131,8 +131,8 @@
 
                         <android.support.design.widget.FloatingActionButton
                             android:id="@+id/fab_pause"
-                            android:layout_width="60dp"
-                            android:layout_height="60dp"
+                            android:layout_width="@dimen/fab_button_size"
+                            android:layout_height="@dimen/fab_button_size"
                             android:clickable="true"
                             android:src="@drawable/ic_play_arrow_white_36dp"
                             app:layout_anchor="@id/player_buttons"
