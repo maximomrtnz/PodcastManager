@@ -40,5 +40,12 @@ public class Constants {
         static final String FEEDS = "Feeds";
     }
 
+    public interface LOADER{
+        static final int PODCAST_SUBSCRIBED_LOADER = 0;
+        static final int PLAY_QUEUE_LOADER = 1;
+        static final int PODCAST_LOADER_BY_FEED_URL = 2;
+        static final int EPISODES_LOADER = 3;
+    }
+
 
 }

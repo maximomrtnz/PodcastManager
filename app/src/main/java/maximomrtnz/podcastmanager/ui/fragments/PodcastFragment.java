@@ -51,6 +51,7 @@ import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.network.ItunesAppleAPI;
 import maximomrtnz.podcastmanager.services.SynchronizeService;
 import maximomrtnz.podcastmanager.ui.activities.BaseActivity;
+import maximomrtnz.podcastmanager.ui.activities.MainActivity;
 import maximomrtnz.podcastmanager.ui.adapters.EpisodesRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.dialogs.ConfirmDialog;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
@@ -65,10 +66,6 @@ import maximomrtnz.podcastmanager.utils.JsonUtil;
 public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoaderListener, RecyclerViewClickListener, LoaderManager.LoaderCallbacks<Cursor>{
 
     private static String LOG_TAG = "PodcastFragment";
-
-    // Identifies a particular Loader being used in this component
-    private static final int PODCAST_LOADER_BY_FEED_URL = 0;
-    private static final int EPISODES_LOADER = 1;
 
     private Toolbar mToolbar;
     private CollapsingToolbarLayout mCollapsingToolbarLayout;
@@ -94,7 +91,12 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
             Bundle bundle = intent.getExtras();
 
             if(bundle.getInt(Constants.SYNCHRONIZE_SERVICE.RESULT)== Activity.RESULT_OK){
+
                 mSwipeRefreshLayout.setRefreshing(false);
+
+                // Let's download from XML Feed
+                mFeedLoader.loadFeed(mPodcast.getFeedUrl(), false);
+
             }
 
         }
@@ -215,7 +217,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
         if(mPodcast.getId()!=null){
 
             // Init loader to check if we have a mPodcast in the DB
-            getLoaderManager().initLoader(EPISODES_LOADER,null,this);
+            getLoaderManager().initLoader(Constants.LOADER.EPISODES_LOADER,null,this);
 
         }
 
@@ -236,7 +238,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
                     mPodcast.setFeedUrl(String.valueOf(arg));
 
                     // Init loader to check if we have a mPodcast in the DB
-                    getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL, null, PodcastFragment.this);
+                    getLoaderManager().initLoader(Constants.LOADER.PODCAST_LOADER_BY_FEED_URL, null, PodcastFragment.this);
 
                 }
             }).getUrlFeed(mPodcast.getFeedUrl());
@@ -244,7 +246,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
         } else { // From Search or Subscriptions
 
             // Init loader to check if we have a mPodcast in the DB
-            getLoaderManager().initLoader(PODCAST_LOADER_BY_FEED_URL, null, this);
+            getLoaderManager().initLoader(Constants.LOADER.PODCAST_LOADER_BY_FEED_URL, null, this);
 
         }
 
@@ -253,6 +255,10 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
     @Override
     public void onFeedLoader(Podcast podcast) {
+
+        if(!isAdded()){
+            return;
+        }
 
         // Load Episodes List
         mEpisodes.clear();
@@ -296,8 +302,8 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
         Episode episode = (Episode)v.getTag();
 
-        if(mActivity!=null){
-            mActivity.playEpisode(mPodcast,episode);
+        if(getActivity() instanceof MainActivity){
+            ((MainActivity)getActivity()).playEpisode(mPodcast,episode);
         }
 
     }
@@ -391,7 +397,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
         switch (loaderID) {
 
-            case PODCAST_LOADER_BY_FEED_URL:
+            case Constants.LOADER.PODCAST_LOADER_BY_FEED_URL:
 
                 Log.d(LOG_TAG, "Created Podcast Loader");
 
@@ -405,7 +411,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
                         null                                                        // Default sort order
                 );
 
-            case EPISODES_LOADER:
+            case Constants.LOADER.EPISODES_LOADER:
 
                 Log.d(LOG_TAG, "Created Episodes Loader");
 
@@ -432,7 +438,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
         switch (loader.getId()) {
 
-            case PODCAST_LOADER_BY_FEED_URL:
+            case Constants.LOADER.PODCAST_LOADER_BY_FEED_URL:
 
                 // if we have a row
                 if(cursor.moveToFirst()){
@@ -441,7 +447,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
                     mPodcast = new PodcastConverter().loadFrom(cursor);
 
                     // Load Podcast Episodes from Database
-                    getLoaderManager().initLoader(EPISODES_LOADER, null, this);
+                    getLoaderManager().initLoader(Constants.LOADER.EPISODES_LOADER, null, this);
 
                 }else {
 
@@ -455,7 +461,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
                 break;
 
-            case EPISODES_LOADER:
+            case Constants.LOADER.EPISODES_LOADER:
 
                if(cursor!=null && cursor.getCount()>0) {
 
@@ -518,7 +524,29 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
     @Override
     public void onPause() {
         super.onPause();
+
         getActivity().unregisterReceiver(mSynchronizeServiceReceiver);
+
+        // Set New Episodes in 0 because we saw new episodes every time we opened this fragment
+
+        if(mPodcast.getNewEpisodesAdded() == null){
+            return;
+        }
+
+        if(mPodcast.getNewEpisodesAdded()==0){
+            return;
+        }
+
+        mPodcast.setNewEpisodesAdded(0);
+
+        // Save into DB
+
+        // Insert/Update into Database
+        getContext().getContentResolver().insert(
+                PodcastManagerContentProvider.PODCAST_CONTENT_URI,
+                new PodcastConverter().loadToContentValue(mPodcast)
+        );
+
     }
 
     @Override

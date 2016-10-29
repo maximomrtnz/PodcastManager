@@ -24,9 +24,11 @@ import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.database.PodcastManagerContract;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.models.pojos.Podcast;
+import maximomrtnz.podcastmanager.ui.activities.MainActivity;
 import maximomrtnz.podcastmanager.ui.adapters.EpisodesRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.adapters.PodcastRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
+import maximomrtnz.podcastmanager.utils.Constants;
 
 /**
  * Created by maximo on 10/10/16.
@@ -34,12 +36,11 @@ import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 
 public class PlayQueueFragment extends BaseFragment implements LoaderManager.LoaderCallbacks<Cursor>, RecyclerViewClickListener {
 
-    // Identifies a particular Loader being used in this component
-    private static final int PLAY_QUEUE_LOADER = 0;
+
 
     private List<Episode> mEpisodes;
     private RecyclerView mRecyclerView;
-    private RecyclerView.Adapter mAdapter;
+    private EpisodesRecyclerViewAdapter mAdapter;
     private LinearLayoutManager mLayoutManager;
     private ProgressBar mProgressBar;
     private Toolbar mToolbar;
@@ -67,7 +68,7 @@ public class PlayQueueFragment extends BaseFragment implements LoaderManager.Loa
         mProgressBar.setVisibility(View.VISIBLE);
 
         // Load Podcast Subscribed
-        getActivity().getLoaderManager().initLoader(PLAY_QUEUE_LOADER, null, this);
+        getActivity().getLoaderManager().initLoader(Constants.LOADER.PLAY_QUEUE_LOADER, null, this);
 
     }
 
@@ -83,7 +84,7 @@ public class PlayQueueFragment extends BaseFragment implements LoaderManager.Loa
 
         switch (loaderID) {
 
-            case PLAY_QUEUE_LOADER:
+            case Constants.LOADER.PLAY_QUEUE_LOADER:
 
                 // Set columns to retrieve
                 String[] projection = PodcastManagerContract.Episode.PROJECTION_ALL;
@@ -112,7 +113,7 @@ public class PlayQueueFragment extends BaseFragment implements LoaderManager.Loa
      */
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        ((EpisodesRecyclerViewAdapter)mAdapter).setCursor(data);
+        mAdapter.setCursor(data);
         mProgressBar.setVisibility(View.GONE);
     }
 
@@ -122,7 +123,7 @@ public class PlayQueueFragment extends BaseFragment implements LoaderManager.Loa
      */
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        ((PodcastRecyclerViewAdapter)mAdapter).setCursor(null);
+        mAdapter.setCursor(null);
     }
 
     @Override
@@ -145,6 +146,10 @@ public class PlayQueueFragment extends BaseFragment implements LoaderManager.Loa
     public void onRecyclerViewListClicked(View v, int position) {
 
         Episode episode = (Episode) v.getTag();
+
+        if(getActivity() instanceof MainActivity){
+            ((MainActivity)getActivity()).playEpisode(episode);
+        }
 
     }
 

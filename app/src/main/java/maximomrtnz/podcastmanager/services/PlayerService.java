@@ -489,7 +489,7 @@ public class PlayerService extends Service implements OnCompletionListener, OnPr
 
         mNotificationHelper
                 .setContentView(remoteView)
-                .setIcon(R.drawable.ic_play)
+                .setIcon(R.drawable.ic_play_arrow_white_24dp)
                 .setContentIntent(pi)
                 .setOngoing(true);
 

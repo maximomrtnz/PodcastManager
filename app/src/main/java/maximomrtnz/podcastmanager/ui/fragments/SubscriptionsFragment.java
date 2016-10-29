@@ -24,6 +24,7 @@ import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.ui.activities.MainActivity;
 import maximomrtnz.podcastmanager.ui.adapters.PodcastRecyclerViewAdapter;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
+import maximomrtnz.podcastmanager.utils.Constants;
 import maximomrtnz.podcastmanager.utils.JsonUtil;
 
 /**
@@ -32,11 +33,8 @@ import maximomrtnz.podcastmanager.utils.JsonUtil;
 
 public class SubscriptionsFragment extends BaseFragment implements LoaderManager.LoaderCallbacks<Cursor>, RecyclerViewClickListener{
 
-    // Identifies a particular Loader being used in this component
-    private static final int PODCAST_SUBSCRIBED_LOADER = 0;
-
     private RecyclerView mRecyclerView;
-    private RecyclerView.Adapter mAdapter;
+    private PodcastRecyclerViewAdapter mAdapter;
     private LinearLayoutManager mLayoutManager;
     private ProgressBar mProgressBar;
 
@@ -60,7 +58,7 @@ public class SubscriptionsFragment extends BaseFragment implements LoaderManager
         mProgressBar.setVisibility(View.VISIBLE);
 
         // Load Podcast Subscribed
-        getActivity().getLoaderManager().initLoader(PODCAST_SUBSCRIBED_LOADER, null, this);
+        getActivity().getLoaderManager().initLoader(Constants.LOADER.PODCAST_SUBSCRIBED_LOADER, null, this);
 
     }
 
@@ -76,7 +74,7 @@ public class SubscriptionsFragment extends BaseFragment implements LoaderManager
 
         switch (loaderID) {
 
-            case PODCAST_SUBSCRIBED_LOADER:
+            case Constants.LOADER.PODCAST_SUBSCRIBED_LOADER:
 
                 // Set columns to retrieve
                 String[] projection = PodcastManagerContract.Podcast.PROJECTION_ALL;
@@ -105,7 +103,7 @@ public class SubscriptionsFragment extends BaseFragment implements LoaderManager
      */
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        ((PodcastRecyclerViewAdapter)mAdapter).setCursor(data);
+        mAdapter.setCursor(data);
         mProgressBar.setVisibility(View.GONE);
     }
 
@@ -115,7 +113,7 @@ public class SubscriptionsFragment extends BaseFragment implements LoaderManager
      */
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        ((PodcastRecyclerViewAdapter)mAdapter).setCursor(null);
+        mAdapter.setCursor(null);
     }
 
     @Override

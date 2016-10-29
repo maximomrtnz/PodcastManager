@@ -87,6 +87,32 @@ public class PlayQueue{
 
     }
 
+    public boolean add(Episode episode){
+
+        // Save episode into de play queue
+        episode.setOnPlayQueue(true);
+        episode.setOnPlayQueueTimeStamp(Calendar.getInstance());
+
+        // Insert/Update into Database
+        mContext.getContentResolver().insert(
+                PodcastManagerContentProvider.EPISODE_CONTENT_URI,
+                new EpisodeConverter().loadToContentValue(episode)
+        );
+
+        // Add to list
+        int index = contains(episode);
+
+        if(index!=-1){
+            mEpisodes.remove(index);
+        }
+
+        mEpisodes.add(0,episode);
+
+        mIndex = -1;
+
+        return true;
+    }
+
     public boolean add(Podcast podcast, Episode episode){
 
         // If Podcast is not saved, save it
@@ -116,28 +142,7 @@ public class PlayQueue{
             episode.setPodcastId(podcast.getId());
         }
 
-        // Save episode into de play queue
-        episode.setOnPlayQueue(true);
-        episode.setOnPlayQueueTimeStamp(Calendar.getInstance());
-
-        // Insert/Update into Database
-        mContext.getContentResolver().insert(
-                PodcastManagerContentProvider.EPISODE_CONTENT_URI,
-                new EpisodeConverter().loadToContentValue(episode)
-        );
-
-        // Add to list
-        int index = contains(episode);
-
-        if(index!=-1){
-            mEpisodes.remove(index);
-        }
-
-        mEpisodes.add(0,episode);
-
-        mIndex = -1;
-
-        return true;
+        return add(episode);
 
     }
 

@@ -289,6 +289,18 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
 
     }
 
+    public void play(Episode episode){
+
+        PlayQueue.getInstance().add(episode);
+
+        // Send an intent with the episode to play. This is expected by
+        // PlayerService.
+        Intent i = new Intent(getContext(),PlayerService.class);
+        i.setAction(PlayerService.ACTION_ADD_TO_PLAY_QUEUE);
+        getActivity().startService(i);
+
+    }
+
     public void doAction(String action){
         Intent i = new Intent(getContext(),PlayerService.class);
         i.setAction(action);
@@ -306,16 +318,16 @@ public class PlayerFragment extends BaseFragment implements View.OnClickListener
     @Override
     public void onStop() {
         super.onStop();
-        // Unbind from the service
-        if (mBound) {
-            getActivity().unbindService(mConnection);
-            mBound = false;
-        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        // Unbind from the service
+        if (mBound) {
+            getActivity().unbindService(mConnection);
+            mBound = false;
+        }
         stopSeekbarUpdate();
         mExecutorService.shutdown();
     }

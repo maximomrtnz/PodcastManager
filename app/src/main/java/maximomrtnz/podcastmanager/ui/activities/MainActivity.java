@@ -194,6 +194,10 @@ public class MainActivity extends BaseActivity implements MenuItemCompat.OnActio
         mPlayerFragment.play(podcast,episode);
     }
 
+    public void playEpisode(Episode episode){
+        mPlayerFragment.play(episode);
+    }
+
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
 

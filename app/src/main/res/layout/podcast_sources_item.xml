@@ -26,9 +26,22 @@
                 android:layout_width="@dimen/podcast_image_width"
                 android:layout_height="@dimen/podcast_image_height"
                 android:id="@+id/podcast_image"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentTop="true"
                 android:layout_marginRight="4dp" />
+
+            <!-- counter -->
+            <TextView
+                android:id="@+id/text_view_episode_new_counter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/circle_green"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textAlignment="center"
+                android:layout_weight="1"
+                android:layout_gravity="right"
+                android:layout_marginLeft="60dp"
+                android:layout_marginTop="5dp"/>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -53,33 +66,27 @@
                 android:ellipsize="end"
                 android:textColor="@color/podcastAuthorListColor"/>
 
-            <!-- counter -->
-            <TextView
-                android:id="@+id/text_view_episode_counter"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
-                android:layout_marginRight="8dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/rectangle"
-                android:gravity="center"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:orientation="horizontal"
+                android:layout_alignParentBottom="true">
 
-            <!-- counter -->
-            <TextView
-                android:id="@+id/text_view_episode_new_counter"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_alignParentRight="true"
-                android:layout_marginRight="8dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/rectangle"
-                android:gravity="center"
-                android:textColor="#FFFFFF"
-                android:textSize="8sp"
-                android:textStyle="bold" />
+                <!-- counter -->
+                <TextView
+                    android:id="@+id/text_view_episode_counter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/circle_red"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textAlignment="center"
+                    android:layout_weight="1"
+                    android:layout_gravity="left"/>
+
+            </LinearLayout>
 
         </RelativeLayout>
 
