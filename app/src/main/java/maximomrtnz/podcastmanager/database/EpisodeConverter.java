@@ -88,6 +88,9 @@ public class EpisodeConverter implements Converter<Episode> {
             contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_DURATION_REMAINDER, episode.getRemainderDuration());
         }
 
+
+        contentValues.put(PodcastManagerContract.Episode.COLUMN_NAME_DOWNLOAD_MANAGER_ID, (episode.getDownloadId()==null)?0:episode.getDownloadId());
+
         return contentValues;
 
     }
@@ -119,11 +122,15 @@ public class EpisodeConverter implements Converter<Episode> {
 
         int isOnPlayQueue = cursor.getInt(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_FLAG_ON_PLAY_QUEUE));
 
+        Long downloadManagerId = cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_DOWNLOAD_MANAGER_ID));
+
         episode.setPlayed((isPlayed==1)?true:false);
 
         episode.setDownloadId(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_DOWNLOAD_MANAGER_ID)));
 
         episode.setOnPlayQueue((isOnPlayQueue==1)?true:false);
+
+        episode.setDownloadId((downloadManagerId<=0)?null:downloadManagerId);
 
         return episode;
 

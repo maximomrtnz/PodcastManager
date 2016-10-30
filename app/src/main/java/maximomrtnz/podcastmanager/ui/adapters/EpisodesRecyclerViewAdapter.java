@@ -1,24 +1,27 @@
 package maximomrtnz.podcastmanager.ui.adapters;
 
+import android.app.DownloadManager;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Color;
+import android.net.Uri;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.List;
 
 import maximomrtnz.podcastmanager.R;
+import maximomrtnz.podcastmanager.cache.FileCache;
 import maximomrtnz.podcastmanager.cache.ImageLoader;
 import maximomrtnz.podcastmanager.database.EpisodeConverter;
+import maximomrtnz.podcastmanager.database.PodcastManagerContentProvider;
 import maximomrtnz.podcastmanager.models.pojos.Episode;
-import maximomrtnz.podcastmanager.models.pojos.Podcast;
 import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 import maximomrtnz.podcastmanager.utils.DateUtils;
 import maximomrtnz.podcastmanager.utils.Utils;
@@ -64,17 +67,92 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
     @Override
     public EpisodeViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
 
-        View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.episode_sources_item, viewGroup, false);
+        final View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.episode_sources_item, viewGroup, false);
 
         final EpisodeViewHolder evh = new EpisodeViewHolder(v);
 
         v.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View view) {
                 int position = evh.getLayoutPosition();
                 // Set Podcast Into View's tag
-                v.setTag(getItem(position));
-                if (mItemListener != null) mItemListener.onRecyclerViewListClicked(v, position);
+                view.setTag(getItem(position));
+                if (mItemListener != null) mItemListener.onRecyclerViewListClicked(view, position);
+            }
+        });
+
+        v.findViewById(R.id.button_cancel).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                evh.mDownloadButton.setVisibility(View.VISIBLE);
+                evh.mCancelButton.setVisibility(View.GONE);
+
+                int position = evh.getLayoutPosition();
+
+                Episode episode = getItem(position);
+
+                DownloadManager downloadManager = (DownloadManager)mContext.getSystemService(Context.DOWNLOAD_SERVICE);
+
+                if(episode.getDownloadId()!=null) {
+
+                    downloadManager.remove(episode.getDownloadId());
+
+                    episode.setDownloadId(null);
+
+                    // Save into DB
+                    mContext.getContentResolver().insert(
+                            PodcastManagerContentProvider.EPISODE_CONTENT_URI,
+                            new EpisodeConverter().loadToContentValue(episode)
+                    );
+
+                }
+            }
+        });
+
+        v.findViewById(R.id.button_download).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                evh.mDownloadButton.setVisibility(View.GONE);
+                evh.mCancelButton.setVisibility(View.VISIBLE);
+
+                int position = evh.getLayoutPosition();
+
+                Episode episode = getItem(position);
+
+                DownloadManager downloadManager = (DownloadManager)mContext.getSystemService(Context.DOWNLOAD_SERVICE);
+
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(episode.getEpisodeUrl()));
+
+                //file type
+                //request.setMimeType("application/mp3");
+
+                //if you want to download only over wifi
+                request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI);
+
+                // we just want to download silently
+                request.setVisibleInDownloadsUi(false);
+                //request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
+                request.setDestinationInExternalFilesDir(mContext, null, FileCache.getAudioFileName(episode.getEpisodeUrl()));
+
+                //to set title of download
+                request.setTitle(episode.getTitle());
+
+                //if your download is visible in history of downloads
+                request.setVisibleInDownloadsUi(false);
+
+                //you should store unique queue id
+                long queueId = downloadManager.enqueue(request);
+
+                episode.setDownloadId(queueId);
+
+                // Save into DB
+                mContext.getContentResolver().insert(
+                        PodcastManagerContentProvider.EPISODE_CONTENT_URI,
+                        new EpisodeConverter().loadToContentValue(episode)
+                );
+
             }
         });
 
@@ -82,27 +160,35 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
     }
 
     @Override
-    public void onBindViewHolder(EpisodeViewHolder personViewHolder, int i) {
+    public void onBindViewHolder(EpisodeViewHolder episodeViewHolder, int i) {
 
         Episode episode = getItem(i);
 
-        mImageLoader.displayImage(episode.getImageUrl(), personViewHolder.mEpisodeImage);
+        mImageLoader.displayImage(episode.getImageUrl(), episodeViewHolder.mEpisodeImage);
 
         if(episode.getPlayed()!=null && episode.getPlayed()){
-            Utils.applyGrayscale(personViewHolder.mEpisodeImage);
-            personViewHolder.mEpisodeTitle.setTextColor(mContext.getResources().getColor(R.color.podcastTitlePlayedListColor));
+            Utils.applyGrayscale(episodeViewHolder.mEpisodeImage);
+            episodeViewHolder.mEpisodeTitle.setTextColor(mContext.getResources().getColor(R.color.podcastTitlePlayedListColor));
         }else{
-            personViewHolder.mEpisodeImage.setColorFilter(null);
-            personViewHolder.mEpisodeTitle.setTextColor(mContext.getResources().getColor(R.color.podcastTitleListColor));
+            episodeViewHolder.mEpisodeImage.setColorFilter(null);
+            episodeViewHolder.mEpisodeTitle.setTextColor(mContext.getResources().getColor(R.color.podcastTitleListColor));
         }
 
         if(episode.getDescription()!=null){
-            personViewHolder.mEpisodeDescription.setText(episode.getDescription());
+            episodeViewHolder.mEpisodeDescription.setText(episode.getDescription());
         }
 
-        personViewHolder.mEpisodeTitle.setText(episode.getTitle());
-        personViewHolder.mEpisodeDuration.setText(episode.getItunesDuration());
-        personViewHolder.mEpisodePubDate.setText(DateUtils.format(episode.getPubDate(),"MMM d, yyyy"));
+        episodeViewHolder.mEpisodeTitle.setText(episode.getTitle());
+        episodeViewHolder.mEpisodeDuration.setText(episode.getItunesDuration());
+        episodeViewHolder.mEpisodePubDate.setText(DateUtils.format(episode.getPubDate(),"MMM d, yyyy"));
+
+        if(episode.getDownloadId()!=null){
+            episodeViewHolder.mCancelButton.setVisibility(View.VISIBLE);
+            episodeViewHolder.mDownloadButton.setVisibility(View.GONE);
+        }else{
+            episodeViewHolder.mDownloadButton.setVisibility(View.VISIBLE);
+            episodeViewHolder.mCancelButton.setVisibility(View.GONE);
+        }
 
     }
 
@@ -119,6 +205,9 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
         TextView mEpisodeDuration;
         TextView mEpisodePubDate;
         ImageView mEpisodeImage;
+        Button mDownloadButton;
+        Button mCancelButton;
+        ProgressBar mProgressBar;
 
         EpisodeViewHolder(View itemView) {
             super(itemView);
@@ -128,6 +217,9 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
             mEpisodeDuration = (TextView) itemView.findViewById(R.id.episode_duration);
             mEpisodePubDate = (TextView) itemView.findViewById(R.id.episode_pub_date);
             mEpisodeImage = (ImageView)itemView.findViewById(R.id.episode_image);
+            mDownloadButton = (Button)itemView.findViewById(R.id.button_download);
+            mCancelButton = (Button)itemView.findViewById(R.id.button_cancel);
+            mProgressBar = (ProgressBar)itemView.findViewById(R.id.progress_bar);
         }
 
     }

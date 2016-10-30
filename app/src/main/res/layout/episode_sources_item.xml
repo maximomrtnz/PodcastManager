@@ -31,6 +31,26 @@
                 android:layout_marginRight="4dp"
                 android:scaleType="centerCrop"/>
 
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="160dp"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:layout_toRightOf="@+id/episode_image"
+                android:layout_alignParentBottom="true"
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/episode_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                android:textSize="12sp"
+                android:background="@drawable/circle_red"
+                android:textColor="#FFFFFF"/>
+
             <TextView
                 android:layout_width="@dimen/episode_title_width"
                 android:layout_height="wrap_content"
@@ -63,14 +83,26 @@
                 android:layout_alignParentRight="true"
                 android:textSize="16sp"/>
 
-            <TextView
-                android:id="@+id/episode_duration"
+            <Button
+                android:id="@+id/button_cancel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignBaseline="@+id/episode_description"
-                android:layout_alignBottom="@+id/episode_description"
+                android:text="Cancel"
+                android:visibility="gone"
                 android:layout_alignParentRight="true"
-                android:textSize="16sp"/>
+                android:layout_alignParentBottom="true"
+                style="?android:attr/buttonStyleSmall"
+                android:textSize="10dp"/>
+
+            <Button
+                android:id="@+id/button_download"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Download"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true"
+                style="?android:attr/buttonStyleSmall"
+                android:textSize="10dp"/>
 
         </RelativeLayout>
 

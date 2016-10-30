@@ -3,6 +3,8 @@ package maximomrtnz.podcastmanager.models.pojos;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 import java.util.Calendar;
@@ -16,7 +18,7 @@ import maximomrtnz.podcastmanager.utils.Utils;
 /**
  * Created by Maxi on 11/17/2015.
  */
-public class Episode {
+public class Episode implements Parcelable{
 
     private Long id;
     private Long podcastId;
@@ -37,6 +39,65 @@ public class Episode {
     private Boolean isOnPlayQueue;
     private Calendar onPlayQueueTimeStamp;
     private Integer remainderDuration;
+    private Integer progress;
+
+    public Episode(){
+
+    }
+
+    protected Episode(Parcel in) {
+        title = in.readString();
+        link = in.readString();
+        imageUrl = in.readString();
+        itunesAuthor = in.readString();
+        itunesDuration = in.readString();
+        itunesSubtitle = in.readString();
+        itunesSummary = in.readString();
+        guid = in.readString();
+        description = in.readString();
+        episodeUrl = in.readString();
+        id = in.readLong();
+        downloadId = in.readLong();
+        progress = in.readInt();
+
+        id = (id==-1)?null:id;
+        downloadId = (downloadId==-1)?null:downloadId;
+        progress = (progress==-1)?null:progress;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(title);
+        dest.writeString(link);
+        dest.writeString(imageUrl);
+        dest.writeString(itunesAuthor);
+        dest.writeString(itunesDuration);
+        dest.writeString(itunesSubtitle);
+        dest.writeString(itunesSummary);
+        dest.writeString(guid);
+        dest.writeString(description);
+        dest.writeString(episodeUrl);
+        dest.writeLong((id==null)?-1:id);
+        dest.writeLong((downloadId==null)?-1:downloadId);
+        dest.writeInt((progress==null)?-1:progress);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final Creator<Episode> CREATOR = new Creator<Episode>() {
+        @Override
+        public Episode createFromParcel(Parcel in) {
+            return new Episode(in);
+        }
+
+        @Override
+        public Episode[] newArray(int size) {
+            return new Episode[size];
+        }
+    };
 
     public String getTitle() {
         return title;
@@ -188,5 +249,13 @@ public class Episode {
 
     public void setRemainderDuration(Integer remainderDuration) {
         this.remainderDuration = remainderDuration;
+    }
+
+    public Integer getProgress() {
+        return progress;
+    }
+
+    public void setProgress(Integer progress) {
+        this.progress = progress;
     }
 }

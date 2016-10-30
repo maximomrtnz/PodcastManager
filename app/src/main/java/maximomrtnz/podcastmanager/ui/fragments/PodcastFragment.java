@@ -1,5 +1,6 @@
 package maximomrtnz.podcastmanager.ui.fragments;
 
+import android.app.DownloadManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -17,6 +18,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
 
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -31,6 +33,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -81,7 +84,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
     private ProgressBar mProgressBar;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private Map<String,Episode> mEpisodesByUrl = new HashMap<>();
-
+    private boolean mReceiversRegistered;
 
     private BroadcastReceiver mSynchronizeServiceReceiver = new BroadcastReceiver() {
 
@@ -273,6 +276,12 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
                 // Set stored Data From stored Episode
                 episode.setPlayed(episodeFromDB.getPlayed());
 
+                episode.setDownloadId(episodeFromDB.getDownloadId());
+
+                if(episodeFromDB.getDownloadId()!=null){
+                    Log.d(LOG_TAG,episodeFromDB.getDownloadId()+"");
+                }
+
             }
 
         }
@@ -293,6 +302,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
         if(mSwipeRefreshLayout.isRefreshing()) {
             mSwipeRefreshLayout.setRefreshing(false);
         }
+
 
     }
 
@@ -523,9 +533,13 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
     @Override
     public void onPause() {
+
         super.onPause();
 
         getActivity().unregisterReceiver(mSynchronizeServiceReceiver);
+
+        getActivity().unregisterReceiver(mDownloadingProgressReceiver);
+
 
         // Set New Episodes in 0 because we saw new episodes every time we opened this fragment
 
@@ -553,6 +567,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
     public void onResume() {
         super.onResume();
         getActivity().registerReceiver(mSynchronizeServiceReceiver, new IntentFilter(Constants.SYNCHRONIZE_SERVICE.NOTIFICATION));
+        getActivity().registerReceiver(mDownloadingProgressReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
     }
 
     @Override
@@ -579,5 +594,93 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
     }
 
 
+    private final BroadcastReceiver mDownloadingProgressReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            Log.d(LOG_TAG,"DOWNLOAD COMPLETE ");
+
+            if (intent.getAction().equals(DownloadManager.ACTION_DOWNLOAD_COMPLETE)) {
+
+                //check if the broadcast message is for our enqueued download
+                long referenceId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+
+                if(referenceId == -1){
+                    return;
+                }
+
+                DownloadManager downloadManager = (DownloadManager)getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
+
+                DownloadManager.Query query = new DownloadManager.Query();
+                query.setFilterById(referenceId);
+                Cursor c = downloadManager.query(query);
+                if (c.moveToFirst()) {
+                    int columnIndex = c.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                    if (DownloadManager.STATUS_SUCCESSFUL == c.getInt(columnIndex)) {
+
+                        int index = 0;
+
+                        for (index=0; index < mEpisodes.size(); index++){
+                            if(mEpisodes.get(index).getDownloadId()==referenceId){
+                                break;
+                            }
+                        }
+
+                        if(index>=mEpisodes.size()){
+                            return;
+                        }
+
+                        // Check if one of our episodes has finished
+                        Toast toast = Toast.makeText(getActivity(), mEpisodes.get(index).getTitle()+" Download Complete", Toast.LENGTH_LONG);
+                        toast.show();
+
+                        onProgressUpdate(index, 1000);
+
+                    }
+                }
+            }
+        }
+    };
+
+
+    protected void onProgressUpdate(int position, int progress) {
+        final LinearLayoutManager linearLayoutManager = (LinearLayoutManager)mRecyclerView.getLayoutManager();
+        int first = linearLayoutManager.findFirstVisibleItemPosition();
+        int last = linearLayoutManager.findLastVisibleItemPosition();
+        mEpisodes.get(position).setProgress(progress > 100 ? 100 : progress);
+        if (position < first || position > last) {
+            // just update your data set, UI will be updated automatically in next
+            // getView() call
+        } else {
+            View convertView = linearLayoutManager.getChildAt(position - first);
+            // this is the convertView that you previously returned in getView
+            // just fix it (for example:)
+            updateRow(mEpisodes.get(position), convertView);
+        }
+    }
+
+    protected void onProgressUpdateOneShot(int[] positions, int[] progresses) {
+        for (int i = 0; i < positions.length; i++) {
+            int position = positions[i];
+            int progress = progresses[i];
+            onProgressUpdate(position, progress);
+        }
+    }
+
+
+    private void updateRow(final Episode episode, View v) {
+        ProgressBar bar = (ProgressBar) v.findViewById(R.id.progress_bar);
+        if(bar.getVisibility()==View.GONE){
+            bar.setVisibility(View.VISIBLE);
+        }
+        bar.setProgress(episode.getProgress());
+    }
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
 
 }
