@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="Customisations"
+        android:key="custom_category">
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/settings_download_podcast_wifi"
+            android:summaryOff="@string/settings_download_podcast_wifi"
+            android:summaryOn="@string/settings_download_podcast_wifi"
+            android:title="@string/settings_download_podcast_wifi" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

@@ -1,5 +1,6 @@
 package maximomrtnz.podcastmanager.ui.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -154,7 +155,8 @@ public class MainActivity extends BaseActivity implements MenuItemCompat.OnActio
     }
 
     private void showSettingsScreen(){
-
+        Intent modifySettings = new Intent(MainActivity.this,SettingsActivity.class);
+        startActivity(modifySettings);
     }
 
     private void showSearch(){

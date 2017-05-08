@@ -43,4 +43,6 @@
     <string name="action_drawer_rate_this_app">Rate this App</string>
     <string name="action_drawer_invite_friends">Invite friends</string>
 
+    <string name="settings_download_podcast_wifi">Only Download Podcasts Over Wi-Fi</string>
+
 </resources>

@@ -381,6 +381,9 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
             mPodcast.setSubscribed(true);
 
+            mPodcast.setEpisodesCount(mEpisodes.size());
+            mPodcast.setLastModifiedDate(Calendar.getInstance());
+
             // Insert/Update into Database
             Uri newPodcastUri = getContext().getContentResolver().insert(
                     PodcastManagerContentProvider.PODCAST_CONTENT_URI,
@@ -392,9 +395,6 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
             if(id!=0){
                 mPodcast.setId(id);
             }
-
-            mPodcast.setEpisodesCount(mEpisodes.size());
-            mPodcast.setLastModifiedDate(Calendar.getInstance());
 
             mFloatingActionButton.setImageDrawable(getResources().getDrawable(R.drawable.ic_fab_check));
 

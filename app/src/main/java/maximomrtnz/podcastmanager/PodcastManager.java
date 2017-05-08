@@ -11,7 +11,7 @@ import maximomrtnz.podcastmanager.utils.PlayQueue;
 public class PodcastManager extends Application {
 
     public void onCreate(){
-
+        super.onCreate();
         // Init singletons
         PlayQueue.getInstance().setContext(this);
 

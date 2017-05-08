@@ -9,12 +9,12 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
+        android:name=".PodcastManager"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        android:name=".PodcastManager">
+        android:theme="@style/AppTheme">
 
         <!-- Main Activity -->
         <activity
@@ -35,18 +35,20 @@
                 android:resource="@xml/searchable" />
         </activity>
 
+        <!--Settings Activity-->
+        <activity android:name=".ui.activities.SettingsActivity"></activity>
+
         <!-- Content Provider -->
         <provider
             android:name=".database.PodcastManagerContentProvider"
             android:authorities="maximomrtnz.podcastmanager.database.podcastmanagercontentprovider"
             android:exported="true"
-            android:multiprocess="true"></provider>
+            android:multiprocess="true" />
 
         <!-- Services -->
         <service
             android:name=".services.SynchronizeService"
             android:exported="false" />
-
 
         <!-- Broadcast Receivers -->
         <receiver android:name=".broadcastreceivers.BootReceiver">
@@ -54,12 +56,13 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-
         <receiver
             android:name=".broadcastreceivers.AlarmReceiver"
-            android:process=":remote"></receiver>
+            android:process=":remote" />
 
-        <service android:exported="false" android:name=".services.PlayerService">
+        <service
+            android:name=".services.PlayerService"
+            android:exported="false">
             <intent-filter>
                 <action android:name="maximomrtnz.podcastmanager.action.TOGGLE_PLAYBACK" />
                 <action android:name="maximomrtnz.podcastmanager.action.PLAY" />
@@ -79,8 +82,7 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
-
-        <receiver android:name=".broadcastreceivers.NotificationBroadcast" >
+        <receiver android:name=".broadcastreceivers.NotificationBroadcast">
             <intent-filter>
                 <action android:name="maximomrtnz.podcastmanager.action.NOTIFICATION.PLAY_PAUSE" />
                 <action android:name="maximomrtnz.podcastmanager.action.NOTIFICATION.SKIP_NEXT" />
@@ -88,6 +90,7 @@
             </intent-filter>
         </receiver>
 
+        <activity android:name=".ui.activities.SettingsActivity"></activity>
     </application>
 
 </manifest>

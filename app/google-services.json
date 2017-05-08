@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "781901888836",
+    "firebase_url": "https://podcastmanager-d5562.firebaseio.com",
+    "project_id": "podcastmanager-d5562",
+    "storage_bucket": "podcastmanager-d5562.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:781901888836:android:01275dfffe05ebdc",
+        "android_client_info": {
+          "package_name": "maximomrtnz.podcastmanager"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "781901888836-u6f75oej1a39sqdon0no9jo9e82n906u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUZLiDf1d7J3IutbaQnZFwJOdTfn9gBNA"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
