@@ -21,6 +21,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import maximomrtnz.podcastmanager.broadcastreceivers.AlarmReceiver;
 
@@ -92,6 +93,14 @@ public class Utils {
         matrix.setSaturation(0);
         ColorMatrixColorFilter filter = new ColorMatrixColorFilter(matrix);
         imageView.setColorFilter(filter);
+    }
+
+    public static long[] toLongArray(Set<Long> set)  {
+        long[] ret = new long[set.size()];
+        int i = 0;
+        for (Long e : set)
+            ret[i++] = e.intValue();
+        return ret;
     }
 
 }

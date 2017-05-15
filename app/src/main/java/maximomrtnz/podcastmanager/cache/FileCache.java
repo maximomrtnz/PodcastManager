@@ -1,6 +1,7 @@
 package maximomrtnz.podcastmanager.cache;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.io.File;
 import java.net.URLEncoder;
@@ -14,32 +15,36 @@ import maximomrtnz.podcastmanager.utils.Utils;
 
 public class FileCache {
 
-    private File cacheDir;
+    private File mCacheDir;
 
     public FileCache(Context context, String directory){
         //Find the dir to save cached images
         if (android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
-            cacheDir = new File(android.os.Environment.getExternalStorageDirectory(), Constants.DIRECTORIES.ROOT+"/"+directory);
+            mCacheDir = context.getExternalFilesDir(directory);
         }else {
-            cacheDir = context.getCacheDir();
+            mCacheDir = context.getFilesDir();
         }
-        if(!cacheDir.exists()) {
-            cacheDir.mkdirs();
+
+        Log.d("IS EXTERNAL",android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)+"");
+        Log.d("DIRECTORY",mCacheDir.getAbsolutePath());
+
+        if(!mCacheDir.exists()) {
+            mCacheDir.mkdirs();
         }
     }
 
     public File getFile(String filename){
-        File f = new File(cacheDir, filename);
+        File f = new File(mCacheDir, filename);
         return f;
     }
 
     public boolean deleteFile(String fileName) {
-        File file = new File(cacheDir, fileName);
+        File file = new File(mCacheDir, fileName);
         return file.delete();
     }
 
     public void clear(){
-        File[] files=cacheDir.listFiles();
+        File[] files=mCacheDir.listFiles();
         if(files==null) {
             return;
         }
@@ -61,6 +66,6 @@ public class FileCache {
         }else if(url.toLowerCase().contains(".wav")){
             fileName +=".wav";
         }
-        return fileName;
+        return  fileName;
     }
 }

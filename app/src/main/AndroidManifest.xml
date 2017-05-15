@@ -90,7 +90,6 @@
             </intent-filter>
         </receiver>
 
-        <activity android:name=".ui.activities.SettingsActivity"></activity>
     </application>
 
 </manifest>

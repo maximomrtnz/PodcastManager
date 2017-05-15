@@ -1,6 +1,7 @@
 package maximomrtnz.podcastmanager.ui.fragments;
 
 import android.app.DownloadManager;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -31,6 +32,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -39,8 +41,14 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import maximomrtnz.podcastmanager.R;
 import maximomrtnz.podcastmanager.cache.FeedLoader;
@@ -61,6 +69,7 @@ import maximomrtnz.podcastmanager.ui.listeners.RecyclerViewClickListener;
 import maximomrtnz.podcastmanager.utils.Constants;
 import maximomrtnz.podcastmanager.utils.ContentProviderUtils;
 import maximomrtnz.podcastmanager.utils.JsonUtil;
+import maximomrtnz.podcastmanager.utils.Utils;
 
 /**
  * Created by maximo on 26/07/16.
@@ -69,6 +78,9 @@ import maximomrtnz.podcastmanager.utils.JsonUtil;
 public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoaderListener, RecyclerViewClickListener, LoaderManager.LoaderCallbacks<Cursor>{
 
     private static String LOG_TAG = "PodcastFragment";
+
+    private static final long PROGRESS_UPDATE_INTERNAL = 1000;
+    private static final long PROGRESS_UPDATE_INITIAL_INTERVAL = 100;
 
     private Toolbar mToolbar;
     private CollapsingToolbarLayout mCollapsingToolbarLayout;
@@ -84,7 +96,19 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
     private ProgressBar mProgressBar;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private Map<String,Episode> mEpisodesByUrl = new HashMap<>();
+    private final ScheduledExecutorService mExecutorService = Executors.newSingleThreadScheduledExecutor();
+
+    private ScheduledFuture<?> mScheduleFuture;
+
+    private final Handler mHandler = new Handler();
     private boolean mReceiversRegistered;
+
+    private final Runnable mUpdateProgressBars = new Runnable() {
+        @Override
+        public void run() {
+            updateProgressBars();
+        }
+    };
 
     private BroadcastReceiver mSynchronizeServiceReceiver = new BroadcastReceiver() {
 
@@ -168,6 +192,17 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
                 refreshItems();
             }
         });
+
+        if (!mExecutorService.isShutdown()) {
+            mScheduleFuture = mExecutorService.scheduleAtFixedRate(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            mHandler.post(mUpdateProgressBars);
+                        }
+                    }, PROGRESS_UPDATE_INITIAL_INTERVAL,
+                    PROGRESS_UPDATE_INTERNAL, TimeUnit.MILLISECONDS);
+        }
 
     }
 
@@ -268,7 +303,13 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
         for(Episode episode : podcast.getEpisodes()){
 
+            if(mPodcast.getId()!=null){
+                episode.setPodcastId(mPodcast.getId());
+            }
+
             if(mEpisodesByUrl.containsKey(episode.getEpisodeUrl())){
+
+                Log.d(LOG_TAG,""+episode.getEpisodeUrl());
 
                 // Get Episode From DB
                 Episode episodeFromDB = mEpisodesByUrl.get(episode.getEpisodeUrl());
@@ -278,9 +319,7 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
                 episode.setDownloadId(episodeFromDB.getDownloadId());
 
-                if(episodeFromDB.getDownloadId()!=null){
-                    Log.d(LOG_TAG,episodeFromDB.getDownloadId()+"");
-                }
+                Log.d(LOG_TAG,""+episode.getDownloadId());
 
             }
 
@@ -479,11 +518,11 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
                    while (cursor.moveToNext()) {
                        Episode episode = new EpisodeConverter().loadFrom(cursor);
+                       Log.d(LOG_TAG,episode.getEpisodeUrl());
                        mEpisodesByUrl.put(episode.getEpisodeUrl(),episode);
                    }
 
                 }
-
                 // Let's download from XML Feed
                 mFeedLoader.loadFeed(mPodcast.getFeedUrl(), false);
 
@@ -670,17 +709,104 @@ public class PodcastFragment extends BaseFragment implements FeedLoader.FeedLoad
 
 
     private void updateRow(final Episode episode, View v) {
+
         ProgressBar bar = (ProgressBar) v.findViewById(R.id.progress_bar);
-        if(bar.getVisibility()==View.GONE){
-            bar.setVisibility(View.VISIBLE);
+        ImageButton cancelButton = (ImageButton) v.findViewById(R.id.button_cancel);
+        ImageButton deleteButton = (ImageButton) v.findViewById(R.id.button_delete);
+        ImageButton downloadButton = (ImageButton) v.findViewById(R.id.button_download);
+
+        cancelButton.setVisibility(View.GONE);
+        deleteButton.setVisibility(View.GONE);
+        downloadButton.setVisibility(View.GONE);
+
+        if(episode.getProgress()<100){
+            if(bar.getVisibility()==View.GONE){
+                bar.setVisibility(View.VISIBLE);
+            }
+            bar.setProgress(episode.getProgress());
+            cancelButton.setVisibility(View.VISIBLE);
+        }else{
+            deleteButton.setVisibility(View.VISIBLE);
         }
-        bar.setProgress(episode.getProgress());
+
+
     }
 
+    private void updateProgressBars(){
+
+        Log.d(LOG_TAG,"Update Progress Bars");
+
+        int index = 0;
+
+        Map<Long,Integer> indexByDownloadIds = new HashMap<>();
+
+        for(Episode episode : mEpisodes) {
+
+            if (episode.getDownloadId() != null) {
+
+                indexByDownloadIds.put(episode.getDownloadId(),index);
+
+                Log.d(LOG_TAG,""+episode.getDownloadId());
+
+            }
+
+            index++;
+
+        }
+
+        if(indexByDownloadIds.isEmpty()){
+            return;
+        }
+
+        DownloadManager downloadManager = (DownloadManager) getActivity().getSystemService(Context.DOWNLOAD_SERVICE);
+
+        DownloadManager.Query q = new DownloadManager.Query();
+
+        q.setFilterById(Utils.toLongArray(indexByDownloadIds.keySet()));
+
+        Cursor cursor = downloadManager.query(q);
+
+        while(cursor.moveToNext()) {
+
+            int bytesDownloaded = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+
+            int bytesTotal = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+
+            long downLoadId = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_ID));
+
+            final int dlProgress = (int) ((bytesDownloaded * 100l) / bytesTotal);
+
+            Log.d(LOG_TAG, "" + dlProgress);
+            Log.d(LOG_TAG, "" + downLoadId);
+
+            if(!indexByDownloadIds.containsKey(downLoadId)){
+                continue;
+            }
+
+            final int i = indexByDownloadIds.get(downLoadId);
+
+
+
+            getActivity().runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+
+                    onProgressUpdate(i,dlProgress);
+
+                }
+
+            });
+        }
+
+        cursor.close();
+
+    }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        mExecutorService.shutdown();
     }
 
 }

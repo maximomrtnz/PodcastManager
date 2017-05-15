@@ -3,6 +3,7 @@ package maximomrtnz.podcastmanager.database;
 import android.content.ContentProviderOperation;
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.util.Log;
 
 import maximomrtnz.podcastmanager.models.pojos.Episode;
 import maximomrtnz.podcastmanager.utils.DateUtils;
@@ -12,6 +13,8 @@ import maximomrtnz.podcastmanager.utils.DateUtils;
  */
 
 public class EpisodeConverter implements Converter<Episode> {
+
+    private String LOG_TAG = "EpisodeConverter";
 
     @Override
     public ContentProviderOperation toDeleteOperation(Episode object) {
@@ -124,13 +127,15 @@ public class EpisodeConverter implements Converter<Episode> {
 
         Long downloadManagerId = cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_DOWNLOAD_MANAGER_ID));
 
-        episode.setPlayed((isPlayed==1)?true:false);
+        Log.d(LOG_TAG,""+downloadManagerId);
 
-        episode.setDownloadId(cursor.getLong(cursor.getColumnIndex(PodcastManagerContract.Episode.COLUMN_NAME_DOWNLOAD_MANAGER_ID)));
+        episode.setPlayed((isPlayed==1)?true:false);
 
         episode.setOnPlayQueue((isOnPlayQueue==1)?true:false);
 
         episode.setDownloadId((downloadManagerId<=0)?null:downloadManagerId);
+
+        Log.d(LOG_TAG,""+episode.getDownloadId());
 
         return episode;
 

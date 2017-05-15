@@ -6,10 +6,12 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -117,6 +119,7 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
                 evh.mDownloadButton.setVisibility(View.GONE);
                 evh.mCancelButton.setVisibility(View.VISIBLE);
 
+
                 int position = evh.getLayoutPosition();
 
                 Episode episode = getItem(position);
@@ -133,11 +136,14 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
 
                 // we just want to download silently
                 request.setVisibleInDownloadsUi(false);
+
                 //request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN);
-                request.setDestinationInExternalFilesDir(mContext, null, FileCache.getAudioFileName(episode.getEpisodeUrl()));
+                request.setDestinationInExternalFilesDir(mContext, null, "Audios/"+FileCache.getAudioFileName(episode.getEpisodeUrl()));
 
                 //to set title of download
                 request.setTitle(episode.getTitle());
+
+                Log.d(LOG_TAG,""+episode.getPodcastId());
 
                 //if your download is visible in history of downloads
                 request.setVisibleInDownloadsUi(false);
@@ -181,15 +187,12 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
         episodeViewHolder.mEpisodeTitle.setText(episode.getTitle());
         episodeViewHolder.mEpisodeDuration.setText(episode.getItunesDuration());
         episodeViewHolder.mEpisodePubDate.setText(DateUtils.format(episode.getPubDate(),"MMM d, yyyy"));
+        episodeViewHolder.mProgressBar.setVisibility(View.GONE);
 
-        if(episode.getDownloadId()!=null){
-            episodeViewHolder.mCancelButton.setVisibility(View.VISIBLE);
-            episodeViewHolder.mDownloadButton.setVisibility(View.GONE);
-        }else{
-            episodeViewHolder.mDownloadButton.setVisibility(View.VISIBLE);
-            episodeViewHolder.mCancelButton.setVisibility(View.GONE);
-        }
 
+        episodeViewHolder.mDeleteButton.setVisibility(View.GONE);
+        episodeViewHolder.mCancelButton.setVisibility(View.GONE);
+        episodeViewHolder.mDownloadButton.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -205,8 +208,9 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
         TextView mEpisodeDuration;
         TextView mEpisodePubDate;
         ImageView mEpisodeImage;
-        Button mDownloadButton;
-        Button mCancelButton;
+        ImageButton mDownloadButton;
+        ImageButton mCancelButton;
+        ImageButton mDeleteButton;
         ProgressBar mProgressBar;
 
         EpisodeViewHolder(View itemView) {
@@ -217,8 +221,9 @@ public class EpisodesRecyclerViewAdapter extends RecyclerView.Adapter<EpisodesRe
             mEpisodeDuration = (TextView) itemView.findViewById(R.id.episode_duration);
             mEpisodePubDate = (TextView) itemView.findViewById(R.id.episode_pub_date);
             mEpisodeImage = (ImageView)itemView.findViewById(R.id.episode_image);
-            mDownloadButton = (Button)itemView.findViewById(R.id.button_download);
-            mCancelButton = (Button)itemView.findViewById(R.id.button_cancel);
+            mDownloadButton = (ImageButton)itemView.findViewById(R.id.button_download);
+            mCancelButton = (ImageButton)itemView.findViewById(R.id.button_cancel);
+            mDeleteButton = (ImageButton)itemView.findViewById(R.id.button_delete);
             mProgressBar = (ProgressBar)itemView.findViewById(R.id.progress_bar);
         }
 
